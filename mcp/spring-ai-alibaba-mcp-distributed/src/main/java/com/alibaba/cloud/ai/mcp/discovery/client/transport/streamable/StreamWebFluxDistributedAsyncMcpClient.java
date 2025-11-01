@@ -14,34 +14,35 @@
  * limitations under the License.
  */
 
-package com.alibaba.cloud.ai.mcp.discovery.client.transport.sse;
+package com.alibaba.cloud.ai.mcp.discovery.client.transport.streamable;
 
-import com.alibaba.cloud.ai.mcp.common.transport.builder.WebFluxSseClientTransportBuilder;
-import com.alibaba.cloud.ai.mcp.discovery.client.transport.DistributedSyncMcpClient;
-import com.alibaba.cloud.ai.mcp.utils.CommonUtil;
-import com.alibaba.cloud.ai.mcp.utils.NacosMcpClientUtil;
+import com.alibaba.cloud.ai.mcp.common.transport.builder.WebFluxStreamableClientTransportBuilder;
+import com.alibaba.cloud.ai.mcp.discovery.client.transport.DistributedAsyncMcpClient;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import com.alibaba.cloud.ai.mcp.nacos.service.model.NacosMcpServerEndpoint;
+import com.alibaba.cloud.ai.mcp.utils.CommonUtil;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpClientUtil;
 import com.alibaba.nacos.api.ai.constant.AiConstants;
 import com.alibaba.nacos.api.ai.model.mcp.McpEndpointInfo;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.WebFluxSseClientTransport;
+import io.modelcontextprotocol.client.transport.WebClientStreamableHttpTransport;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.mcp.client.common.autoconfigure.NamedClientMcpTransport;
-import org.springframework.ai.mcp.client.common.autoconfigure.configurer.McpSyncClientConfigurer;
+import org.springframework.ai.mcp.client.common.autoconfigure.configurer.McpAsyncClientConfigurer;
 import org.springframework.ai.mcp.client.common.autoconfigure.properties.McpClientCommonProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -49,14 +50,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * @author yingzi
- * @since 2025/10/25
+ * @since 2025/11/1
  */
-public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpClient {
 
-    private static final Logger logger = LoggerFactory.getLogger(SseWebFluxDistributedSyncMcpClient.class);
+public class StreamWebFluxDistributedAsyncMcpClient implements DistributedAsyncMcpClient {
+
+    private static final Logger logger = LoggerFactory.getLogger(StreamWebFluxDistributedAsyncMcpClient.class);
 
     private final String serverName;
 
@@ -66,7 +69,7 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
 
     private final McpClientCommonProperties commonProperties;
 
-    private final McpSyncClientConfigurer mcpSyncClientConfigurer;
+    private final McpAsyncClientConfigurer mcpAsyncClientConfigurer;
 
     private final WebClient.Builder webClientBuilderTemplate;
 
@@ -74,15 +77,15 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
 
     private final AtomicInteger index = new AtomicInteger(0);
 
-    private Map<String, McpSyncClient> keyToClientMap;
+    private Map<String, McpAsyncClient> keyToClientMap;
 
     private NacosMcpServerEndpoint serverEndpoint;
 
     // Link Tracking Filters
     private final ExchangeFilterFunction traceFilter;
 
-    public SseWebFluxDistributedSyncMcpClient(String serverName, String version,
-                                              NacosMcpOperationService nacosMcpOperationService, ApplicationContext applicationContext) {
+    public StreamWebFluxDistributedAsyncMcpClient(String serverName, String version,
+                                                 NacosMcpOperationService nacosMcpOperationService, ApplicationContext applicationContext) {
         Assert.notNull(serverName, "serviceName cannot be null");
         Assert.notNull(version, "version cannot be null");
         Assert.notNull(nacosMcpOperationService, "nacosMcpOperationService cannot be null");
@@ -99,9 +102,9 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
                         String.format("[Nacos Mcp Sync Client] Can not find mcp server from nacos: %s, version:%s",
                                 serverName, version));
             }
-            if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
+            if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE)) {
                 throw new RuntimeException(
-                        String.format("[Nacos Mcp Sync Client] Protocol of mcp server:%s, version :%s must be sse",
+                        String.format("[Nacos Mcp Sync Client] Protocol of mcp server:%s, version :%s must be streamable",
                                 serverName, version));
             }
         } catch (NacosException e) {
@@ -111,7 +114,7 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
         }
 
         commonProperties = applicationContext.getBean(McpClientCommonProperties.class);
-        mcpSyncClientConfigurer = applicationContext.getBean(McpSyncClientConfigurer.class);
+        mcpAsyncClientConfigurer = applicationContext.getBean(McpAsyncClientConfigurer.class);
         webClientBuilderTemplate = applicationContext.getBean(WebClient.Builder.class);
         mcpJsonMapper = new JacksonMcpJsonMapper(applicationContext.getBean(ObjectMapper.class));
         // Try to get the link tracking filter
@@ -127,7 +130,7 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
         this.traceFilter = tempTraceFilter;
     }
 
-    public Map<String, McpSyncClient> init() {
+    public Map<String, McpAsyncClient> init() {
         keyToClientMap = new ConcurrentHashMap<>();
         for (McpEndpointInfo mcpEndpointInfo : serverEndpoint.getMcpEndpointInfoList()) {
             updateByAddEndpoint(mcpEndpointInfo, serverEndpoint.getExportPath());
@@ -153,17 +156,17 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
                 version);
     }
 
-    public McpSyncClient getMcpSyncClient() {
-        List<McpSyncClient> syncClients = getMcpSyncClientList();
-        if (syncClients.isEmpty()) {
-            throw new IllegalStateException("[Nacos Mcp Sync Client] No McpSyncClient available, name :" + serverName);
+    public McpAsyncClient getMcpAsyncClient() {
+        List<McpAsyncClient> asynClients = getMcpAsyncClientList();
+        if (asynClients.isEmpty()) {
+            throw new IllegalStateException("[Nacos Mcp Async Client] No McpAsyncClient available, name:" + serverName);
         }
-        int currentIndex = index.getAndUpdate(index -> (index + 1) % syncClients.size());
 
-        return syncClients.get(currentIndex);
+        int currentIndex = index.getAndUpdate(index -> (index + 1) % asynClients.size());
+        return asynClients.get(currentIndex);
     }
 
-    public List<McpSyncClient> getMcpSyncClientList() {
+    public List<McpAsyncClient> getMcpAsyncClientList() {
         return keyToClientMap.values().stream().toList();
     }
 
@@ -176,23 +179,23 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
     }
 
     private void updateByAddEndpoint(McpEndpointInfo mcpEndpointInfo, String exportPath) {
-        McpSyncClient mcpSyncClient = clientByEndpoint(mcpEndpointInfo, exportPath);
+        McpAsyncClient mcpAsyncClient = clientByEndpoint(mcpEndpointInfo, exportPath);
         String key = NacosMcpClientUtil.getMcpEndpointInfoId(mcpEndpointInfo, exportPath);
-        keyToClientMap.putIfAbsent(key, mcpSyncClient);
+        keyToClientMap.putIfAbsent(key, mcpAsyncClient);
     }
 
-    private McpSyncClient clientByEndpoint(McpEndpointInfo mcpEndpointInfo, String exportPath) {
-        McpSyncClient syncClient;
+    private McpAsyncClient clientByEndpoint(McpEndpointInfo mcpEndpointInfo, String exportPath) {
+        McpAsyncClient asyncClient;
 
         String protocol = NacosMcpClientUtil.checkProtocol(mcpEndpointInfo);
         String baseUrl = protocol + "://" + mcpEndpointInfo.getAddress() + ":" + mcpEndpointInfo.getPort();
         WebClient.Builder webClientBuilder = webClientBuilderTemplate.clone().baseUrl(baseUrl);
 
-        WebFluxSseClientTransport transport;
+        WebClientStreamableHttpTransport transport;
         if (traceFilter != null) {
-            transport = WebFluxSseClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath);
+            transport = WebFluxStreamableClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath);
         } else {
-            transport = WebFluxSseClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath, traceFilter);
+            transport = WebFluxStreamableClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath, traceFilter);
         }
 
         NamedClientMcpTransport namedClientMcpTransport = new NamedClientMcpTransport(
@@ -203,17 +206,17 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
                 commonProperties.getVersion()
         );
 
-        McpClient.SyncSpec spec = McpClient.sync(namedClientMcpTransport.transport())
+        McpClient.AsyncSpec spec = McpClient.async(namedClientMcpTransport.transport())
                 .clientInfo(clientInfo)
                 ;
-        spec = mcpSyncClientConfigurer.configure(namedClientMcpTransport.name(), spec);
-        syncClient = spec.build();
+        spec = mcpAsyncClientConfigurer.configure(namedClientMcpTransport.name(), spec);
+        asyncClient = spec.build();
         if (commonProperties.isInitialized()) {
-            syncClient.initialize();
+            asyncClient.initialize().block();
         }
 
-        logger.info("Added McpSyncClient: {}", clientInfo.name());
-        return syncClient;
+        logger.info("Added McpAsyncClient: {}", clientInfo.name());
+        return asyncClient;
     }
 
     private void updateClientList(NacosMcpServerEndpoint newServerEndpoint) {
@@ -256,170 +259,174 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
     }
 
     private void updateAll(NacosMcpServerEndpoint newServerEndpoint) {
-        Map<String, McpSyncClient> newKeyToClientMap = new ConcurrentHashMap<>();
-        Map<String, McpSyncClient> oldKeyToClientMap = this.keyToClientMap;
+        Map<String, McpAsyncClient> newKeyToClientMap = new ConcurrentHashMap<>();
+        Map<String, McpAsyncClient> oldKeyToClientMap = this.keyToClientMap;
         Map<String, Integer> newKeyToCountMap = new ConcurrentHashMap<>();
         for (McpEndpointInfo mcpEndpointInfo : newServerEndpoint.getMcpEndpointInfoList()) {
-            McpSyncClient syncClient = clientByEndpoint(mcpEndpointInfo, newServerEndpoint.getExportPath());
+            McpAsyncClient asyncClient = clientByEndpoint(mcpEndpointInfo, newServerEndpoint.getExportPath());
             String key = NacosMcpClientUtil.getMcpEndpointInfoId(mcpEndpointInfo, newServerEndpoint.getExportPath());
-            newKeyToClientMap.putIfAbsent(key, syncClient);
+            newKeyToClientMap.putIfAbsent(key, asyncClient);
             newKeyToCountMap.putIfAbsent(key, 0);
         }
         this.keyToClientMap = newKeyToClientMap;
-        for (Map.Entry<String, McpSyncClient> entry : oldKeyToClientMap.entrySet()) {
-            McpSyncClient syncClient = entry.getValue();
-            logger.info("Removing McpSyncClient: {}", syncClient.getClientInfo().name());
-            syncClient.closeGracefully();
-            logger.info("Removed McpSyncClient: {} Success", syncClient.getClientInfo().name());
+        for (Map.Entry<String, McpAsyncClient> entry : oldKeyToClientMap.entrySet()) {
+            McpAsyncClient asyncClient = entry.getValue();
+            logger.info("Removing McpAsyncClient: {}", asyncClient.getClientInfo().name());
+            asyncClient.closeGracefully();
+            logger.info("Removed McpAsyncClient: {} Success", asyncClient.getClientInfo().name());
         }
     }
 
     private void updateByRemoveEndpoint(McpEndpointInfo serverEndpoint, String exportPath) {
         String key = NacosMcpClientUtil.getMcpEndpointInfoId(serverEndpoint, exportPath);
         if (keyToClientMap.containsKey(key)) {
-            McpSyncClient syncClient = keyToClientMap.remove(key);
-            logger.info("Removing McpSyncClient: {}", syncClient.getClientInfo().name());
-            syncClient.closeGracefully();
-            logger.info("Removed McpSyncClient: {} Success", syncClient.getClientInfo().name());
+            McpAsyncClient asyncClient = keyToClientMap.remove(key);
+            logger.info("Removing McpAsyncClient: {}", asyncClient.getClientInfo().name());
+            asyncClient.closeGracefully().block();
+            logger.info("Removed McpAsyncClient: {} Success", asyncClient.getClientInfo().name());
         }
     }
 
     // ---------------------------原始调用方法------------------------------//
     public McpSchema.ServerCapabilities getServerCapabilities() {
-        return getMcpSyncClient().getServerCapabilities();
+        return getMcpAsyncClient().getServerCapabilities();
     }
 
     public String getServerInstructions() {
-        return getMcpSyncClient().getServerInstructions();
+        return getMcpAsyncClient().getServerInstructions();
     }
 
     public McpSchema.Implementation getServerInfo() {
-        return getMcpSyncClient().getServerInfo();
+        return getMcpAsyncClient().getServerInfo();
     }
 
     public McpSchema.ClientCapabilities getClientCapabilities() {
-        return getMcpSyncClient().getClientCapabilities();
+        return getMcpAsyncClient().getClientCapabilities();
     }
 
     public McpSchema.Implementation getClientInfo() {
-        return getMcpSyncClient().getClientInfo();
+        return getMcpAsyncClient().getClientInfo();
     }
 
     public void close() {
-        Iterator<McpSyncClient> iterator = getMcpSyncClientList().iterator();
+        Iterator<McpAsyncClient> iterator = getMcpAsyncClientList().iterator();
         while (iterator.hasNext()) {
-            McpSyncClient mcpSyncClient = iterator.next();
-            mcpSyncClient.close();
+            McpAsyncClient mcpAsyncClient = iterator.next();
+            mcpAsyncClient.close();
             iterator.remove();
-            logger.info("[Nacos Mcp Sync Client] Closed and removed McpSyncClient: {}",
-                    mcpSyncClient.getClientInfo().name());
+            logger.info("[Nacos Mcp Async Client] Closed and removed McpAsyncClient: {}",
+                    mcpAsyncClient.getClientInfo().name());
         }
     }
 
-    public boolean closeGracefully() {
-        List<Boolean> flagList = new ArrayList<>();
-        Iterator<McpSyncClient> iterator = getMcpSyncClientList().iterator();
+    public Mono<Void> closeGracefully() {
+        Iterator<McpAsyncClient> iterator = getMcpAsyncClientList().iterator();
+        List<Mono<Void>> closeMonos = new ArrayList<>();
         while (iterator.hasNext()) {
-            McpSyncClient mcpSyncClient = iterator.next();
-            boolean flag = mcpSyncClient.closeGracefully();
-            flagList.add(flag);
-            if (flag) {
+            McpAsyncClient mcpAsyncClient = iterator.next();
+            Mono<Void> voidMono = mcpAsyncClient.closeGracefully().doOnSuccess(v -> {
                 iterator.remove();
-                logger.info("[Nacos Mcp Sync Client] Closed and removed McpSyncClient: {}",
-                        mcpSyncClient.getClientInfo().name());
-            }
+                logger.info("[Nacos Mcp Async Client] Closed and removed McpAsyncClient: {}",
+                        mcpAsyncClient.getClientInfo().name());
+            });
+            closeMonos.add(voidMono);
         }
-        return !flagList.stream().allMatch(flag -> flag);
+        return Mono.when(closeMonos);
     }
 
-    public void rootsListChangedNotification() {
-        getMcpSyncClient().rootsListChangedNotification();
+    public Mono<Object> ping() {
+        return getMcpAsyncClient().ping();
     }
 
-    public void addRoot(McpSchema.Root root)     {
-        for (McpSyncClient syncClient : getMcpSyncClientList()) {
-            syncClient.addRoot(root);
-        }
+    public Mono<Void> addRoot(McpSchema.Root root) {
+        return Mono.when(getMcpAsyncClientList().stream()
+                .map(mcpAsyncClient -> mcpAsyncClient.addRoot(root))
+                .collect(Collectors.toList()));
     }
 
-    public void removeRoot(String rootUri) {
-        for (McpSyncClient syncClient : getMcpSyncClientList()) {
-            syncClient.removeRoot(rootUri);
-        }
+    public Mono<Void> removeRoot(String rootUri) {
+        return Mono.when(getMcpAsyncClientList().stream()
+                .map(mcpAsyncClient -> mcpAsyncClient.removeRoot(rootUri))
+                .collect(Collectors.toList()));
     }
 
-    public Object ping() {
-        return getMcpSyncClient().ping();
+    public Mono<Void> rootsListChangedNotification() {
+        return Mono.when(getMcpAsyncClientList().stream()
+                .map(McpAsyncClient::rootsListChangedNotification)
+                .collect(Collectors.toList()));
     }
 
-    public McpSchema.CallToolResult callTool(McpSchema.CallToolRequest callToolRequest) {
-        return getMcpSyncClient().callTool(callToolRequest);
+    public Mono<McpSchema.CallToolResult> callTool(McpSchema.CallToolRequest callToolRequest) {
+        return getMcpAsyncClient().callTool(callToolRequest);
     }
 
-    public McpSchema.ListToolsResult listTools() {
-        return getMcpSyncClient().listTools();
+    public Mono<McpSchema.ListToolsResult> listTools() {
+        return listToolsInternal(null);
     }
 
-    public McpSchema.ListToolsResult listTools(String cursor) {
-        return getMcpSyncClient().listTools(cursor);
+    public Mono<McpSchema.ListToolsResult> listTools(String cursor) {
+        return listToolsInternal(cursor);
     }
 
-    public McpSchema.ListResourcesResult listResources(String cursor) {
-        return getMcpSyncClient().listResources(cursor);
+    private Mono<McpSchema.ListToolsResult> listToolsInternal(String cursor) {
+        return getMcpAsyncClient().listTools(cursor);
     }
 
-    public McpSchema.ListResourcesResult listResources() {
-        return getMcpSyncClient().listResources();
+    public Mono<McpSchema.ListResourcesResult> listResources() {
+        return getMcpAsyncClient().listResources();
     }
 
-    public McpSchema.ReadResourceResult readResource(McpSchema.Resource resource) {
-        return getMcpSyncClient().readResource(resource);
+    public Mono<McpSchema.ListResourcesResult> listResources(String cursor) {
+        return getMcpAsyncClient().listResources(cursor);
     }
 
-    public McpSchema.ReadResourceResult readResource(McpSchema.ReadResourceRequest readResourceRequest) {
-        return getMcpSyncClient().readResource(readResourceRequest);
+    public Mono<McpSchema.ReadResourceResult> readResource(McpSchema.Resource resource) {
+        return getMcpAsyncClient().readResource(resource);
     }
 
-    public McpSchema.ListResourceTemplatesResult listResourceTemplates(String cursor) {
-        return getMcpSyncClient().listResourceTemplates(cursor);
+    public Mono<McpSchema.ReadResourceResult> readResource(McpSchema.ReadResourceRequest readResourceRequest) {
+        return getMcpAsyncClient().readResource(readResourceRequest);
     }
 
-    public McpSchema.ListResourceTemplatesResult listResourceTemplates() {
-        return getMcpSyncClient().listResourceTemplates();
+    public Mono<McpSchema.ListResourceTemplatesResult> listResourceTemplates() {
+        return getMcpAsyncClient().listResourceTemplates();
+    }
+    public Mono<McpSchema.ListResourceTemplatesResult> listResourceTemplates(String cursor) {
+        return getMcpAsyncClient().listResourceTemplates(cursor);
     }
 
-    public void subscribeResource (McpSchema.SubscribeRequest subscribeRequest) {
-        for (McpSyncClient syncClient : getMcpSyncClientList()) {
-            syncClient.subscribeResource(subscribeRequest);
-        }
+    public Mono<Void> subscribeResource(McpSchema.SubscribeRequest subscribeRequest) {
+        return Mono.when(getMcpAsyncClientList().stream()
+                .map(mcpAsyncClient -> mcpAsyncClient.subscribeResource(subscribeRequest))
+                .collect(Collectors.toList()));
     }
 
-    public void unsubscribeResource(McpSchema.UnsubscribeRequest unsubscribeRequest) {
-        for (McpSyncClient syncClient : getMcpSyncClientList()) {
-            syncClient.unsubscribeResource(unsubscribeRequest);
-        }
+    public Mono<Void> unsubscribeResource(McpSchema.UnsubscribeRequest unsubscribeRequest) {
+        return Mono.when(getMcpAsyncClientList().stream()
+                .map(mcpAsyncClient -> mcpAsyncClient.unsubscribeResource(unsubscribeRequest))
+                .collect(Collectors.toList()));
     }
 
-    public McpSchema.ListPromptsResult listPrompts(String cursor) {
-        return getMcpSyncClient().listPrompts(cursor);
+    public Mono<McpSchema.ListPromptsResult> listPrompts() {
+        return getMcpAsyncClient().listPrompts();
     }
 
-    public McpSchema.ListPromptsResult listPrompts() {
-        return getMcpSyncClient().listPrompts();
+    public Mono<McpSchema.ListPromptsResult> listPrompts(String cursor) {
+        return getMcpAsyncClient().listPrompts(cursor);
     }
 
-    public McpSchema.GetPromptResult getPrompt(McpSchema.GetPromptRequest getPromptRequest) {
-        return getMcpSyncClient().getPrompt(getPromptRequest);
+    public Mono<McpSchema.GetPromptResult> getPrompt(McpSchema.GetPromptRequest getPromptRequest) {
+        return getMcpAsyncClient().getPrompt(getPromptRequest);
     }
 
-    public void setLoggingLevel(McpSchema.LoggingLevel loggingLevel) {
-        for (McpSyncClient syncClient : getMcpSyncClientList()) {
-            syncClient.setLoggingLevel(loggingLevel);
-        }
+    public Mono<Void> setLoggingLevel(McpSchema.LoggingLevel loggingLevel) {
+        return Mono.when(getMcpAsyncClientList().stream()
+                .map(mcpAsyncClient -> mcpAsyncClient.setLoggingLevel(loggingLevel))
+                .collect(Collectors.toList()));
     }
 
-    public McpSchema.CompleteResult completeCompletion(McpSchema.CompleteRequest completeRequest) {
-        return getMcpSyncClient().completeCompletion(completeRequest);
+    public Mono<McpSchema.CompleteResult> completeCompletion(McpSchema.CompleteRequest completeRequest) {
+        return getMcpAsyncClient().completeCompletion(completeRequest);
     }
 
     // ---------------------------原始调用方法------------------------------//
@@ -458,8 +465,8 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
             return this;
         }
 
-        public SseWebFluxDistributedSyncMcpClient build() {
-            return new SseWebFluxDistributedSyncMcpClient(this.serverName, this.version, this.nacosMcpOperationService,
+        public StreamWebFluxDistributedAsyncMcpClient build() {
+            return new StreamWebFluxDistributedAsyncMcpClient(this.serverName, this.version, this.nacosMcpOperationService,
                     this.applicationContext);
         }
 

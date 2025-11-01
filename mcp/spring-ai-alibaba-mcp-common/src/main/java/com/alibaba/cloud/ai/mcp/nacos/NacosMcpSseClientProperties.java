@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-package com.alibaba.cloud.ai.mcp.discovery.client.transport;
+package com.alibaba.cloud.ai.mcp.nacos;
 
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.spec.McpSchema;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author yingzi
- * @since 2025/10/25
+ * @since 2025/4/29:08:24
  */
+@ConfigurationProperties(NacosMcpSseClientProperties.CONFIG_PREFIX)
+public class NacosMcpSseClientProperties {
 
-public interface DistributedSyncMcpClient {
+	public static final String CONFIG_PREFIX = "spring.ai.alibaba.mcp.nacos.client.sse";
 
-    String getServerName();
+	private final Map<String, NacosSseParameters> connections = new HashMap<>();
 
-    McpSchema.CallToolResult callTool(McpSchema.CallToolRequest callToolRequest);
+	public Map<String, NacosSseParameters> getConnections() {
+		return connections;
+	}
 
-    McpSchema.ListToolsResult listTools();
+	public record NacosSseParameters(String serviceName, String version) {
+	}
 
-    McpSyncClient getMcpSyncClient();
-
-    Map<String, McpSyncClient> init();
-
-    void subscribe();
 }

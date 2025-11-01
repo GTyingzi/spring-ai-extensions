@@ -18,11 +18,11 @@ package com.alibaba.cloud.ai.autoconfigure.mcp.discovery.client;
 
 import com.alibaba.cloud.ai.mcp.discovery.client.transport.DistributedAsyncMcpClient;
 import com.alibaba.cloud.ai.mcp.discovery.client.transport.DistributedSyncMcpClient;
-import com.alibaba.cloud.ai.mcp.discovery.client.transport.sse.SseWebFluxDistributedAsyncMcpClient;
-import com.alibaba.cloud.ai.mcp.discovery.client.transport.sse.SseWebFluxDistributedSyncMcpClient;
+import com.alibaba.cloud.ai.mcp.discovery.client.transport.streamable.StreamWebFluxDistributedAsyncMcpClient;
+import com.alibaba.cloud.ai.mcp.discovery.client.transport.streamable.StreamWebFluxDistributedSyncMcpClient;
 import com.alibaba.cloud.ai.mcp.nacos.NacosMcpClientProperties;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
-import com.alibaba.cloud.ai.mcp.nacos.sse.NacosMcpSseClientProperties;
+import com.alibaba.cloud.ai.mcp.nacos.NacosMcpStreamableClientProperties;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -39,22 +39,22 @@ import java.util.Map;
  * @since 2025/10/28
  */
 @AutoConfiguration(after = { NacosMcpAutoConfiguration.class })
-@EnableConfigurationProperties({ NacosMcpSseClientProperties.class, NacosMcpClientProperties.class})
+@EnableConfigurationProperties({ NacosMcpStreamableClientProperties.class, NacosMcpClientProperties.class})
 @ConditionalOnProperty(prefix = "spring.ai.alibaba.mcp.nacos.client", name = { "enabled" }, havingValue = "true",
         matchIfMissing = false)
-public class NacosMcpClientMapAutoConfiguration {
+public class NacosMcpStreamableClientAutoConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = "spring.ai.mcp.client", name = { "type" }, havingValue = "SYNC",
             matchIfMissing = true)
-    public List<DistributedSyncMcpClient> sseWebFluxDistributedSyncClients(
+    public List<DistributedSyncMcpClient> streamableWebFluxDistributedSyncClients(
             ObjectProvider<Map<String, NacosMcpOperationService>> nacosMcpOperationServiceMapProvider,
-            NacosMcpSseClientProperties nacosMcpSseClientProperties, ApplicationContext applicationContext) {
+            NacosMcpStreamableClientProperties nacosMcpStreamableClientProperties, ApplicationContext applicationContext) {
         Map<String, NacosMcpOperationService> nacosMcpOperationServiceMap = nacosMcpOperationServiceMapProvider.getObject();
         List<DistributedSyncMcpClient> clients = new ArrayList<>();
 
-        nacosMcpSseClientProperties.getConnections().forEach((name, nacosSseParameters) -> {
-            SseWebFluxDistributedSyncMcpClient client = SseWebFluxDistributedSyncMcpClient.builder()
+        nacosMcpStreamableClientProperties.getConnections().forEach((name, nacosSseParameters) -> {
+            StreamWebFluxDistributedSyncMcpClient client = StreamWebFluxDistributedSyncMcpClient.builder()
                     .serverName(nacosSseParameters.serviceName())
                     .version(nacosSseParameters.version())
                     .nacosMcpOperationService(nacosMcpOperationServiceMap.get(name))
@@ -71,14 +71,14 @@ public class NacosMcpClientMapAutoConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "spring.ai.mcp.client", name = { "type" }, havingValue = "ASYNC",
             matchIfMissing = true)
-    public List<DistributedAsyncMcpClient> sseWebFluxDistributedAsyncClients(
+    public List<DistributedAsyncMcpClient> streamableWebFluxDistributedAsyncClients(
             ObjectProvider<Map<String, NacosMcpOperationService>> nacosMcpOperationServiceMapProvider,
-            NacosMcpSseClientProperties nacosMcpSseClientProperties, ApplicationContext applicationContext) {
+            NacosMcpStreamableClientProperties nacosMcpStreamableClientProperties, ApplicationContext applicationContext) {
         Map<String, NacosMcpOperationService> nacosMcpOperationServiceMap = nacosMcpOperationServiceMapProvider.getObject();
         List<DistributedAsyncMcpClient> clients = new ArrayList<>();
 
-        nacosMcpSseClientProperties.getConnections().forEach((name, nacosSseParameters) -> {
-            SseWebFluxDistributedAsyncMcpClient client = SseWebFluxDistributedAsyncMcpClient.builder()
+        nacosMcpStreamableClientProperties.getConnections().forEach((name, nacosSseParameters) -> {
+            StreamWebFluxDistributedAsyncMcpClient client = StreamWebFluxDistributedAsyncMcpClient.builder()
                     .serverName(nacosSseParameters.serviceName())
                     .version(nacosSseParameters.version())
                     .nacosMcpOperationService(nacosMcpOperationServiceMap.get(name))

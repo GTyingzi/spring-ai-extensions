@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.alibaba.cloud.ai.mcp.discovery.client.transport.sse;
+package com.alibaba.cloud.ai.mcp.discovery.client.transport.streamable;
 
-import com.alibaba.cloud.ai.mcp.common.transport.builder.WebFluxSseClientTransportBuilder;
+import com.alibaba.cloud.ai.mcp.common.transport.builder.WebFluxStreamableClientTransportBuilder;
 import com.alibaba.cloud.ai.mcp.discovery.client.transport.DistributedSyncMcpClient;
-import com.alibaba.cloud.ai.mcp.utils.CommonUtil;
-import com.alibaba.cloud.ai.mcp.utils.NacosMcpClientUtil;
 import com.alibaba.cloud.ai.mcp.nacos.service.NacosMcpOperationService;
 import com.alibaba.cloud.ai.mcp.nacos.service.model.NacosMcpServerEndpoint;
+import com.alibaba.cloud.ai.mcp.utils.CommonUtil;
+import com.alibaba.cloud.ai.mcp.utils.NacosMcpClientUtil;
 import com.alibaba.nacos.api.ai.constant.AiConstants;
 import com.alibaba.nacos.api.ai.model.mcp.McpEndpointInfo;
 import com.alibaba.nacos.api.exception.NacosException;
@@ -29,7 +29,7 @@ import com.alibaba.nacos.api.utils.StringUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.WebFluxSseClientTransport;
+import io.modelcontextprotocol.client.transport.WebClientStreamableHttpTransport;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -52,11 +52,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author yingzi
- * @since 2025/10/25
+ * @since 2025/11/1
  */
-public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpClient {
 
-    private static final Logger logger = LoggerFactory.getLogger(SseWebFluxDistributedSyncMcpClient.class);
+public class StreamWebFluxDistributedSyncMcpClient implements DistributedSyncMcpClient {
+
+    private static final Logger logger = LoggerFactory.getLogger(StreamWebFluxDistributedSyncMcpClient.class);
 
     private final String serverName;
 
@@ -81,7 +82,7 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
     // Link Tracking Filters
     private final ExchangeFilterFunction traceFilter;
 
-    public SseWebFluxDistributedSyncMcpClient(String serverName, String version,
+    public StreamWebFluxDistributedSyncMcpClient(String serverName, String version,
                                               NacosMcpOperationService nacosMcpOperationService, ApplicationContext applicationContext) {
         Assert.notNull(serverName, "serviceName cannot be null");
         Assert.notNull(version, "version cannot be null");
@@ -99,9 +100,9 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
                         String.format("[Nacos Mcp Sync Client] Can not find mcp server from nacos: %s, version:%s",
                                 serverName, version));
             }
-            if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_SSE)) {
+            if (!StringUtils.equals(serverEndpoint.getProtocol(), AiConstants.Mcp.MCP_PROTOCOL_STREAMABLE)) {
                 throw new RuntimeException(
-                        String.format("[Nacos Mcp Sync Client] Protocol of mcp server:%s, version :%s must be sse",
+                        String.format("[Nacos Mcp Sync Client] Protocol of mcp server:%s, version :%s must be streamable",
                                 serverName, version));
             }
         } catch (NacosException e) {
@@ -134,8 +135,7 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
         }
         logger.info("[Nacos Mcp Sync Client] McpSyncClient init, serverName: {}, version: {}, endpoint: {}", serverName,
                 version, serverEndpoint);
-        return keyToClientMap;
-    }
+        return keyToClientMap;    }
 
     public void subscribe() {
         String serverNameAndVersion = this.serverName + "::" + this.version;
@@ -188,11 +188,11 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
         String baseUrl = protocol + "://" + mcpEndpointInfo.getAddress() + ":" + mcpEndpointInfo.getPort();
         WebClient.Builder webClientBuilder = webClientBuilderTemplate.clone().baseUrl(baseUrl);
 
-        WebFluxSseClientTransport transport;
+        WebClientStreamableHttpTransport transport;
         if (traceFilter != null) {
-            transport = WebFluxSseClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath);
+            transport = WebFluxStreamableClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath);
         } else {
-            transport = WebFluxSseClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath, traceFilter);
+            transport = WebFluxStreamableClientTransportBuilder.build(webClientBuilder, mcpJsonMapper, exportPath, traceFilter);
         }
 
         NamedClientMcpTransport namedClientMcpTransport = new NamedClientMcpTransport(
@@ -458,8 +458,8 @@ public class SseWebFluxDistributedSyncMcpClient implements DistributedSyncMcpCli
             return this;
         }
 
-        public SseWebFluxDistributedSyncMcpClient build() {
-            return new SseWebFluxDistributedSyncMcpClient(this.serverName, this.version, this.nacosMcpOperationService,
+        public StreamWebFluxDistributedSyncMcpClient build() {
+            return new StreamWebFluxDistributedSyncMcpClient(this.serverName, this.version, this.nacosMcpOperationService,
                     this.applicationContext);
         }
 
