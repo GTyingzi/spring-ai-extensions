@@ -16,7 +16,6 @@
 
 package com.alibaba.cloud.ai.autoconfigure.mcp.gateway.core;
 
-import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayProperties;
 import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayToolCallbackProvider;
 import com.alibaba.cloud.ai.mcp.gateway.core.McpGatewayToolsInitializer;
 import com.alibaba.cloud.ai.mcp.gateway.core.utils.SpringBeanUtils;

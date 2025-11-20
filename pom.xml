@@ -178,6 +178,7 @@
         <module>spring-ai-alibaba-extensions-bom</module>
         <module>mcp/spring-ai-alibaba-mcp-gateway</module>
         <module>auto-configurations/spring-ai-alibaba-autoconfigure-mcp-gateway</module>
+        <module>spring-boot-starters/spring-ai-alibaba-starter-mcp-gateway</module>
     </modules>
 
     <scm>
