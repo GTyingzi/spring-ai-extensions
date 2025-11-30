@@ -13,36 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.alibaba.cloud.ai.autoconfigure.memory;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * auth: dahua
+ * Configuration properties for PostgreSQL chat memory repository.
  */
-@ConfigurationProperties(prefix = MemcachedChatMemoryProperties.CONFIG_PREFIX)
-public class MemcachedChatMemoryProperties {
+@ConfigurationProperties(PostgresqlChatMemoryProperties.CONFIG_PREFIX)
+public class PostgresqlChatMemoryProperties {
 
-	public static final String CONFIG_PREFIX = "spring.ai.memory.memcached";
+	public static final String CONFIG_PREFIX = "spring.ai.memory.postgresql";
 
-	private String host = "127.0.0.1";
+	private boolean initializeSchema = true;
 
-	private int port = 11211;
-
-	public String getHost() {
-		return host;
+	public boolean isInitializeSchema() {
+		return this.initializeSchema;
 	}
 
-	public void setHost(String host) {
-		this.host = host;
-	}
-
-	public int getPort() {
-		return port;
-	}
-
-	public void setPort(int port) {
-		this.port = port;
+	public void setInitializeSchema(boolean initializeSchema) {
+		this.initializeSchema = initializeSchema;
 	}
 
 }
