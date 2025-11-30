@@ -38,8 +38,10 @@ public class ChatMemoryAutoConfiguration {
 
 	private static final Logger logger = LoggerFactory.getLogger(ChatMemoryAutoConfiguration.class);
 
-	@Bean(name = "inMemoryChatMemoryRepository")
-	@ConditionalOnMissingBean
+	public static final String IN_CHAT_MEMORY_REPOSITORY_BEAN_NAME = "inChatMemoryRepository";
+
+	@Bean(value = IN_CHAT_MEMORY_REPOSITORY_BEAN_NAME)
+	@ConditionalOnMissingBean(name = IN_CHAT_MEMORY_REPOSITORY_BEAN_NAME)
 	ChatMemoryRepository chatMemoryRepository() {
 		logger.info("Using InMemoryChatMemoryRepository");
 		return new InMemoryChatMemoryRepository();
