@@ -16,10 +16,8 @@
 package com.alibaba.cloud.ai.mcp.nacos;
 
 import com.alibaba.nacos.api.PropertyKeyConst;
-import com.alibaba.nacos.api.utils.NetUtils;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,7 +118,7 @@ public class NacosMcpProperties {
 	public void setIp(String ip) {
 		this.ip = ip;
 	}
-
+	
 	public String getEndpoint() {
 		return endpoint;
 	}
@@ -135,13 +133,6 @@ public class NacosMcpProperties {
 
 	void setServerAddr(String serverAddr) {
 		this.serverAddr = serverAddr;
-	}
-
-	@PostConstruct
-	public void init() throws Exception {
-		if (StringUtils.isEmpty(this.ip)) {
-			this.ip = NetUtils.localIp();
-		}
 	}
 
 	public Properties getNacosProperties() {
