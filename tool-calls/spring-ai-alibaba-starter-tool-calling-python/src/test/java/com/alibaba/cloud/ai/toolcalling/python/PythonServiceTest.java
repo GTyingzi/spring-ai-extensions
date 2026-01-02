@@ -15,8 +15,8 @@
  */
 package com.alibaba.cloud.ai.toolcalling.python;
 
-import com.alibaba.cloud.ai.toolcalling.python.PythonService.PythonRequest;
-import com.alibaba.cloud.ai.toolcalling.python.PythonService.PythonResponse;
+import com.alibaba.cloud.ai.toolcalling.python.PythonService.Request;
+import com.alibaba.cloud.ai.toolcalling.python.PythonService.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,8 +38,8 @@ public class PythonServiceTest {
     @Test
     @DisplayName("Test simple arithmetic calculation")
     public void testSimpleArithmetic() {
-        PythonRequest request = new PythonRequest("2 + 3");
-        PythonResponse response = pythonService.apply(request, null);
+        Request request = new Request("2 + 3");
+        Response response = pythonService.apply(request, null);
 
         assertNotNull(response);
         assertNotNull(response.result());
@@ -50,8 +50,8 @@ public class PythonServiceTest {
     @Test
     @DisplayName("Test string operations")
     public void testStringOperations() {
-        PythonRequest request = new PythonRequest("'Hello, ' + 'World'");
-        PythonResponse response = pythonService.apply(request, null);
+        Request request = new Request("'Hello, ' + 'World'");
+        Response response = pythonService.apply(request, null);
 
         assertNotNull(response);
         assertNotNull(response.result());
@@ -63,8 +63,8 @@ public class PythonServiceTest {
     @Test
     @DisplayName("Test list operations")
     public void testListOperations() {
-        PythonRequest request = new PythonRequest("[1, 2, 3, 4, 5]");
-        PythonResponse response = pythonService.apply(request, null);
+        Request request = new Request("[1, 2, 3, 4, 5]");
+        Response response = pythonService.apply(request, null);
 
         assertNotNull(response);
         assertNotNull(response.result());
@@ -74,8 +74,8 @@ public class PythonServiceTest {
     @Test
     @DisplayName("Test boolean expressions")
     public void testBooleanExpressions() {
-        PythonRequest request = new PythonRequest("5 > 3");
-        PythonResponse response = pythonService.apply(request, null);
+        Request request = new Request("5 > 3");
+        Response response = pythonService.apply(request, null);
 
         assertNotNull(response);
         assertNotNull(response.result());
@@ -87,8 +87,8 @@ public class PythonServiceTest {
     @Test
     @DisplayName("Test empty code error handling")
     public void testEmptyCode() {
-        PythonRequest request = new PythonRequest("");
-        PythonResponse response = pythonService.apply(request, null);
+        Request request = new Request("");
+        Response response = pythonService.apply(request, null);
 
         assertNotNull(response);
         assertNotNull(response.result());
@@ -99,8 +99,8 @@ public class PythonServiceTest {
     @Test
     @DisplayName("Test null code error handling")
     public void testNullCode() {
-        PythonRequest request = new PythonRequest(null);
-        PythonResponse response = pythonService.apply(request, null);
+        Request request = new Request(null);
+        Response response = pythonService.apply(request, null);
 
         assertNotNull(response);
         assertNotNull(response.result());
@@ -111,8 +111,8 @@ public class PythonServiceTest {
     @Test
     @DisplayName("Test invalid Python syntax error handling")
     public void testInvalidSyntax() {
-        PythonRequest request = new PythonRequest("def invalid syntax");
-        PythonResponse response = pythonService.apply(request, null);
+        Request request = new Request("def invalid syntax");
+        Response response = pythonService.apply(request, null);
 
         assertNotNull(response);
         assertNotNull(response.result());
@@ -123,8 +123,8 @@ public class PythonServiceTest {
     @Test
     @DisplayName("Test complex calculation")
     public void testComplexCalculation() {
-        PythonRequest request = new PythonRequest("(10 + 20) * 3 - 5");
-        PythonResponse response = pythonService.apply(request, null);
+        Request request = new Request("(10 + 20) * 3 - 5");
+        Response response = pythonService.apply(request, null);
 
         assertNotNull(response);
         assertNotNull(response.result());
@@ -136,8 +136,8 @@ public class PythonServiceTest {
     @DisplayName("Test with default constructor")
     public void testDefaultConstructor() {
         PythonService defaultService = new PythonService();
-        PythonRequest request = new PythonRequest("1 + 1");
-        PythonResponse response = defaultService.apply(request, null);
+        Request request = new Request("1 + 1");
+        Response response = defaultService.apply(request, null);
 
         assertNotNull(response);
         assertNotNull(response.result());
@@ -154,8 +154,8 @@ public class PythonServiceTest {
         customProps.getContext().setAllowHostAccess(true);
 
         PythonService customService = new PythonService(customProps);
-        PythonRequest request = new PythonRequest("3 * 7");
-        PythonResponse response = customService.apply(request, null);
+        Request request = new Request("3 * 7");
+        Response response = customService.apply(request, null);
 
         assertNotNull(response);
         assertNotNull(response.result());

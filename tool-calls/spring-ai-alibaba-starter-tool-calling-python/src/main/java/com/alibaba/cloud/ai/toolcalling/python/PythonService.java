@@ -37,7 +37,7 @@ import java.util.function.BiFunction;
  * This tool allows the agent to execute Python code snippets and get results.
  * It uses GraalVM's polyglot API to run Python code in a sandboxed environment.
  */
-public class PythonService implements BiFunction<PythonService.PythonRequest, ToolContext, PythonService.PythonResponse> {
+public class PythonService implements BiFunction<PythonService.Request, ToolContext, PythonService.Response> {
 
     private static final Logger log = LoggerFactory.getLogger(PythonService.class);
 
@@ -71,22 +71,22 @@ public class PythonService implements BiFunction<PythonService.PythonRequest, To
     }
 
     @Override
-    public PythonResponse apply(PythonRequest request, ToolContext toolContext) {
+    public Response apply(Request request, ToolContext toolContext) {
         if (request.code == null || request.code.trim().isEmpty()) {
-            return new PythonResponse("Error: Python code cannot be empty");
+            return new Response("Error: Python code cannot be empty");
         }
         try {
             log.debug("Executing Python code: {}", request.code);
             Value result = context.eval("python", request.code);
             String resultStr = convertResultToString(result);
 
-            return new PythonResponse(resultStr);
+            return new Response(resultStr);
         } catch (PolyglotException e) {
             log.error("Error executing Python code", e);
-            return new PythonResponse("Error executing Python code: " + e.getMessage());
+            return new Response("Error executing Python code: " + e.getMessage());
         } catch (Exception e) {
             log.error("Unexpected error executing Python code", e);
-            return new PythonResponse("Unexpected error: " + e.getMessage());
+            return new Response("Unexpected error: " + e.getMessage());
         }
     }
 
@@ -136,7 +136,7 @@ public class PythonService implements BiFunction<PythonService.PythonRequest, To
     public static ToolCallback createPythonToolCallback(String description) {
         return FunctionToolCallback.builder("python", new PythonService())
                 .description(description)
-                .inputType(PythonRequest.class)
+                .inputType(Request.class)
                 .build();
     }
 
@@ -145,14 +145,14 @@ public class PythonService implements BiFunction<PythonService.PythonRequest, To
      */
     @JsonClassDescription("Python Reuqest")
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record PythonRequest(
+    public record Request(
             @JsonProperty(required = true, value = "code")
             @JsonPropertyDescription("Code that can be executed by Python\n") String code) {
 
     }
 
     @JsonClassDescription("Python Result")
-    public record PythonResponse(String result) {
+    public record Response(String result) {
 
     }
 }
