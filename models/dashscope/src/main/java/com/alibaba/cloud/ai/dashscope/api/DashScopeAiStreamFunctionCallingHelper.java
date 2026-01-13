@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,8 +97,10 @@ public class DashScopeAiStreamFunctionCallingHelper {
 		ChatCompletionMessage message = merge(previous.message(), current.message());
 		DashScopeApiSpec.ChatCompletionLogprobs logprobs = (current.logprobs() != null ? current.logprobs()
 				: previous.logprobs());
+		Integer index= (current.index() != null ? current.index()
+				: previous.index());
 
-		return new Choice(finishReason, message, logprobs);
+		return new Choice(finishReason, message, logprobs, index);
 	}
 
 	private ChatCompletionMessage merge(ChatCompletionMessage previous, ChatCompletionMessage current) {
