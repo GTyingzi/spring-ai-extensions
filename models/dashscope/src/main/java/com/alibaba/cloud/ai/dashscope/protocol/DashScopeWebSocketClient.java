@@ -19,7 +19,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.alibaba.cloud.ai.dashscope.api.ApiUtils;
@@ -68,11 +71,12 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	FluxSink<String> textEmitter;
 
-    private final java.util.concurrent.CompletableFuture<Void> connectionReadyFuture = new java.util.concurrent.CompletableFuture<>();
+    private final CompletableFuture<Void> connectionReadyFuture;
 
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
 		this.options = options;
 		this.isOpen = new AtomicBoolean(false);
+        this.connectionReadyFuture = new CompletableFuture<>();
 		this.objectMapper = JsonMapper.builder()
 			// Deserialization configuration
 			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
@@ -270,14 +274,13 @@ public class DashScopeWebSocketClient extends WebSocketListener {
      * and block until the connection is ready or timeout occurs.
      *
      * @param timeout the maximum time to wait for connection
-     * @param unit the time unit of the timeout argument
-     * @throws java.util.concurrent.TimeoutException if connection is not ready within timeout
-     * @throws InterruptedException if the current thread is interrupted while waiting
+     * @param unit    the time unit of the timeout argument
+     *
+     * @throws java.util.concurrent.TimeoutException   if connection is not ready within timeout
+     * @throws InterruptedException                    if the current thread is interrupted while waiting
      * @throws java.util.concurrent.ExecutionException if connection fails
      */
-    public void ensureConnectionReady(
-            long timeout,
-            TimeUnit unit) throws java.util.concurrent.TimeoutException, InterruptedException, java.util.concurrent.ExecutionException {
+    public void ensureConnectionReady(long timeout, TimeUnit unit) throws TimeoutException, InterruptedException, ExecutionException {
         if (!isOpen.get()) {
             establishWebSocketClient();
         }
