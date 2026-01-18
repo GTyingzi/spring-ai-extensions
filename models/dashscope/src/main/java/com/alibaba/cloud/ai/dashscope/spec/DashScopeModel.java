@@ -17,7 +17,6 @@
 package com.alibaba.cloud.ai.dashscope.spec;
 
 import org.springframework.ai.model.ChatModelDescription;
-import org.springframework.ai.model.ModelDescription;
 
 /**
  * @author yuluo
@@ -446,59 +445,6 @@ public class DashScopeModel {
 
         public String getValue() {
             return value;
-        }
-
-    }
-
-    /**
-     * <a href="https://help.aliyun.com/zh/model-studio/text-to-video-api-reference">Video Models</a>
-     */
-    public enum VideoModel implements ModelDescription {
-
-        /**
-         * Text to Video, faster generation speed and balanced performance.
-         */
-        WANX2_1_T2V_TURBO("wanx2.1-t2v-turbo"),
-
-        WANX2_5_T2V_PREVIEW("wan2.5-t2v-preview"),
-
-        /**
-         * Text to Video, The generated details are richer and the picture is more
-         * textured.
-         */
-        WANX2_1_T2V_PLUS("wanx2.1-t2v-plus"),
-
-        /**
-         * Picture-generated video, based on the first frame. The generation speed is
-         * faster, taking only one-third of the plus model, and it has a higher
-         * cost-effectiveness.
-         */
-        WANX2_1_I2V_TURBO("wanx2.1-i2v-turbo"),
-
-        /**
-         * Picture-generated video, The generated details are richer and the picture is
-         * more textured.
-         */
-        WANX2_1_I2V_PLUS("wanx2.1-i2v-plus"),
-
-        /**
-         * Generate video based on the beginning and end frames
-         */
-        WANX2_1_KF2V_PLUS("wanx2.1-kf2v-plus");
-
-        public final String value;
-
-        VideoModel(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return this.value;
-        }
-
-        @Override
-        public String getName() {
-            return this.value;
         }
 
     }

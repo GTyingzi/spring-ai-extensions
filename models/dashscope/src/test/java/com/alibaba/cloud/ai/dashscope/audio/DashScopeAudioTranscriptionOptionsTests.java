@@ -15,14 +15,14 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio;
 
-import java.util.List;
-
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Test cases for DashScopeAudioTranscriptionOptions. Tests cover builder pattern,
@@ -255,18 +255,18 @@ class DashScopeAudioTranscriptionOptionsTests {
     void testDeprecatedBuilderMethods() {
         // Test deprecated builder methods still work
         DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
-                .withModel(TEST_MODEL)
-                .withVocabularyId(TEST_VOCABULARY_ID)
-                .withResourceId(TEST_RESOURCE_ID)
-                .withSampleRate(TEST_SAMPLE_RATE)
-                .withFormat(TEST_FORMAT)
-                .withChannelId(TEST_CHANNEL_ID)
-                .withDisfluencyRemovalEnabled(TEST_DISFLUENCY_REMOVAL)
-                .withTimestampAlignmentEnabled(TEST_TIMESTAMP_ALIGNMENT)
-                .withSpecialWordFilter(TEST_SPECIAL_WORD_FILTER)
-                .withLanguageHints(TEST_LANGUAGE_HINTS)
-                .withDiarizationEnabled(TEST_DIARIZATION_ENABLED)
-                .withSpeakerCount(TEST_SPEAKER_COUNT)
+                .model(TEST_MODEL)
+                .vocabularyId(TEST_VOCABULARY_ID)
+                .resourceId(TEST_RESOURCE_ID)
+                .sampleRate(TEST_SAMPLE_RATE)
+                .format(TEST_FORMAT)
+                .channelId(TEST_CHANNEL_ID)
+                .diarizationEnabled(TEST_DISFLUENCY_REMOVAL)
+                .timestampAlignmentEnabled(TEST_TIMESTAMP_ALIGNMENT)
+                .specialWordFilter(TEST_SPECIAL_WORD_FILTER)
+                .languageHints(TEST_LANGUAGE_HINTS)
+                .diarizationEnabled(TEST_DIARIZATION_ENABLED)
+                .speakerCount(TEST_SPEAKER_COUNT)
                 .build();
 
         // Verify fields are set correctly via deprecated methods

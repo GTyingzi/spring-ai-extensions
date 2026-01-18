@@ -15,10 +15,8 @@
  */
 package com.alibaba.cloud.ai.dashscope.image;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse;
@@ -26,8 +24,6 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncR
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseResult;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.DashScopeImageAsyncResponse.DashScopeImageAsyncResponseUsage;
 import io.micrometer.observation.ObservationRegistry;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -35,6 +31,11 @@ import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.support.RetryTemplate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 /**
  * Test cases for DashScopeImageModel. Tests cover basic image generation, custom options,
@@ -186,5 +187,26 @@ class DashScopeImageModelTests {
 				new DashScopeImageAsyncResponseUsage(1));
 		when(dashScopeImageApi.getImageGenTaskResult(TEST_TASK_ID)).thenReturn(ResponseEntity.ok(pendingResponse));
 	}
+
+    @Test
+    void testImageEditWithWanx21() {
+        // Test image editing capability using WANX_2_1_IMAGEEDIT model
+        mockSuccessfulImageGeneration();
+
+        // Prepare image edit options with base image URL and edit prompt
+        DashScopeImageOptions imageEditOptions = DashScopeImageOptions.builder()
+                .model("wanx2.1-imageedit")
+                .baseImageUrl("https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg")
+                .n(1)
+                .build();
+
+        // Create prompt with edit instruction
+        ImagePrompt prompt = new ImagePrompt("小狗变小猫", imageEditOptions);
+        ImageResponse response = imageModel.call(prompt);
+
+        // Verify response
+        assertThat(response.getResults()).hasSize(1);
+        assertThat(response.getResult().getOutput().getUrl()).isEqualTo(TEST_IMAGE_URL);
+    }
 
 }
