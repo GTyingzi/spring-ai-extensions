@@ -15,14 +15,6 @@
  */
 package com.alibaba.cloud.ai.dashscope.video;
 
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.List;
-
 import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeVideoModel;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest.VideoInput;
@@ -34,7 +26,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.retry.support.RetryTemplate;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for DashScope Video Model functionality. These tests will only run
@@ -79,7 +79,7 @@ class DashScopeVideoModelIT {
         // Create retry template (shared by all tests)
         // Video generation may take longer, so increase retry attempts
         retryTemplate = RetryTemplate.builder().maxAttempts(30) // Increase max attempts for video generation
-                .fixedBackoff(2000) // 2 seconds between retries
+                .fixedBackoff(5000) // 2 seconds between retries
                 .build();
     }
 
@@ -241,9 +241,9 @@ class DashScopeVideoModelIT {
         assertThat(response).isNotNull();
         assertThat(response.getResult()).isNotNull();
         assertThat(response.getResult().getOutput().taskStatus()).isEqualTo("SUCCEEDED");
-        assertThat(response.getResult().getOutput().videoUrl()).isNotEmpty();
+        assertThat(response.getResult().getOutput().results().videoUrl()).isNotEmpty();
 
-        String generatedVideoUrl = response.getResult().getOutput().videoUrl();
+        String generatedVideoUrl = response.getResult().getOutput().results().videoUrl();
         System.out.println("✓ Video character replacement completed successfully!");
         System.out.println("Video URL: " + generatedVideoUrl);
 
