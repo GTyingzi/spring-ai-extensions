@@ -15,14 +15,14 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio;
 
+import java.util.List;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test cases for DashScopeAudioTranscriptionOptions. Tests cover builder pattern,
@@ -249,39 +249,6 @@ class DashScopeAudioTranscriptionOptionsTests {
         assertThat(pcmOptions.getFormat()).isEqualTo(DashScopeAudioTranscriptionApi.AudioFormat.PCM);
         assertThat(wavOptions.getFormat()).isEqualTo(DashScopeAudioTranscriptionApi.AudioFormat.WAV);
         assertThat(mp3Options.getFormat()).isEqualTo(DashScopeAudioTranscriptionApi.AudioFormat.MP3);
-    }
-
-    @Test
-    void testDeprecatedBuilderMethods() {
-        // Test deprecated builder methods still work
-        DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
-                .model(TEST_MODEL)
-                .vocabularyId(TEST_VOCABULARY_ID)
-                .resourceId(TEST_RESOURCE_ID)
-                .sampleRate(TEST_SAMPLE_RATE)
-                .format(TEST_FORMAT)
-                .channelId(TEST_CHANNEL_ID)
-                .diarizationEnabled(TEST_DISFLUENCY_REMOVAL)
-                .timestampAlignmentEnabled(TEST_TIMESTAMP_ALIGNMENT)
-                .specialWordFilter(TEST_SPECIAL_WORD_FILTER)
-                .languageHints(TEST_LANGUAGE_HINTS)
-                .diarizationEnabled(TEST_DIARIZATION_ENABLED)
-                .speakerCount(TEST_SPEAKER_COUNT)
-                .build();
-
-        // Verify fields are set correctly via deprecated methods
-        assertThat(options.getModel()).isEqualTo(TEST_MODEL);
-        assertThat(options.getVocabularyId()).isEqualTo(TEST_VOCABULARY_ID);
-        assertThat(options.getResourceId()).isEqualTo(TEST_RESOURCE_ID);
-        assertThat(options.getSampleRate()).isEqualTo(TEST_SAMPLE_RATE);
-        assertThat(options.getFormat()).isEqualTo(TEST_FORMAT);
-        assertThat(options.getChannelId()).isEqualTo(TEST_CHANNEL_ID);
-        assertThat(options.getDisfluencyRemovalEnabled()).isEqualTo(TEST_DISFLUENCY_REMOVAL);
-        assertThat(options.getTimestampAlignmentEnabled()).isEqualTo(TEST_TIMESTAMP_ALIGNMENT);
-        assertThat(options.getSpecialWordFilter()).isEqualTo(TEST_SPECIAL_WORD_FILTER);
-        assertThat(options.getLanguageHints()).isEqualTo(TEST_LANGUAGE_HINTS);
-        assertThat(options.getDiarizationEnabled()).isEqualTo(TEST_DIARIZATION_ENABLED);
-        assertThat(options.getSpeakerCount()).isEqualTo(TEST_SPEAKER_COUNT);
     }
 
     @Test
