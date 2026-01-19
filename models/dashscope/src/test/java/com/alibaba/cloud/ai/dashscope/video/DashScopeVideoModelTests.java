@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.video;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest;
@@ -115,29 +116,38 @@ class DashScopeVideoModelTests {
     }
 
     @Test
-    void testNullResponse() {
-        // Test handling of null API response
+    void testNullResponseThrowsException() {
+        // Test handling of null API response - should throw exception
         when(dashScopeVideoApi.submitVideoGenTask(any(DashScopeVideoRequest.class))).thenReturn(null);
 
         VideoPrompt prompt = VideoPrompt.builder().content(TEST_PROMPT).build();
-        VideoResponse response = videoModel.call(prompt);
 
-        assertThat(response).isNotNull();
-        assertThat(response.getResult()).isNull();
+        assertThatThrownBy(() -> videoModel.call(prompt)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Failed to submit video generation task: null response");
     }
 
     @Test
-    void testNullTaskIdResponse() {
-        // Test handling of null task ID in submit response
+    void testNullBodyInResponseThrowsException() {
+        // Test handling of null body in response - should throw exception
+        when(dashScopeVideoApi.submitVideoGenTask(any(DashScopeVideoRequest.class))).thenReturn(ResponseEntity.ok(null));
+
+        VideoPrompt prompt = VideoPrompt.builder().content(TEST_PROMPT).build();
+
+        assertThatThrownBy(() -> videoModel.call(prompt)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Failed to submit video generation task: null response");
+    }
+
+    @Test
+    void testNullTaskIdResponseThrowsException() {
+        // Test handling of null task ID in submit response - should throw exception
         VideoOutput submitOutput = new VideoOutput(null, "PENDING", null, null, null, null, null, null, null, null, null, false, false, false, null, null);
         DashScopeVideoResponse submitResponse = new DashScopeVideoResponse(TEST_REQUEST_ID, submitOutput, null);
         when(dashScopeVideoApi.submitVideoGenTask(any(DashScopeVideoRequest.class))).thenReturn(ResponseEntity.ok(submitResponse));
 
         VideoPrompt prompt = VideoPrompt.builder().content(TEST_PROMPT).build();
-        VideoResponse response = videoModel.call(prompt);
 
-        assertThat(response).isNotNull();
-        assertThat(response.getResult()).isNull();
+        assertThatThrownBy(() -> videoModel.call(prompt)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Failed to submit video generation task: invalid output");
     }
 
     @Test
@@ -189,6 +199,17 @@ class DashScopeVideoModelTests {
     }
 
     @Test
+    void testVideoGenerationFailureThrowsException() {
+        // Test handling of failed video generation task - should throw exception
+        mockFailedVideoGeneration();
+
+        VideoPrompt prompt = VideoPrompt.builder().content(TEST_PROMPT).build();
+
+        assertThatThrownBy(() -> videoModel.call(prompt)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Video generation task failed");
+    }
+
+    @Test
     void testVideoOptionsWithAllParameters() {
         // Test video generation with comprehensive parameter configuration
         mockSuccessfulVideoGeneration();
@@ -237,6 +258,38 @@ class DashScopeVideoModelTests {
 
         assertThat(response).isNotNull();
         assertThat(response.getResult()).isNotNull();
+    }
+
+    @Test
+    void testImageDetectionModel() {
+        // Test image detection model which returns directly without polling
+        // Image detection models return results synchronously (no task polling)
+
+        DashScopeVideoOptions.VideoInputBuilder inputBuilder = new DashScopeVideoOptions.VideoInputBuilder();
+        DashScopeVideoOptions.VideoParametersBuilder parametersBuilder = new DashScopeVideoOptions.VideoParametersBuilder();
+
+        DashScopeVideoOptions detectionOptions = DashScopeVideoOptions.builder()
+                .model("emoji-detect-v1") // Detect model
+                .input(inputBuilder.imageUrl("https://example.com/test.jpg").build())
+                .parameters(parametersBuilder.ratio("1:1").build())
+                .build();
+
+        // Mock detection response - no task polling needed
+        VideoOutput detectionOutput = new VideoOutput(null, null, null, null, null, null, null, null, null, null, null, false, false, false, List.of(212, 194, 460, 441), List.of(63, 30, 609, 575));
+        VideoUsage detectionUsage = new VideoUsage(0, 0, 0, 0, 0, null, null, null, 1);
+        DashScopeVideoResponse detectionResponse = new DashScopeVideoResponse(TEST_REQUEST_ID, detectionOutput, detectionUsage);
+
+        when(dashScopeVideoApi.submitVideoGenTask(any(DashScopeVideoRequest.class))).thenReturn(ResponseEntity.ok(detectionResponse));
+
+        VideoPrompt prompt = VideoPrompt.builder().options(detectionOptions).build();
+        VideoResponse response = videoModel.call(prompt);
+
+        // Verify detection results
+        assertThat(response).isNotNull();
+        assertThat(response.getResult()).isNotNull();
+        assertThat(response.getResult().getOutput().bboxFace()).isNotNull();
+        assertThat(response.getResult().getOutput().extBboxFace()).isNotNull();
+        assertThat(response.getResult().usage().imageCount()).isEqualTo(1);
     }
 
     private void mockSuccessfulVideoGeneration() {
