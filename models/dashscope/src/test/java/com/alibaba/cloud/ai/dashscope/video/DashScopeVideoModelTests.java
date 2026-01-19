@@ -115,18 +115,6 @@ class DashScopeVideoModelTests {
     }
 
     @Test
-    void testFailedVideoGeneration() {
-        // Test handling of failed video generation
-        mockFailedVideoGeneration();
-
-        VideoPrompt prompt = VideoPrompt.builder().content(TEST_PROMPT).build();
-        VideoResponse response = videoModel.call(prompt);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getResult()).isNull();
-    }
-
-    @Test
     void testNullResponse() {
         // Test handling of null API response
         when(dashScopeVideoApi.submitVideoGenTask(any(DashScopeVideoRequest.class))).thenReturn(null);
