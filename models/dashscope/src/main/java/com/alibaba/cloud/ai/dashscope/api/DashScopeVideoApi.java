@@ -92,15 +92,18 @@ public class DashScopeVideoApi {
 	 * Submit video generation task.
 	 */
     public ResponseEntity<DashScopeVideoResponse> submitVideoGenTask(DashScopeVideoRequest request) {
-		logger.debug("Submitting video generation task with options: {}", request);
+        logger.debug("Submitting video generation task with options: {}", request);
         String uri = DashScopeVidoeApiConstants.getPathByModelName(request.getModel());
+        boolean detect = DashScopeVidoeApiConstants.isDetect(request.getModel());
 
-        return this.restClient.post()
-			.uri(uri)
-			.body(request)
-			.header(HEADER_ASYNC, ENABLED)
-			.retrieve().toEntity(DashScopeVideoResponse.class);
-	}
+        var requestSpec = this.restClient.post().uri(uri).body(request);
+
+        if (!detect) {
+            requestSpec.header(HEADER_ASYNC, ENABLED);
+        }
+        return requestSpec.retrieve().toEntity(DashScopeVideoResponse.class);
+    }
+
 
 	/**
 	 * Query video generation task status.

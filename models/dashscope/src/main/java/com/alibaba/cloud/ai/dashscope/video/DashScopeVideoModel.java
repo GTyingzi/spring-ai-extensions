@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.dashscope.video;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeVidoeApiConstants;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse;
 import org.slf4j.Logger;
@@ -75,13 +76,29 @@ public class DashScopeVideoModel implements VideoModel {
         Assert.notNull(prompt, "Prompt must not be null");
         Assert.notEmpty(prompt.getInstructions(), "Prompt instructions must not be empty");
 
-        String taskId = submitGenTask(prompt);
-        if (Objects.isNull(taskId)) {
-            return new VideoResponse(null);
+        DashScopeVideoRequest request = buildDashScopeVideoRequest(prompt);
+        // send request to DashScope Video API
+        ResponseEntity<DashScopeVideoResponse> responseEntity = this.dashScopeVideoApi.submitVideoGenTask(request);
+        // 图像检测直接返回
+        if (DashScopeVidoeApiConstants.isDetect(request.getModel())) {
+            logger.info("Video detect task completed successfully:");
+            return new VideoResponse(responseEntity.getBody());
         }
 
+        if (Objects.isNull(responseEntity) || Objects.isNull(responseEntity.getBody())) {
+            logger.error("Failed to submit video generation task: null response");
+            throw new IllegalStateException("Failed to submit video generation task: null response");
+        }
+        DashScopeVideoResponse response = responseEntity.getBody();
+        if (Objects.isNull(response.getOutput()) || Objects.isNull(response.getOutput().taskId())) {
+            logger.error("Failed to submit video generation task: {}", response);
+            throw new IllegalStateException("Failed to submit video generation task: invalid output");
+        }
+
+        String taskId = response.getOutput().taskId();
+
         // todo: add observation
-        logger.warn("Video generation task submitted with taskId: {}", taskId);
+        logger.info("Video generation task submitted with taskId: {}", taskId);
         return this.retryTemplate.execute(context -> {
             var resp = getVideoTask(taskId);
             if (Objects.nonNull(resp)) {
@@ -95,36 +112,12 @@ public class DashScopeVideoModel implements VideoModel {
                     }
                     case "FAILED" -> {
                         logger.error("Video generation task failed: {}", resp.getOutput());
-                        return new VideoResponse(null);
+                        throw new IllegalStateException("Video generation task failed: " + resp.getOutput());
                     }
                 }
             }
             throw new TransientAiException("Video generation still pending, retry ...");
         });
-    }
-
-    /**
-     * Generate video from text prompt with options.
-     */
-    public String submitGenTask(VideoPrompt prompt) {
-        DashScopeVideoRequest request = buildDashScopeVideoRequest(prompt);
-
-        // send request to DashScope Video API
-        ResponseEntity<DashScopeVideoResponse> responseEntity = this.dashScopeVideoApi.submitVideoGenTask(request);
-
-        if (Objects.isNull(responseEntity) || Objects.isNull(responseEntity.getBody())) {
-            logger.warn("Failed to submit video generation task: null response");
-            return null;
-        }
-
-        DashScopeVideoResponse response = responseEntity.getBody();
-
-        if (Objects.isNull(response.getOutput()) || Objects.isNull(response.getOutput().taskId())) {
-            logger.warn("Failed to submit video generation task: {}", response);
-            return null;
-        }
-
-        return response.getOutput().taskId();
     }
 
     private DashScopeVideoResponse getVideoTask(String taskId) {

@@ -15,6 +15,14 @@
  */
 package com.alibaba.cloud.ai.dashscope.video;
 
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeVideoModel;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest.VideoInput;
@@ -26,15 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.retry.support.RetryTemplate;
 
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for DashScope Video Model functionality. These tests will only run
@@ -311,6 +311,71 @@ class DashScopeVideoModelIT {
 
         // Download and save video
         downloadAndSaveVideo(generatedVideoUrl, "Emoji视频生成.mp4");
+
+        System.out.println("=".repeat(80));
+    }
+
+    /**
+     * Test Scenario 5: Image detection (图像检测). This tests the detect functionality
+     * with emoji-detect-v1 model that returns face bounding boxes directly.
+     */
+    @Test
+    void testImageDetection() throws Exception {
+        System.out.println("=".repeat(80));
+        System.out.println("Test Scenario 5: Image Detection (图像检测)");
+        System.out.println("=".repeat(80));
+
+        String imageUrl = "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20250912/uopnly/emoji-%E5%9B%BE%E5%83%8F%E6%A3%80%E6%B5%8B.png";
+        String ratio = "1:1";
+
+        // Build options matching curl command
+        DashScopeVideoOptions options = DashScopeVideoOptions.builder()
+                .model(DashScopeVideoModel.EMOJI_DETECT_V1.getName())
+                .input(VideoInput.builder().imageUrl(imageUrl).build())
+                .parameters(VideoParameters.builder().ratio(ratio).build())
+                .build();
+
+        // Create video model
+        com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel videoModel = com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel.builder()
+                .videoApi(videoApi)
+                .defaultOptions(options)
+                .retryTemplate(retryTemplate)
+                .build();
+
+        // Create prompt
+        VideoPrompt videoPrompt = VideoPrompt.builder().options(options).build();
+
+        System.out.println("Model: emoji-detect-v1");
+        System.out.println("Ratio: " + ratio);
+        System.out.println("Image URL: " + imageUrl);
+        System.out.println("\nSubmitting image detection task...");
+
+        // Call API - detection is synchronous, returns immediately
+        VideoResponse response = videoModel.call(videoPrompt);
+
+        // Verify response
+        assertThat(response).isNotNull();
+        assertThat(response.getResult()).isNotNull();
+
+        // Print the complete response
+        System.out.println("\n========== Response Details ==========");
+        System.out.println("Request ID: " + response.getResult().requestId());
+        System.out.println("Output: " + response.getResult().getOutput());
+        System.out.println("Usage: " + response.getResult().usage());
+        System.out.println("======================================\n");
+
+        // Verify detection results
+        assertThat(response.getResult().getOutput().bboxFace()).isNotNull();
+        assertThat(response.getResult().getOutput().extBboxFace()).isNotNull();
+        assertThat(response.getResult().usage().imageCount()).isEqualTo(1);
+        assertThat(response.getResult().requestId()).isNotEmpty();
+
+        // Print bounding boxes
+        System.out.println("✓ Image detection completed successfully!");
+        System.out.println("Face BBox: " + response.getResult().getOutput().bboxFace());
+        System.out.println("Ext BBox: " + response.getResult().getOutput().extBboxFace());
+        System.out.println("Image Count: " + response.getResult().usage().imageCount());
+        System.out.println("Request ID: " + response.getResult().requestId());
 
         System.out.println("=".repeat(80));
     }

@@ -130,4 +130,10 @@ public class DashScopeVidoeApiConstants {
         return model2Url.get(modelName);
     }
 
+    public static boolean isDetect(String modelName) {
+        return image2VideoFaceAa2Model.values().stream().anyMatch(modelList -> modelList.contains(modelName))
+                || image2VideoFaceDetect2Model.values().stream().anyMatch(modelList -> modelList.contains(modelName));
+    }
+
+
 }
