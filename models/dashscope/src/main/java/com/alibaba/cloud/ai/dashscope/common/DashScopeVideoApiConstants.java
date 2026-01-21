@@ -20,13 +20,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeVideoModel;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 
 /**
  * @author yingzi
  * @since 2026/1/18
  */
-public class DashScopeVidoeApiConstants {
+public class DashScopeVideoApiConstants {
 
     static Map<String, String> model2Url = new HashMap<>();
 
@@ -35,65 +35,65 @@ public class DashScopeVidoeApiConstants {
 
     static final Map<String, List<String>> videoGenerationSynthesis2Model = Map.of(VIDEO_GENERATION_SYNTHESIS, List.of(
             // 通义万相-图生视频-基于首帧
-            DashScopeVideoModel.WANX21_I2V_TURBO.getName(), DashScopeVideoModel.WANX21_I2V_PLUS.getName(), DashScopeVideoModel.WANX22_I2V_PLUS.getName(), DashScopeVideoModel.WAN22_I2V_FLASH.getName(), DashScopeVideoModel.WAN25_I2V_PREVIEW.getName(), DashScopeVideoModel.WAN26_I2V_FLASH.getName(), DashScopeVideoModel.WAN26_I2V.getName(),
+            DashScopeModel.VideoModel.WANX21_I2V_TURBO.getName(), DashScopeModel.VideoModel.WANX21_I2V_PLUS.getName(), DashScopeModel.VideoModel.WANX22_I2V_PLUS.getName(), DashScopeModel.VideoModel.WAN22_I2V_FLASH.getName(), DashScopeModel.VideoModel.WAN25_I2V_PREVIEW.getName(), DashScopeModel.VideoModel.WAN26_I2V_FLASH.getName(), DashScopeModel.VideoModel.WAN26_I2V.getName(),
             // 通义万相-参考生视频
-            DashScopeVideoModel.WAN26_R2V.getName(),
+            DashScopeModel.VideoModel.WAN26_R2V.getName(),
             // 通义万相-文生视频
-            DashScopeVideoModel.WANX21_T2V_PLUS.getName(), DashScopeVideoModel.WANX21_T2V_TURBO.getName(), DashScopeVideoModel.WANX22_T2V_PLUS.getName(), DashScopeVideoModel.WANX25_T2V_PREVIEW.getName(), DashScopeVideoModel.WANX26_T2V.getName(),
+            DashScopeModel.VideoModel.WANX21_T2V_PLUS.getName(), DashScopeModel.VideoModel.WANX21_T2V_TURBO.getName(), DashScopeModel.VideoModel.WANX22_T2V_PLUS.getName(), DashScopeModel.VideoModel.WANX25_T2V_PREVIEW.getName(), DashScopeModel.VideoModel.WANX26_T2V.getName(),
             // 通义万相-通用视频编辑
-            DashScopeVideoModel.WANX21_VACE_PLUS.getName(),
+            DashScopeModel.VideoModel.WANX21_VACE_PLUS.getName(),
             // 视频风格重绘
-            DashScopeVideoModel.VIDEO_STYLE_TRANSFORM.getName()));
+            DashScopeModel.VideoModel.VIDEO_STYLE_TRANSFORM.getName()));
 
     // 通义万相-图生视频-基于首尾帧；通义万相-图生动作；通义万相数字人-图像检测-视频生成；图声舞蹈视频-舞动人像-AnimateAnyone-视频生成；图生唱视频-悦动人像EMO-视频生成；VideoRetalk-视频生成
     static final String IMAGE_2_VIDEO_SYNTHESIS = "/api/v1/services/aigc/image2video/video-synthesis";
 
     static final Map<String, List<String>> image2VideoSynthesis2Model = Map.of(IMAGE_2_VIDEO_SYNTHESIS, List.of(
             // 通义万相-图生视频-基于首尾帧
-            DashScopeVideoModel.WANX21_KF2V_PLUS.getName(),
+            DashScopeModel.VideoModel.WANX21_KF2V_PLUS.getName(),
             // 通义万相-图生动作
-            DashScopeVideoModel.WAN22_KF2V_FLASH.getName(),
+            DashScopeModel.VideoModel.WAN22_KF2V_FLASH.getName(),
             // 通义万相-视频换人
-            DashScopeVideoModel.WAN22_ANIMATE_MIX.getName(),
+            DashScopeModel.VideoModel.WAN22_ANIMATE_MIX.getName(),
             // 通义万相数字人-图像检测-视频生成
-            DashScopeVideoModel.WAN22_S2V.getName(),
+            DashScopeModel.VideoModel.WAN22_S2V.getName(),
             // 图声舞蹈视频-舞动人像-AnimateAnyone-动作模版生成
-            DashScopeVideoModel.ANIMATE_ANYONE_GEN2.getName(),
+            DashScopeModel.VideoModel.ANIMATE_ANYONE_GEN2.getName(),
             // 图生唱视频-悦动人像EMO-视频生成
-            DashScopeVideoModel.EMO_V1.getName(),
+            DashScopeModel.VideoModel.EMO_V1.getName(),
             // 图生播报视频-灵动人像-视频生成
-            DashScopeVideoModel.LIVEPORTRAIT.getName(),
+            DashScopeModel.VideoModel.LIVEPORTRAIT.getName(),
             // VideoRetalk-视频生成
-            DashScopeVideoModel.VIDEORETALK.getName(),
+            DashScopeModel.VideoModel.VIDEORETALK.getName(),
             // 图声表情包视频-表情包Emoji-视频生成
-            DashScopeVideoModel.EMOJI_V1.getName()));
+            DashScopeModel.VideoModel.EMOJI_V1.getName()));
 
     // 通义万相数字人-图像检测；图生唱视频-悦动人像EMO-图像检测；图生播报视频-灵动人像-图像检测；图声表情包视频-表情包Emoji-图像检测
     static final String IMAGE_2_VIDEO_FACE_DETECT = "/api/v1/services/aigc/image2video/face-detect";
 
     static final Map<String, List<String>> image2VideoFaceDetect2Model = Map.of(IMAGE_2_VIDEO_FACE_DETECT, List.of(
             // 通义万相数字人
-            DashScopeVideoModel.WAN22_S2V_DETECT.getName(),
+            DashScopeModel.VideoModel.WAN22_S2V_DETECT.getName(),
             // 图生唱视频-悦动人像EMO-图像检测
-            DashScopeVideoModel.EMO_DETECT_V1.getName(),
+            DashScopeModel.VideoModel.EMO_DETECT_V1.getName(),
             // 图生播报视频-灵动人像-图像检测
-            DashScopeVideoModel.LIVEPORTRAIT_DETECT.getName(),
+            DashScopeModel.VideoModel.LIVEPORTRAIT_DETECT.getName(),
             // 图声表情包视频-表情包Emoji-图像检测
-            DashScopeVideoModel.EMOJI_DETECT_V1.getName()));
+            DashScopeModel.VideoModel.EMOJI_DETECT_V1.getName()));
 
     // 图声舞蹈视频-舞动人像-AnimateAnyone-图像检测
     static final String IMAGE_2_VIDEO_AA_DETECT = "/api/v1/services/aigc/image2video/aa-detect";
 
     static final Map<String, List<String>> image2VideoFaceAa2Model = Map.of(IMAGE_2_VIDEO_AA_DETECT, List.of(
             // AnimateAnyone人像检测
-            DashScopeVideoModel.ANIMATE_ANYONE_DETECT_GEN2.getName()));
+            DashScopeModel.VideoModel.ANIMATE_ANYONE_DETECT_GEN2.getName()));
 
     // 图声舞蹈视频-舞动人像-AnimateAnyone-动作模版生成
     static final String IMAGE_2_VIDEO_AA_TEMPLATE_GENERATION = "/api/v1/services/aigc/image2video/aa-template-generation";
 
     static final Map<String, List<String>> image2VideoAaTemplateGeneration2Model = Map.of(IMAGE_2_VIDEO_AA_TEMPLATE_GENERATION, List.of(
             // AnimateAnyone动作模板生成
-            DashScopeVideoModel.ANIMATE_ANYONE_TEMPLATE_GEN2.getName()));
+            DashScopeModel.VideoModel.ANIMATE_ANYONE_TEMPLATE_GEN2.getName()));
 
     static {
         // 从 url -> models 映射自动生成 model -> url 的反向映射

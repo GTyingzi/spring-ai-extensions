@@ -18,9 +18,7 @@ package com.alibaba.cloud.ai.dashscope.video;
 
 import java.util.List;
 
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeVideoModel;
-import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest.VideoInput;
-import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest.VideoParameters;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -36,16 +34,16 @@ public class DashScopeVideoOptions implements VideoOptions {
     /**
      * Default video model.
      */
-    public static final String DEFAULT_MODEL = DashScopeVideoModel.WANX21_T2V_TURBO.getName();
+    public static final String DEFAULT_MODEL = DashScopeModel.VideoModel.WANX21_T2V_TURBO.getName();
 
 	@JsonProperty("model")
 	private String model;
 
     @JsonProperty("input")
-    private VideoInput input;
+    private InputOptions input;
 
     @JsonProperty("parameters")
-    private VideoParameters parameters;
+    private ParametersOptions parameters;
 
 	@Override
 	public String getModel() {
@@ -56,19 +54,19 @@ public class DashScopeVideoOptions implements VideoOptions {
 		this.model = model;
     }
 
-    public VideoInput getInput() {
+    public InputOptions getInput() {
         return input;
     }
 
-    public void setInput(VideoInput input) {
+    public void setInput(InputOptions input) {
         this.input = input;
     }
 
-    public VideoParameters getParameters() {
+    public ParametersOptions getParameters() {
         return parameters;
     }
 
-    public void setParameters(VideoParameters parameters) {
+    public void setParameters(ParametersOptions parameters) {
         this.parameters = parameters;
 	}
 
@@ -80,9 +78,9 @@ public class DashScopeVideoOptions implements VideoOptions {
 
         private String model;
 
-        private VideoInput input;
+        private InputOptions input;
 
-        private VideoParameters parameters;
+        private ParametersOptions parameters;
 
         public Builder() {
         }
@@ -92,12 +90,12 @@ public class DashScopeVideoOptions implements VideoOptions {
             return this;
         }
 
-        public Builder input(VideoInput input) {
+        public Builder input(InputOptions input) {
             this.input = input;
             return this;
         }
 
-        public Builder parameters(VideoParameters parameters) {
+        public Builder parameters(ParametersOptions parameters) {
             this.parameters = parameters;
             return this;
         }
@@ -112,381 +110,754 @@ public class DashScopeVideoOptions implements VideoOptions {
 
     }
 
-    /**
-     * Builder for VideoInput. Provides a fluent API to construct VideoInput objects.
-     */
-    public static class VideoInputBuilder {
+    public static class InputOptions {
 
+        @JsonProperty("prompt")
         private String prompt;
 
+        @JsonProperty("img_url")
         private String imgUrl;
 
+        @JsonProperty("image_url")
         private String imageUrl;
 
+        @JsonProperty("audio_url")
         private String audioUrl;
 
+        @JsonProperty("template")
         private String template;
 
+        @JsonProperty("negative_prompt")
         private String negativePrompt;
 
+        @JsonProperty("first_frame_url")
         private String firstFrameUrl;
 
+        @JsonProperty("last_frame_url")
         private String lastFrameUrl;
 
+        @JsonProperty("reference_video_urls")
         private List<String> referenceVideoUrls;
 
+        @JsonProperty("function")
         private String function;
 
+        @JsonProperty("ref_image_url")
         private String refImageUrl;
 
+        @JsonProperty("ref_images_url")
         private String refImagesUrl;
 
+        @JsonProperty("mask_frame_id")
         private Integer maskFrameId;
 
+        @JsonProperty("first_clip_url")
         private String firstClipUrl;
 
+        @JsonProperty("video_url")
         private String videoUrl;
 
+        @JsonProperty("template_id")
         private String templateId;
 
+        @JsonProperty("face_bbox")
         private List<Integer> faceBbox;
 
+        @JsonProperty("ext_bbox")
         private List<Integer> extBbox;
 
+        @JsonProperty("driven_id")
         private String drivenId;
 
-        public VideoInputBuilder prompt(String prompt) {
+        public InputOptions() {
+        }
+
+        public String getPrompt() {
+            return prompt;
+        }
+
+        public void setPrompt(String prompt) {
             this.prompt = prompt;
-			return this;
         }
 
-        public VideoInputBuilder imgUrl(String imgUrl) {
+        public String getImgUrl() {
+            return imgUrl;
+        }
+
+        public void setImgUrl(String imgUrl) {
             this.imgUrl = imgUrl;
-            return this;
         }
 
-        public VideoInputBuilder imageUrl(String imageUrl) {
+        public String getImageUrl() {
+            return imageUrl;
+        }
+
+        public void setImageUrl(String imageUrl) {
             this.imageUrl = imageUrl;
-            return this;
         }
 
-        public VideoInputBuilder audioUrl(String audioUrl) {
+        public String getAudioUrl() {
+            return audioUrl;
+        }
+
+        public void setAudioUrl(String audioUrl) {
             this.audioUrl = audioUrl;
-            return this;
         }
 
-        public VideoInputBuilder template(String template) {
+        public String getTemplate() {
+            return template;
+        }
+
+        public void setTemplate(String template) {
             this.template = template;
-            return this;
         }
 
-        public VideoInputBuilder negativePrompt(String negativePrompt) {
+        public String getNegativePrompt() {
+            return negativePrompt;
+        }
+
+        public void setNegativePrompt(String negativePrompt) {
             this.negativePrompt = negativePrompt;
-            return this;
         }
 
-        public VideoInputBuilder firstFrameUrl(String firstFrameUrl) {
+        public String getFirstFrameUrl() {
+            return firstFrameUrl;
+        }
+
+        public void setFirstFrameUrl(String firstFrameUrl) {
             this.firstFrameUrl = firstFrameUrl;
-			return this;
         }
 
-        public VideoInputBuilder lastFrameUrl(String lastFrameUrl) {
+        public String getLastFrameUrl() {
+            return lastFrameUrl;
+        }
+
+        public void setLastFrameUrl(String lastFrameUrl) {
             this.lastFrameUrl = lastFrameUrl;
-			return this;
         }
 
-        public VideoInputBuilder referenceVideoUrls(List<String> referenceVideoUrls) {
+        public List<String> getReferenceVideoUrls() {
+            return referenceVideoUrls;
+        }
+
+        public void setReferenceVideoUrls(List<String> referenceVideoUrls) {
             this.referenceVideoUrls = referenceVideoUrls;
-            return this;
         }
 
-        public VideoInputBuilder function(String function) {
+        public String getFunction() {
+            return function;
+        }
+
+        public void setFunction(String function) {
             this.function = function;
-            return this;
         }
 
-        public VideoInputBuilder refImageUrl(String refImageUrl) {
+        public String getRefImageUrl() {
+            return refImageUrl;
+        }
+
+        public void setRefImageUrl(String refImageUrl) {
             this.refImageUrl = refImageUrl;
-            return this;
         }
 
-        public VideoInputBuilder refImagesUrl(String refImagesUrl) {
+        public String getRefImagesUrl() {
+            return refImagesUrl;
+        }
+
+        public void setRefImagesUrl(String refImagesUrl) {
             this.refImagesUrl = refImagesUrl;
-            return this;
         }
 
-        public VideoInputBuilder maskFrameId(Integer maskFrameId) {
+        public Integer getMaskFrameId() {
+            return maskFrameId;
+        }
+
+        public void setMaskFrameId(Integer maskFrameId) {
             this.maskFrameId = maskFrameId;
-            return this;
         }
 
-        public VideoInputBuilder firstClipUrl(String firstClipUrl) {
+        public String getFirstClipUrl() {
+            return firstClipUrl;
+        }
+
+        public void setFirstClipUrl(String firstClipUrl) {
             this.firstClipUrl = firstClipUrl;
-            return this;
         }
 
-        public VideoInputBuilder videoUrl(String videoUrl) {
+        public String getVideoUrl() {
+            return videoUrl;
+        }
+
+        public void setVideoUrl(String videoUrl) {
             this.videoUrl = videoUrl;
-            return this;
         }
 
-        public VideoInputBuilder templateId(String templateId) {
+        public String getTemplateId() {
+            return templateId;
+        }
+
+        public void setTemplateId(String templateId) {
             this.templateId = templateId;
-            return this;
         }
 
-        public VideoInputBuilder faceBbox(List<Integer> faceBbox) {
+        public List<Integer> getFaceBbox() {
+            return faceBbox;
+        }
+
+        public void setFaceBbox(List<Integer> faceBbox) {
             this.faceBbox = faceBbox;
-            return this;
         }
 
-        public VideoInputBuilder extBbox(List<Integer> extBbox) {
+        public List<Integer> getExtBbox() {
+            return extBbox;
+        }
+
+        public void setExtBbox(List<Integer> extBbox) {
             this.extBbox = extBbox;
-            return this;
         }
 
-        public VideoInputBuilder drivenId(String drivenId) {
+        public String getDrivenId() {
+            return drivenId;
+        }
+
+        public void setDrivenId(String drivenId) {
             this.drivenId = drivenId;
-            return this;
         }
 
-        public VideoInput build() {
-            return VideoInput.builder()
-                    .prompt(this.prompt)
-                    .imgUrl(this.imgUrl)
-                    .imageUrl(this.imageUrl)
-                    .audioUrl(this.audioUrl)
-                    .template(this.template)
-                    .negativePrompt(this.negativePrompt)
-                    .firstFrameUrl(this.firstFrameUrl)
-                    .lastFrameUrl(this.lastFrameUrl)
-                    .referenceVideoUrls(this.referenceVideoUrls)
-                    .function(this.function)
-                    .refImageUrl(this.refImageUrl)
-                    .refImagesUrl(this.refImagesUrl)
-                    .maskFrameId(this.maskFrameId)
-                    .firstClipUrl(this.firstClipUrl)
-                    .videoUrl(this.videoUrl)
-                    .templateId(this.templateId)
-                    .faceBbox(this.faceBbox)
-                    .extBbox(this.extBbox)
-                    .drivenId(this.drivenId)
-                    .build();
+        public static Builder builder() {
+            return new Builder();
         }
 
+        public static class Builder {
+
+            private final InputOptions options;
+
+            public Builder() {
+                this.options = new InputOptions();
+            }
+
+            public Builder prompt(String prompt) {
+                this.options.setPrompt(prompt);
+                return this;
+            }
+
+            public Builder imgUrl(String imgUrl) {
+                this.options.setImgUrl(imgUrl);
+                return this;
+            }
+
+            public Builder imageUrl(String imageUrl) {
+                this.options.setImageUrl(imageUrl);
+                return this;
+            }
+
+            public Builder audioUrl(String audioUrl) {
+                this.options.setAudioUrl(audioUrl);
+                return this;
+            }
+
+            public Builder template(String template) {
+                this.options.setTemplate(template);
+                return this;
+            }
+
+            public Builder negativePrompt(String negativePrompt) {
+                this.options.setNegativePrompt(negativePrompt);
+                return this;
+            }
+
+            public Builder firstFrameUrl(String firstFrameUrl) {
+                this.options.setFirstFrameUrl(firstFrameUrl);
+                return this;
+            }
+
+            public Builder lastFrameUrl(String lastFrameUrl) {
+                this.options.setLastFrameUrl(lastFrameUrl);
+                return this;
+            }
+
+            public Builder referenceVideoUrls(List<String> referenceVideoUrls) {
+                this.options.setReferenceVideoUrls(referenceVideoUrls);
+                return this;
+            }
+
+            public Builder function(String function) {
+                this.options.setFunction(function);
+                return this;
+            }
+
+            public Builder refImageUrl(String refImageUrl) {
+                this.options.setRefImageUrl(refImageUrl);
+                return this;
+            }
+
+            public Builder refImagesUrl(String refImagesUrl) {
+                this.options.setRefImagesUrl(refImagesUrl);
+                return this;
+            }
+
+            public Builder maskFrameId(Integer maskFrameId) {
+                this.options.setMaskFrameId(maskFrameId);
+                return this;
+            }
+
+            public Builder firstClipUrl(String firstClipUrl) {
+                this.options.setFirstClipUrl(firstClipUrl);
+                return this;
+            }
+
+            public Builder videoUrl(String videoUrl) {
+                this.options.setVideoUrl(videoUrl);
+                return this;
+            }
+
+            public Builder templateId(String templateId) {
+                this.options.setTemplateId(templateId);
+                return this;
+            }
+
+            public Builder faceBbox(List<Integer> faceBbox) {
+                this.options.setFaceBbox(faceBbox);
+                return this;
+            }
+
+            public Builder extBbox(List<Integer> extBbox) {
+                this.options.setExtBbox(extBbox);
+                return this;
+            }
+
+            public Builder drivenId(String drivenId) {
+                this.options.setDrivenId(drivenId);
+                return this;
+            }
+
+            public InputOptions build() {
+                return this.options;
+            }
+        }
     }
 
-    /**
-     * Builder for VideoParameters. Provides a fluent API to construct VideoParameters
-     * objects.
-     */
-    public static class VideoParametersBuilder {
+    public static class ParametersOptions {
 
+        @JsonProperty("resolution")
         private String resolution;
 
+        @JsonProperty("size")
         private String size;
 
+        @JsonProperty("prompt_extend")
         private Boolean promptExtend;
 
+        @JsonProperty("duration")
         private Integer duration;
 
+        @JsonProperty("shot_type")
         private String shotType;
 
+        @JsonProperty("obj_or_bg")
         private List<String> objOrBg;
 
+        @JsonProperty("mask_type")
         private String maskType;
 
+        @JsonProperty("expand_ratio")
         private Double expandRatio;
 
+        @JsonProperty("top_scale")
         private Double topScale;
 
+        @JsonProperty("bottom_scale")
         private Double bottomScale;
 
+        @JsonProperty("left_scale")
         private Double leftScale;
 
+        @JsonProperty("right_scale")
         private Double rightScale;
 
+        @JsonProperty("mode")
         private String mode;
 
+        @JsonProperty("use_ref_img_bg")
         private Boolean useRefImgBg;
 
+        @JsonProperty("video_ratio")
         private String videoRatio;
 
+        @JsonProperty("ratio")
         private String ratio;
 
+        @JsonProperty("style_level")
         private String styleLevel;
 
+        @JsonProperty("template_id")
         private String templateId;
 
+        @JsonProperty("eye_move_freq")
         private Double eyeMoveFreq;
 
+        @JsonProperty("video_fps")
         private Integer videoFps;
 
+        @JsonProperty("mouth_move_strength")
         private Integer mouthMoveStrength;
 
+        @JsonProperty("paste_back")
         private Boolean pasteBack;
 
+        @JsonProperty("head_move_strength")
         private Double headMoveStrength;
 
+        @JsonProperty("style")
         private Integer style;
 
+        @JsonProperty("seed")
         private Long seed;
 
-        public VideoParametersBuilder resolution(String resolution) {
+        public ParametersOptions() {
+        }
+
+        public String getResolution() {
+            return resolution;
+        }
+
+        public void setResolution(String resolution) {
             this.resolution = resolution;
-            return this;
         }
 
-        public VideoParametersBuilder size(String size) {
+        public String getSize() {
+            return size;
+        }
+
+        public void setSize(String size) {
             this.size = size;
-            return this;
         }
 
-        public VideoParametersBuilder promptExtend(Boolean promptExtend) {
+        public Boolean getPromptExtend() {
+            return promptExtend;
+        }
+
+        public void setPromptExtend(Boolean promptExtend) {
             this.promptExtend = promptExtend;
-            return this;
         }
 
-        public VideoParametersBuilder duration(Integer duration) {
+        public Integer getDuration() {
+            return duration;
+        }
+
+        public void setDuration(Integer duration) {
             this.duration = duration;
-            return this;
         }
 
-        public VideoParametersBuilder shotType(String shotType) {
+        public String getShotType() {
+            return shotType;
+        }
+
+        public void setShotType(String shotType) {
             this.shotType = shotType;
-            return this;
         }
 
-        public VideoParametersBuilder objOrBg(List<String> objOrBg) {
+        public List<String> getObjOrBg() {
+            return objOrBg;
+        }
+
+        public void setObjOrBg(List<String> objOrBg) {
             this.objOrBg = objOrBg;
-            return this;
         }
 
-        public VideoParametersBuilder maskType(String maskType) {
+        public String getMaskType() {
+            return maskType;
+        }
+
+        public void setMaskType(String maskType) {
             this.maskType = maskType;
-            return this;
         }
 
-        public VideoParametersBuilder expandRatio(Double expandRatio) {
+        public Double getExpandRatio() {
+            return expandRatio;
+        }
+
+        public void setExpandRatio(Double expandRatio) {
             this.expandRatio = expandRatio;
-            return this;
         }
 
-        public VideoParametersBuilder topScale(Double topScale) {
+        public Double getTopScale() {
+            return topScale;
+        }
+
+        public void setTopScale(Double topScale) {
             this.topScale = topScale;
-            return this;
         }
 
-        public VideoParametersBuilder bottomScale(Double bottomScale) {
+        public Double getBottomScale() {
+            return bottomScale;
+        }
+
+        public void setBottomScale(Double bottomScale) {
             this.bottomScale = bottomScale;
-            return this;
         }
 
-        public VideoParametersBuilder leftScale(Double leftScale) {
+        public Double getLeftScale() {
+            return leftScale;
+        }
+
+        public void setLeftScale(Double leftScale) {
             this.leftScale = leftScale;
-            return this;
         }
 
-        public VideoParametersBuilder rightScale(Double rightScale) {
+        public Double getRightScale() {
+            return rightScale;
+        }
+
+        public void setRightScale(Double rightScale) {
             this.rightScale = rightScale;
-            return this;
         }
 
-        public VideoParametersBuilder mode(String mode) {
+        public String getMode() {
+            return mode;
+        }
+
+        public void setMode(String mode) {
             this.mode = mode;
-            return this;
         }
 
-        public VideoParametersBuilder useRefImgBg(Boolean useRefImgBg) {
+        public Boolean getUseRefImgBg() {
+            return useRefImgBg;
+        }
+
+        public void setUseRefImgBg(Boolean useRefImgBg) {
             this.useRefImgBg = useRefImgBg;
-            return this;
         }
 
-        public VideoParametersBuilder videoRatio(String videoRatio) {
+        public String getVideoRatio() {
+            return videoRatio;
+        }
+
+        public void setVideoRatio(String videoRatio) {
             this.videoRatio = videoRatio;
-            return this;
         }
 
-        public VideoParametersBuilder ratio(String ratio) {
+        public String getRatio() {
+            return ratio;
+        }
+
+        public void setRatio(String ratio) {
             this.ratio = ratio;
-            return this;
         }
 
-        public VideoParametersBuilder styleLevel(String styleLevel) {
+        public String getStyleLevel() {
+            return styleLevel;
+        }
+
+        public void setStyleLevel(String styleLevel) {
             this.styleLevel = styleLevel;
-            return this;
         }
 
-        public VideoParametersBuilder templateId(String templateId) {
+        public String getTemplateId() {
+            return templateId;
+        }
+
+        public void setTemplateId(String templateId) {
             this.templateId = templateId;
-            return this;
         }
 
-        public VideoParametersBuilder eyeMoveFreq(Double eyeMoveFreq) {
+        public Double getEyeMoveFreq() {
+            return eyeMoveFreq;
+        }
+
+        public void setEyeMoveFreq(Double eyeMoveFreq) {
             this.eyeMoveFreq = eyeMoveFreq;
-            return this;
         }
 
-        public VideoParametersBuilder videoFps(Integer videoFps) {
+        public Integer getVideoFps() {
+            return videoFps;
+        }
+
+        public void setVideoFps(Integer videoFps) {
             this.videoFps = videoFps;
-            return this;
         }
 
-        public VideoParametersBuilder mouthMoveStrength(Integer mouthMoveStrength) {
+        public Integer getMouthMoveStrength() {
+            return mouthMoveStrength;
+        }
+
+        public void setMouthMoveStrength(Integer mouthMoveStrength) {
             this.mouthMoveStrength = mouthMoveStrength;
-            return this;
         }
 
-        public VideoParametersBuilder pasteBack(Boolean pasteBack) {
+        public Boolean getPasteBack() {
+            return pasteBack;
+        }
+
+        public void setPasteBack(Boolean pasteBack) {
             this.pasteBack = pasteBack;
-            return this;
         }
 
-        public VideoParametersBuilder headMoveStrength(Double headMoveStrength) {
+        public Double getHeadMoveStrength() {
+            return headMoveStrength;
+        }
+
+        public void setHeadMoveStrength(Double headMoveStrength) {
             this.headMoveStrength = headMoveStrength;
-            return this;
         }
 
-        public VideoParametersBuilder style(Integer style) {
+        public Integer getStyle() {
+            return style;
+        }
+
+        public void setStyle(Integer style) {
             this.style = style;
-            return this;
         }
 
-        public VideoParametersBuilder seed(Long seed) {
+        public Long getSeed() {
+            return seed;
+        }
+
+        public void setSeed(Long seed) {
             this.seed = seed;
-            return this;
         }
 
-        public VideoParameters build() {
-            return VideoParameters.builder()
-                    .resolution(this.resolution)
-                    .size(this.size)
-                    .promptExtend(this.promptExtend)
-                    .duration(this.duration)
-                    .shotType(this.shotType)
-                    .objOrBg(this.objOrBg)
-                    .maskType(this.maskType)
-                    .expandRatio(this.expandRatio)
-                    .topScale(this.topScale)
-                    .bottomScale(this.bottomScale)
-                    .leftScale(this.leftScale)
-                    .rightScale(this.rightScale)
-                    .mode(this.mode)
-                    .useRefImgBg(this.useRefImgBg)
-                    .videoRatio(this.videoRatio)
-                    .ratio(this.ratio)
-                    .styleLevel(this.styleLevel)
-                    .templateId(this.templateId)
-                    .eyeMoveFreq(this.eyeMoveFreq)
-                    .videoFps(this.videoFps)
-                    .mouthMoveStrength(this.mouthMoveStrength)
-                    .pasteBack(this.pasteBack)
-                    .headMoveStrength(this.headMoveStrength)
-                    .style(this.style)
-                    .seed(this.seed)
-                    .build();
-		}
+        public static Builder builder() {
+            return new Builder();
+        }
 
-	}
+        public static class Builder {
+
+            private final ParametersOptions options;
+
+            public Builder() {
+                this.options = new ParametersOptions();
+            }
+
+            public Builder resolution(String resolution) {
+                this.options.setResolution(resolution);
+                return this;
+            }
+
+            public Builder size(String size) {
+                this.options.setSize(size);
+                return this;
+            }
+
+            public Builder promptExtend(Boolean promptExtend) {
+                this.options.setPromptExtend(promptExtend);
+                return this;
+            }
+
+            public Builder duration(Integer duration) {
+                this.options.setDuration(duration);
+                return this;
+            }
+
+            public Builder shotType(String shotType) {
+                this.options.setShotType(shotType);
+                return this;
+            }
+
+            public Builder objOrBg(List<String> objOrBg) {
+                this.options.setObjOrBg(objOrBg);
+                return this;
+            }
+
+            public Builder maskType(String maskType) {
+                this.options.setMaskType(maskType);
+                return this;
+            }
+
+            public Builder expandRatio(Double expandRatio) {
+                this.options.setExpandRatio(expandRatio);
+                return this;
+            }
+
+            public Builder topScale(Double topScale) {
+                this.options.setTopScale(topScale);
+                return this;
+            }
+
+            public Builder bottomScale(Double bottomScale) {
+                this.options.setBottomScale(bottomScale);
+                return this;
+            }
+
+            public Builder leftScale(Double leftScale) {
+                this.options.setLeftScale(leftScale);
+                return this;
+            }
+
+            public Builder rightScale(Double rightScale) {
+                this.options.setRightScale(rightScale);
+                return this;
+            }
+
+            public Builder mode(String mode) {
+                this.options.setMode(mode);
+                return this;
+            }
+
+            public Builder useRefImgBg(Boolean useRefImgBg) {
+                this.options.setUseRefImgBg(useRefImgBg);
+                return this;
+            }
+
+            public Builder videoRatio(String videoRatio) {
+                this.options.setVideoRatio(videoRatio);
+                return this;
+            }
+
+            public Builder ratio(String ratio) {
+                this.options.setRatio(ratio);
+                return this;
+            }
+
+            public Builder styleLevel(String styleLevel) {
+                this.options.setStyleLevel(styleLevel);
+                return this;
+            }
+
+            public Builder templateId(String templateId) {
+                this.options.setTemplateId(templateId);
+                return this;
+            }
+
+            public Builder eyeMoveFreq(Double eyeMoveFreq) {
+                this.options.setEyeMoveFreq(eyeMoveFreq);
+                return this;
+            }
+
+            public Builder videoFps(Integer videoFps) {
+                this.options.setVideoFps(videoFps);
+                return this;
+            }
+
+            public Builder mouthMoveStrength(Integer mouthMoveStrength) {
+                this.options.setMouthMoveStrength(mouthMoveStrength);
+                return this;
+            }
+
+            public Builder pasteBack(Boolean pasteBack) {
+                this.options.setPasteBack(pasteBack);
+                return this;
+            }
+
+            public Builder headMoveStrength(Double headMoveStrength) {
+                this.options.setHeadMoveStrength(headMoveStrength);
+                return this;
+            }
+
+            public Builder style(Integer style) {
+                this.options.setStyle(style);
+                return this;
+            }
+
+            public Builder seed(Long seed) {
+                this.options.setSeed(seed);
+                return this;
+            }
+
+            public ParametersOptions build() {
+                return this.options;
+            }
+        }
+    }
 
 }

@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
+import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoOptions.InputOptions;
+import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoOptions.ParametersOptions;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse.VideoOutput;
@@ -67,13 +69,10 @@ class DashScopeVideoModelTests {
         dashScopeVideoApi = Mockito.mock(DashScopeVideoApi.class);
 
         // Create default options with basic configuration
-        DashScopeVideoOptions.VideoInputBuilder inputBuilder = new DashScopeVideoOptions.VideoInputBuilder();
-        DashScopeVideoOptions.VideoParametersBuilder parametersBuilder = new DashScopeVideoOptions.VideoParametersBuilder();
-
         defaultOptions = DashScopeVideoOptions.builder()
                 .model(TEST_MODEL)
-                .input(inputBuilder.prompt(TEST_PROMPT).build())
-                .parameters(parametersBuilder.size("832*480").promptExtend(true).build())
+                .input(InputOptions.builder().prompt(TEST_PROMPT).build())
+                .parameters(ParametersOptions.builder().size("832*480").promptExtend(true).build())
                 .build();
 
         videoModel = new DashScopeVideoModel(dashScopeVideoApi, defaultOptions, RetryTemplate.builder().build());
@@ -98,13 +97,10 @@ class DashScopeVideoModelTests {
         // Test video generation with custom options
         mockSuccessfulVideoGeneration();
 
-        DashScopeVideoOptions.VideoInputBuilder inputBuilder = new DashScopeVideoOptions.VideoInputBuilder();
-        DashScopeVideoOptions.VideoParametersBuilder parametersBuilder = new DashScopeVideoOptions.VideoParametersBuilder();
-
         DashScopeVideoOptions customOptions = DashScopeVideoOptions.builder()
                 .model(TEST_MODEL)
-                .input(inputBuilder.prompt(TEST_PROMPT).negativePrompt("低质量，模糊").build())
-                .parameters(parametersBuilder.size("1280*720").promptExtend(false).duration(5).build())
+                .input(InputOptions.builder().prompt(TEST_PROMPT).negativePrompt("低质量，模糊").build())
+                .parameters(ParametersOptions.builder().size("1280*720").promptExtend(false).duration(5).build())
                 .build();
 
         VideoPrompt prompt = VideoPrompt.builder().options(customOptions).build();
@@ -182,13 +178,10 @@ class DashScopeVideoModelTests {
         // Test video generation with seed parameter for reproducibility
         mockSuccessfulVideoGeneration();
 
-        DashScopeVideoOptions.VideoInputBuilder inputBuilder = new DashScopeVideoOptions.VideoInputBuilder();
-        DashScopeVideoOptions.VideoParametersBuilder parametersBuilder = new DashScopeVideoOptions.VideoParametersBuilder();
-
         DashScopeVideoOptions optionsWithSeed = DashScopeVideoOptions.builder()
                 .model(TEST_MODEL)
-                .input(inputBuilder.prompt(TEST_PROMPT).build())
-                .parameters(parametersBuilder.size("832*480").seed(42L).build())
+                .input(InputOptions.builder().prompt(TEST_PROMPT).build())
+                .parameters(ParametersOptions.builder().size("832*480").seed(42L).build())
                 .build();
 
         VideoPrompt prompt = VideoPrompt.builder().options(optionsWithSeed).build();
@@ -214,16 +207,11 @@ class DashScopeVideoModelTests {
         // Test video generation with comprehensive parameter configuration
         mockSuccessfulVideoGeneration();
 
-        DashScopeVideoOptions.VideoInputBuilder inputBuilder = new DashScopeVideoOptions.VideoInputBuilder();
-        DashScopeVideoOptions.VideoParametersBuilder parametersBuilder = new DashScopeVideoOptions.VideoParametersBuilder();
-
         DashScopeVideoOptions comprehensiveOptions = DashScopeVideoOptions.builder()
-                .model(TEST_MODEL)
-                .input(inputBuilder.prompt(TEST_PROMPT)
+                .model(TEST_MODEL).input(InputOptions.builder().prompt(TEST_PROMPT)
                         .negativePrompt("低质量")
                         .firstFrameUrl("https://example.com/first-frame.jpg")
-                        .build())
-                .parameters(parametersBuilder.size("1280*720")
+                        .build()).parameters(ParametersOptions.builder().size("1280*720")
                         .promptExtend(true)
                         .duration(5)
                         .seed(123L)
@@ -244,13 +232,10 @@ class DashScopeVideoModelTests {
         // Test image-to-video generation with image URL input
         mockSuccessfulVideoGeneration();
 
-        DashScopeVideoOptions.VideoInputBuilder inputBuilder = new DashScopeVideoOptions.VideoInputBuilder();
-        DashScopeVideoOptions.VideoParametersBuilder parametersBuilder = new DashScopeVideoOptions.VideoParametersBuilder();
-
         DashScopeVideoOptions imageToVideoOptions = DashScopeVideoOptions.builder()
                 .model(TEST_MODEL)
-                .input(inputBuilder.prompt(TEST_PROMPT).imageUrl("https://example.com/input.jpg").build())
-                .parameters(parametersBuilder.size("832*480").duration(5).build())
+                .input(InputOptions.builder().prompt(TEST_PROMPT).imageUrl("https://example.com/input.jpg").build())
+                .parameters(ParametersOptions.builder().size("832*480").duration(5).build())
                 .build();
 
         VideoPrompt prompt = VideoPrompt.builder().options(imageToVideoOptions).build();
@@ -264,14 +249,10 @@ class DashScopeVideoModelTests {
     void testImageDetectionModel() {
         // Test image detection model which returns directly without polling
         // Image detection models return results synchronously (no task polling)
-
-        DashScopeVideoOptions.VideoInputBuilder inputBuilder = new DashScopeVideoOptions.VideoInputBuilder();
-        DashScopeVideoOptions.VideoParametersBuilder parametersBuilder = new DashScopeVideoOptions.VideoParametersBuilder();
-
         DashScopeVideoOptions detectionOptions = DashScopeVideoOptions.builder()
                 .model("emoji-detect-v1") // Detect model
-                .input(inputBuilder.imageUrl("https://example.com/test.jpg").build())
-                .parameters(parametersBuilder.ratio("1:1").build())
+                .input(InputOptions.builder().imageUrl("https://example.com/test.jpg").build())
+                .parameters(ParametersOptions.builder().ratio("1:1").build())
                 .build();
 
         // Mock detection response - no task polling needed

@@ -24,9 +24,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeVideoModel;
-import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest.VideoInput;
-import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest.VideoParameters;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
+import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoOptions.InputOptions;
+import com.alibaba.cloud.ai.dashscope.video.DashScopeVideoOptions.ParametersOptions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -99,13 +99,13 @@ class DashScopeVideoModelIT {
 
         // Build options matching curl command
         DashScopeVideoOptions options = DashScopeVideoOptions.builder()
-                .model(DashScopeVideoModel.WANX22_T2V_PLUS.getName())
-                .input(VideoInput.builder().prompt(prompt).build())
-                .parameters(VideoParameters.builder().size("832*480").promptExtend(true).build())
+                .model(DashScopeModel.VideoModel.WANX22_T2V_PLUS.getName())
+                .input(InputOptions.builder().prompt(prompt).build())
+                .parameters(ParametersOptions.builder().size("832*480").promptExtend(true).build())
                 .build();
 
         // Create video model with options
-        com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel videoModel = com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel.builder()
+        DashScopeVideoModel videoModel = DashScopeVideoModel.builder()
                 .videoApi(videoApi)
                 .defaultOptions(options)
                 .retryTemplate(retryTemplate)
@@ -114,7 +114,7 @@ class DashScopeVideoModelIT {
         // Create prompt using builder pattern
         VideoPrompt videoPrompt = VideoPrompt.builder().options(options).build();
 
-        System.out.println("Model: " + DashScopeVideoModel.WANX22_T2V_PLUS.getName());
+        System.out.println("Model: " + DashScopeModel.VideoModel.WANX22_T2V_PLUS.getName());
         System.out.println("Video Size: 832*480");
         System.out.println("Prompt Extend: true");
         System.out.println("\nSubmitting video generation task...");
@@ -154,17 +154,17 @@ class DashScopeVideoModelIT {
 
         // Build options matching curl command
         DashScopeVideoOptions options = DashScopeVideoOptions.builder()
-                .model(DashScopeVideoModel.WAN22_KF2V_FLASH.getName())
-                .input(VideoInput.builder()
+                .model(DashScopeModel.VideoModel.WAN22_KF2V_FLASH.getName())
+                .input(InputOptions.builder()
                         .firstFrameUrl(firstFrameUrl)
                         .lastFrameUrl(lastFrameUrl)
                         .prompt(prompt)
                         .build())
-                .parameters(VideoParameters.builder().resolution("480P").promptExtend(true).build())
+                .parameters(ParametersOptions.builder().resolution("480P").promptExtend(true).build())
                 .build();
 
         // Create video model
-        com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel videoModel = com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel.builder()
+        DashScopeVideoModel videoModel = DashScopeVideoModel.builder()
                 .videoApi(videoApi)
                 .defaultOptions(options)
                 .retryTemplate(retryTemplate)
@@ -173,7 +173,7 @@ class DashScopeVideoModelIT {
         // Create prompt
         VideoPrompt videoPrompt = VideoPrompt.builder().options(options).build();
 
-        System.out.println("Model: " + DashScopeVideoModel.WAN22_KF2V_FLASH.getName());
+        System.out.println("Model: " + DashScopeModel.VideoModel.WAN22_KF2V_FLASH.getName());
         System.out.println("Resolution: 480P");
         System.out.println("First Frame: " + firstFrameUrl);
         System.out.println("Last Frame: " + lastFrameUrl);
@@ -213,13 +213,13 @@ class DashScopeVideoModelIT {
 
         // Build options matching curl command
         DashScopeVideoOptions options = DashScopeVideoOptions.builder()
-                .model(DashScopeVideoModel.WAN22_ANIMATE_MIX.getName())
-                .input(VideoInput.builder().imageUrl(imageUrl).videoUrl(videoUrl).build())
-                .parameters(VideoParameters.builder().mode("wan-std").build())
+                .model(DashScopeModel.VideoModel.WAN22_ANIMATE_MIX.getName())
+                .input(InputOptions.builder().imageUrl(imageUrl).videoUrl(videoUrl).build())
+                .parameters(ParametersOptions.builder().mode("wan-std").build())
                 .build();
 
         // Create video model
-        com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel videoModel = com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel.builder()
+        DashScopeVideoModel videoModel = DashScopeVideoModel.builder()
                 .videoApi(videoApi)
                 .defaultOptions(options)
                 .retryTemplate(retryTemplate)
@@ -228,7 +228,7 @@ class DashScopeVideoModelIT {
         // Create prompt
         VideoPrompt videoPrompt = VideoPrompt.builder().options(options).build();
 
-        System.out.println("Model: " + DashScopeVideoModel.WAN22_ANIMATE_MIX.getName());
+        System.out.println("Model: " + DashScopeModel.VideoModel.WAN22_ANIMATE_MIX.getName());
         System.out.println("Mode: wan-std");
         System.out.println("Image URL: " + imageUrl);
         System.out.println("Video URL: " + videoUrl);
@@ -270,8 +270,7 @@ class DashScopeVideoModelIT {
 
         // Build options matching curl command
         DashScopeVideoOptions options = DashScopeVideoOptions.builder()
-                .model("emoji-v1")
-                .input(VideoInput.builder()
+                .model("emoji-v1").input(InputOptions.builder()
                         .imageUrl(imageUrl)
                         .drivenId(drivenId)
                         .faceBbox(faceBbox)
@@ -280,7 +279,7 @@ class DashScopeVideoModelIT {
                 .build();
 
         // Create video model
-        com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel videoModel = com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel.builder()
+        DashScopeVideoModel videoModel = DashScopeVideoModel.builder()
                 .videoApi(videoApi)
                 .defaultOptions(options)
                 .retryTemplate(retryTemplate)
@@ -330,13 +329,13 @@ class DashScopeVideoModelIT {
 
         // Build options matching curl command
         DashScopeVideoOptions options = DashScopeVideoOptions.builder()
-                .model(DashScopeVideoModel.EMOJI_DETECT_V1.getName())
-                .input(VideoInput.builder().imageUrl(imageUrl).build())
-                .parameters(VideoParameters.builder().ratio(ratio).build())
+                .model(DashScopeModel.VideoModel.EMOJI_DETECT_V1.getName())
+                .input(InputOptions.builder().imageUrl(imageUrl).build())
+                .parameters(ParametersOptions.builder().ratio(ratio).build())
                 .build();
 
         // Create video model
-        com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel videoModel = com.alibaba.cloud.ai.dashscope.video.DashScopeVideoModel.builder()
+        DashScopeVideoModel videoModel = DashScopeVideoModel.builder()
                 .videoApi(videoApi)
                 .defaultOptions(options)
                 .retryTemplate(retryTemplate)

@@ -19,7 +19,7 @@ package com.alibaba.cloud.ai.dashscope.video;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
-import com.alibaba.cloud.ai.dashscope.common.DashScopeVidoeApiConstants;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeVideoApiConstants;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse;
 import org.slf4j.Logger;
@@ -80,7 +80,7 @@ public class DashScopeVideoModel implements VideoModel {
         // send request to DashScope Video API
         ResponseEntity<DashScopeVideoResponse> responseEntity = this.dashScopeVideoApi.submitVideoGenTask(request);
         // 图像检测直接返回
-        if (DashScopeVidoeApiConstants.isDetect(request.getModel())) {
+        if (DashScopeVideoApiConstants.isDetect(request.getModel())) {
             logger.info("Video detect task completed successfully:");
             return new VideoResponse(responseEntity.getBody());
         }
@@ -143,8 +143,8 @@ public class DashScopeVideoModel implements VideoModel {
 
         return DashScopeVideoRequest.builder()
                 .model(options.getModel())
-                .input(options.getInput())
-                .parameters(options.getParameters())
+                .input(DashScopeVideoRequest.VideoInput.optionsConvertReq(options.getInput()))
+                .parameters(DashScopeVideoRequest.VideoParameters.optionsConvertReq(options.getParameters()))
                 .build();
     }
 

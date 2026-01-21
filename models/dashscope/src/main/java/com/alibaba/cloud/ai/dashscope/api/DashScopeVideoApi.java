@@ -19,7 +19,7 @@ package com.alibaba.cloud.ai.dashscope.api;
 import java.util.function.Consumer;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
-import com.alibaba.cloud.ai.dashscope.common.DashScopeVidoeApiConstants;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeVideoApiConstants;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse;
 import org.slf4j.Logger;
@@ -93,8 +93,8 @@ public class DashScopeVideoApi {
 	 */
     public ResponseEntity<DashScopeVideoResponse> submitVideoGenTask(DashScopeVideoRequest request) {
         logger.debug("Submitting video generation task with options: {}", request);
-        String uri = DashScopeVidoeApiConstants.getPathByModelName(request.getModel());
-        boolean detect = DashScopeVidoeApiConstants.isDetect(request.getModel());
+        String uri = DashScopeVideoApiConstants.getPathByModelName(request.getModel());
+        boolean detect = DashScopeVideoApiConstants.isDetect(request.getModel());
 
         var requestSpec = this.restClient.post().uri(uri).body(request);
 
