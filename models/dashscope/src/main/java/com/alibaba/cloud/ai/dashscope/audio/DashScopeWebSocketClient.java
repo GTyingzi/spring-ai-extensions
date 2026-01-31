@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.alibaba.cloud.ai.dashscope.api.ApiUtils;
-import com.alibaba.cloud.ai.dashscope.audio.model.AudioDataWithMetadata;
 import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioEventMessage;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -69,8 +68,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	FluxSink<ByteBuffer> binaryEmitter;
 
 	FluxSink<String> textEmitter;
-
-	FluxSink<AudioDataWithMetadata> audioWithMetadataEmitter;
 
     private String continueTaskMessage;
 
@@ -322,10 +319,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			this.textEmitter.complete();
 			logger.info("done");
 		}
-		if (this.audioWithMetadataEmitter != null && !this.audioWithMetadataEmitter.isCancelled()) {
-			logger.info("audio with metadata emitter handling: complete on {}", event);
-			this.audioWithMetadataEmitter.complete();
-		}
 	}
 
 	private void emittersError(String event, Throwable t) {
@@ -336,10 +329,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		if (this.textEmitter != null && !this.textEmitter.isCancelled()) {
 			logger.info("text emitter handling: error on {}", event);
 			this.textEmitter.error(t);
-		}
-		if (this.audioWithMetadataEmitter != null && !this.audioWithMetadataEmitter.isCancelled()) {
-			logger.info("audio with metadata emitter handling: error on {}", event);
-			this.audioWithMetadataEmitter.error(t);
 		}
 	}
 

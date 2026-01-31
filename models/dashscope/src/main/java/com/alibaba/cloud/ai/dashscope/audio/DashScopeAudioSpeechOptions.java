@@ -16,7 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.audio;
 
 import com.alibaba.cloud.ai.dashscope.audio.model.AudioCommonType.TextType;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.audio.tts.TextToSpeechOptions;
 
@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 
-    public static final String DEFAULT_MODEL = DashScopeModel.AudioModel.COSYVOICE_V1.getValue();
+    public static final String DEFAULT_MODEL = AudioModel.SAMBERT_ZHICHU_V1.getValue();
 
     @JsonProperty("model")
     private String model;
@@ -40,7 +40,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 	private String textType = TextType.PLAIN_TEXT.getValue();
 
     @JsonProperty("voice")
-    private String voice = "longwan";
+    private String voice = "longanyang";
 
     @JsonProperty("format")
     private String format;
