@@ -22,6 +22,7 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionModel;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
+import com.alibaba.cloud.ai.dashscope.audio.model.AudioCommonType;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
@@ -238,8 +239,8 @@ public class DashScopePropertiesTests {
 
 				assertThat(speechProperties.getOptions().getModel()).isEqualTo("TTS_1");
 				assertThat(speechProperties.getOptions().getVoice()).isEqualTo("longhua_test");
-				assertThat(speechProperties.getOptions().getResponseFormat())
-					.isEqualTo(DashScopeAudioSpeechApi.ResponseFormat.MP3);
+				assertThat(speechProperties.getOptions().getFormat())
+					.isEqualTo(AudioCommonType.Format.MP3);
 				assertThat(speechProperties.getOptions().getSpeed()).isEqualTo(0.75f);
 			});
 	}
@@ -270,8 +271,8 @@ public class DashScopePropertiesTests {
 
 				assertThat(speechProperties.getOptions().getModel()).isEqualTo("TTS_2");
 				assertThat(speechProperties.getOptions().getVoice()).isEqualTo("echo");
-				assertThat(speechProperties.getOptions().getResponseFormat())
-					.isEqualTo(DashScopeAudioSpeechApi.ResponseFormat.PCM);
+				assertThat(speechProperties.getOptions().getFormat())
+					.isEqualTo(AudioCommonType.Format.PCM);
 				assertThat(speechProperties.getOptions().getSpeed()).isEqualTo(0.8);
 			});
 	}

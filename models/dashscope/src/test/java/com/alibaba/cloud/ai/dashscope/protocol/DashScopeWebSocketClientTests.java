@@ -23,6 +23,8 @@ import static org.mockito.Mockito.when;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okio.ByteString;

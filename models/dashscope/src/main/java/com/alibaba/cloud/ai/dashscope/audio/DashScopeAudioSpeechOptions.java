@@ -15,379 +15,432 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.alibaba.cloud.ai.dashscope.audio.model.AudioCommonType.TextType;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.audio.tts.TextToSpeechOptions;
 
 import java.util.List;
 
 /**
+ * DashScope Audio Speech Options.
+ *
  * @author kevinlin09
  * @author xuguan
+ * @author yingzi
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 
-	// @formatter:off
-    /**
-     * Audio Speech models.
-     */
+    public static final String DEFAULT_MODEL = DashScopeModel.AudioModel.COSYVOICE_V1.getValue();
+
     @JsonProperty("model")
     private String model;
 
-    /**
-     * Text content.
-     */
-    @JsonProperty("text")
-    private String text;
+	@JsonProperty("text_type")
+	private String textType = TextType.PLAIN_TEXT.getValue();
 
-	/**
-	 * Voice, only for tts v2.
-	 */
-	@JsonProperty("voice")
-	private String voice;
+    @JsonProperty("voice")
+    private String voice = "longwan";
 
-	/**
-	 * Input Text type.
-	 */
-	@JsonProperty("request_text_type")
-	private DashScopeAudioSpeechApi.RequestTextType requestTextType = DashScopeAudioSpeechApi.RequestTextType.PLAIN_TEXT;
+    @JsonProperty("format")
+    private String format = "mp3";
 
-    /**
-     * synthesis audio sample rate.
-     */
     @JsonProperty("sample_rate")
-    private Integer sampleRate = 48000;
+    private Integer sampleRate = 22050;
 
-    /**
-     * synthesis audio volume.
-     */
     @JsonProperty("volume")
     private Integer volume = 50;
 
-    /**
-     * synthesis audio speed.
-     */
+    @JsonProperty("rate")
+    private Float rate = 1.0f;
+
+    @JsonProperty("pitch")
+    private Float pitch = 1.0f;
+
+    @JsonProperty("enable_ssml")
+    private Boolean enableSsml;
+
+    @JsonProperty("bit_rate")
+    private Integer bitRate = 32;
+
     @JsonProperty("speed")
     private Double speed = 1.0;
 
-    /**
-     * synthesis audio pitch.
-     */
-    @JsonProperty("pitch")
-    private Double pitch = 1.0;
+    @JsonProperty("seed")
+    private Integer seed = 0;
 
-    /**
-     * enable word level timestamp.
-     */
-    @JsonProperty("enable_word_timestamp")
-    private Boolean enableWordTimestamp = false;
+    @JsonProperty("word_timestamp_enabled")
+    private Boolean wordTimestampEnabled = false;
 
-    /**
-     * enable phoneme level timestamp.
-     */
-    @JsonProperty("enable_phoneme_timestamp")
-    private Boolean enablePhonemeTimestamp = false;
+    @JsonProperty("phoneme_timestamp_enabled")
+    private Boolean phonemeTimestampEnabled = false;
 
-	/**
-	 * Whether SSML is enabled. When this parameter is set to true,
-	 * text is only allowed to be sent once,
-	 * and plain text or text containing SSML is supported.
-	 */
-	@JsonProperty("enable_ssml")
-	private Boolean enableSsml;
-
-	/**
-	 * Audio bit rate.
-	 */
-	@JsonProperty("bit_rate")
-	private Integer bitRate;
-
-	/**
-	 * The random number seed used at the time of generation.
-	 */
-	@JsonProperty("seed")
-	private Integer seed;
-
-	/**
-	 * Synthetic Text Language.
-	 */
 	@JsonProperty("language_hints")
 	private List<String> languageHints;
 
-	/**
-	 * 	Set prompt words.
-	 * 	Only cosyvoice-v3 and cosyvoice-v3-plus support this feature.
-	 * 	Currently only emotions are supported.
-	 */
-	@JsonProperty("instruction")
-	private String instruction;
+    @JsonProperty("instruction")
+    private String instruction;
+
+    @JsonProperty("enable_aigc_tag")
+    private Boolean enableAigcTag;
+
+    @JsonProperty("aigc_propagator")
+    private String aigcPropagator;
+
+    @JsonProperty("aigc_propagate_id")
+    private String aigcPropagateId;
+
+    @JsonProperty("language_type")
+    private String languageType = "Auto";
+
+    @Override
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    @Override
+    public String getVoice() {
+        return voice;
+    }
+
+    public void setVoice(String voice) {
+        this.voice = voice;
+    }
+
+    public String getTextType() {
+        return textType;
+    }
+
+    public void setTextType(String textType) {
+        this.textType = textType;
+    }
+
+    public Boolean getEnableAigcTag() {
+        return enableAigcTag;
+    }
+
+    public void setEnableAigcTag(Boolean enableAigcTag) {
+        this.enableAigcTag = enableAigcTag;
+    }
+
+    public String getAigcPropagator() {
+        return aigcPropagator;
+    }
+
+    public void setAigcPropagator(String aigcPropagator) {
+        this.aigcPropagator = aigcPropagator;
+    }
+
+    public String getAigcPropagateId() {
+        return aigcPropagateId;
+    }
+
+    public void setAigcPropagateId(String aigcPropagateId) {
+        this.aigcPropagateId = aigcPropagateId;
+    }
+
+    public Integer getSampleRate() {
+        return sampleRate;
+    }
+
+    public void setSampleRate(Integer sampleRate) {
+        this.sampleRate = sampleRate;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
+    public Boolean getWordTimestampEnabled() {
+        return wordTimestampEnabled;
+    }
+
+    public void setWordTimestampEnabled(Boolean wordTimestampEnabled) {
+        this.wordTimestampEnabled = wordTimestampEnabled;
+    }
+
+    public Boolean getPhonemeTimestampEnabled() {
+        return phonemeTimestampEnabled;
+    }
+
+    public void setPhonemeTimestampEnabled(Boolean phonemeTimestampEnabled) {
+        this.phonemeTimestampEnabled = phonemeTimestampEnabled;
+    }
+
+    public Integer getVolume() {
+        return volume;
+    }
+
+    public void setVolume(Integer volume) {
+        this.volume = volume;
+    }
+
+    @Override
+    public Double getSpeed() {
+        return speed;
+    }
+
+    @Override
+    public <T extends TextToSpeechOptions> T copy() {
+        return null;
+    }
+
+    public void setSpeed(Double speed) {
+        this.speed = speed;
+    }
+
+    public float getRate() {
+        return rate;
+    }
+
+    public void setRate(float rate) {
+        this.rate = rate;
+    }
+
+    public void setResponseFormat(String format) {
+        this.format = format;
+    }
+
+    @Override
+    public String getFormat() {
+        return format;
+    }
+
+    public Float getPitch() {
+        return pitch;
+    }
+
+    public void setPitch(Float pitch) {
+        this.pitch = pitch;
+    }
+
+    public Boolean getEnableSsml() {
+        return enableSsml;
+    }
+
+    public void setEnableSsml(Boolean enableSsml) {
+        this.enableSsml = enableSsml;
+    }
+
+    public Integer getBitRate() {
+        return bitRate;
+    }
+
+    public void setBitRate(Integer bitRate) {
+        this.bitRate = bitRate;
+    }
+
+    public Integer getSeed() {
+        return seed;
+    }
+
+    public void setSeed(Integer seed) {
+        this.seed = seed;
+    }
+
+    public List<String> getLanguageHints() {
+        return languageHints;
+    }
+
+    public void setLanguageHints(List<String> languageHints) {
+        this.languageHints = languageHints;
+    }
+
+    public String getInstruction() {
+        return instruction;
+    }
+
+    public void setInstruction(String instruction) {
+        this.instruction = instruction;
+    }
+
+    public String getLanguageType() {
+        return languageType;
+    }
+
+    public void setLanguageType(String languageType) {
+        this.languageType = languageType;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
 
     /**
-     * The format of the audio output. Supported formats are mp3, wav, and pcm. Defaults
-     * to mp3.
+     * Builder for DashScopeAudioSpeechOptions.
      */
-    @JsonProperty("response_format")
-    private DashScopeAudioSpeechApi.ResponseFormat responseFormat = DashScopeAudioSpeechApi.ResponseFormat.MP3;
+    public static class Builder {
 
-    // @formatter:on
+        private String model;
 
-	public static Builder builder() {
-		return new Builder();
-	}
+        private String textType = TextType.PLAIN_TEXT.getValue();
 
-	@Override
-	public String getModel() {
-		return this.model;
-	}
+        private String voice = "longwan";
 
-	public void setModel(String model) {
-		this.model = model;
-	}
+        private String format = "mp3";
 
-	public String getText() {
-		return this.text;
-	}
+        private Integer sampleRate = 22050;
 
-	public void setText(String text) {
-		this.text = text;
-	}
+        private Integer volume = 50;
 
-	@Override
-	public String getVoice() {
-		return this.voice;
-	}
+        private float rate = 1.0f;
 
-	public void setVoice(String voice) {
-		this.voice = voice;
-	}
+        private float pitch = 1.0f;
 
-	public DashScopeAudioSpeechApi.RequestTextType getRequestTextType() {
-		return this.requestTextType;
-	}
+        private Boolean enableSsml;
 
-	public void setRequestTextType(DashScopeAudioSpeechApi.RequestTextType requestTextType) {
-		this.requestTextType = requestTextType;
-	}
+        private Integer bitRate = 32;
 
-	public Integer getSampleRate() {
-		return this.sampleRate;
-	}
+        private Double speed = 1.0;
 
-	public void setSampleRate(Integer sampleRate) {
-		this.sampleRate = sampleRate;
-	}
+        private Integer seed = 0;
 
-	public Integer getVolume() {
-		return this.volume;
-	}
+        private Boolean wordTimestampEnabled = false;
 
-	public void setVolume(Integer volume) {
-		this.volume = volume;
-	}
+        private Boolean phonemeTimestampEnabled = false;
 
-	@Override
-	public Double getSpeed() {
-		return this.speed;
-	}
+        private List<String> languageHints;
 
-	public void setSpeed(Double speed) {
-		this.speed = speed;
-	}
+        private String instruction;
 
-	public Double getPitch() {
-		return this.pitch;
-	}
+        private Boolean enableAigcTag;
 
-	public void setPitch(Double pitch) {
-		this.pitch = pitch;
-	}
+        private String aigcPropagator;
 
-	public Boolean getEnableWordTimestamp() {
-		return this.enableWordTimestamp;
-	}
+        private String aigcPropagateId;
 
-	public void setEnableWordTimestamp(Boolean enableWordTimestamp) {
-		this.enableWordTimestamp = enableWordTimestamp;
-	}
+        private String languageType = "Auto";
 
-	public Boolean getEnablePhonemeTimestamp() {
-		return this.enablePhonemeTimestamp;
-	}
+        public Builder model(String model) {
+            this.model = model;
+            return this;
+        }
 
-	public void setEnablePhonemeTimestamp(Boolean enablePhonemeTimestamp) {
-		this.enablePhonemeTimestamp = enablePhonemeTimestamp;
-	}
+        public Builder textType(String textType) {
+            this.textType = textType;
+            return this;
+        }
 
-	public Boolean getEnableSsml() {
-		return this.enableSsml;
-	}
+        public Builder voice(String voice) {
+            this.voice = voice;
+            return this;
+        }
 
-	public void setEnableSsml(Boolean enableSsml) {
-		this.enableSsml = enableSsml;
-	}
+        public Builder format(String format) {
+            this.format = format;
+            return this;
+        }
 
-	public Integer getBitRate() {
-		return bitRate;
-	}
+        public Builder sampleRate(Integer sampleRate) {
+            this.sampleRate = sampleRate;
+            return this;
+        }
 
-	public void setBitRate(Integer bitRate) {
-		this.bitRate = bitRate;
-	}
+        public Builder volume(Integer volume) {
+            this.volume = volume;
+            return this;
+        }
 
-	public Integer getSeed() {
-		return this.seed;
-	}
+        public Builder rate(float rate) {
+            this.rate = rate;
+            return this;
+        }
 
-	public void setSeed(Integer seed) {
-		this.seed = seed;
-	}
+        public Builder pitch(Float pitch) {
+            this.pitch = pitch;
+            return this;
+        }
 
-	public List<String> getLanguageHints() {
-		return this.languageHints;
-	}
+        public Builder enableSsml(Boolean enableSsml) {
+            this.enableSsml = enableSsml;
+            return this;
+        }
 
-	public void setLanguageHints(List<String> languageHints) {
-		this.languageHints = languageHints;
-	}
+        public Builder bitRate(Integer bitRate) {
+            this.bitRate = bitRate;
+            return this;
+        }
 
-	public String getInstruction() {
-		return this.instruction;
-	}
+        public Builder speed(Double speed) {
+            this.speed = speed;
+            return this;
+        }
 
-	public void setInstruction(String instruction) {
-		this.instruction = instruction;
-	}
+        public Builder seed(Integer seed) {
+            this.seed = seed;
+            return this;
+        }
 
-	public DashScopeAudioSpeechApi.ResponseFormat getResponseFormat() {
-		return this.responseFormat;
-	}
+        public Builder wordTimestampEnabled(Boolean wordTimestampEnabled) {
+            this.wordTimestampEnabled = wordTimestampEnabled;
+            return this;
+        }
 
-	public void setResponseFormat(DashScopeAudioSpeechApi.ResponseFormat responseFormat) {
-		this.responseFormat = responseFormat;
-	}
+        public Builder phonemeTimestampEnabled(Boolean phonemeTimestampEnabled) {
+            this.phonemeTimestampEnabled = phonemeTimestampEnabled;
+            return this;
+        }
 
-	@Override
-	public String getFormat() {
-		return this.responseFormat == null ? null : this.responseFormat.getValue();
-	}
+        public Builder languageHints(List<String> languageHints) {
+            this.languageHints = languageHints;
+            return this;
+        }
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public DashScopeAudioSpeechOptions copy() {
-		return DashScopeAudioSpeechOptions.builder()
-			.model(this.model)
-			.text(this.text)
-			.voice(this.voice)
-			.requestTextType(this.requestTextType)
-			.sampleRate(this.sampleRate)
-			.volume(this.volume)
-			.speed(this.speed)
-			.pitch(this.pitch)
-			.enableWordTimestamp(this.enableWordTimestamp)
-			.enablePhonemeTimestamp(this.enablePhonemeTimestamp)
-			.enableSsml(this.enableSsml)
-			.bitRate(this.bitRate)
-			.seed(this.seed)
-			.languageHints(this.languageHints)
-			.instruction(this.instruction)
-			.responseFormat(this.responseFormat)
-			.build();
-	}
+        public Builder instruction(String instruction) {
+            this.instruction = instruction;
+            return this;
+        }
 
-	/**
-	 * Build an options instances.
-	 */
-	public static class Builder {
+        public Builder enableAigcTag(Boolean enableAigcTag) {
+            this.enableAigcTag = enableAigcTag;
+            return this;
+        }
 
-		private final DashScopeAudioSpeechOptions options = new DashScopeAudioSpeechOptions();
+        public Builder aigcPropagator(String aigcPropagator) {
+            this.aigcPropagator = aigcPropagator;
+            return this;
+        }
 
-		public DashScopeAudioSpeechOptions.Builder model(String model) {
-			options.model = model;
-			return this;
-		}
+        public Builder aigcPropagateId(String aigcPropagateId) {
+            this.aigcPropagateId = aigcPropagateId;
+            return this;
+        }
 
-		public DashScopeAudioSpeechOptions.Builder text(String text) {
-			options.text = text;
-			return this;
-		}
+        public Builder languageType(String languageType) {
+            this.languageType = languageType;
+            return this;
+        }
 
-		public DashScopeAudioSpeechOptions.Builder voice(String voice) {
-			options.voice = voice;
-			return this;
-		}
+        public DashScopeAudioSpeechOptions build() {
+            DashScopeAudioSpeechOptions options = new DashScopeAudioSpeechOptions();
+            options.model = this.model;
+            options.textType = this.textType;
+            options.voice = this.voice;
+            options.format = this.format;
+            options.sampleRate = this.sampleRate;
+            options.volume = this.volume;
+            options.rate = this.rate;
+            options.pitch = this.pitch;
+            options.enableSsml = this.enableSsml;
+            options.bitRate = this.bitRate;
+            options.speed = this.speed;
+            options.seed = this.seed;
+            options.wordTimestampEnabled = this.wordTimestampEnabled;
+            options.phonemeTimestampEnabled = this.phonemeTimestampEnabled;
+            options.languageHints = this.languageHints;
+            options.instruction = this.instruction;
+            options.enableAigcTag = this.enableAigcTag;
+            options.aigcPropagator = this.aigcPropagator;
+            options.aigcPropagateId = this.aigcPropagateId;
+            options.languageType = this.languageType;
+            return options;
+        }
 
-		public DashScopeAudioSpeechOptions.Builder requestTextType(
-				DashScopeAudioSpeechApi.RequestTextType requestTextType) {
-			options.requestTextType = requestTextType;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder sampleRate(Integer sampleRate) {
-			options.sampleRate = sampleRate;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder volume(Integer volume) {
-			options.volume = volume;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder speed(Double speed) {
-			options.speed = speed;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder responseFormat(DashScopeAudioSpeechApi.ResponseFormat format) {
-			options.responseFormat = format;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder pitch(Double pitch) {
-			options.pitch = pitch;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder enableWordTimestamp(Boolean enableWordTimestamp) {
-			options.enableWordTimestamp = enableWordTimestamp;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder enablePhonemeTimestamp(Boolean enablePhonemeTimestamp) {
-			options.enablePhonemeTimestamp = enablePhonemeTimestamp;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder enableSsml(Boolean enableSsml) {
-			options.enableSsml = enableSsml;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder bitRate(Integer bitRate) {
-			options.bitRate = bitRate;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder seed(Integer seed) {
-			options.seed = seed;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder languageHints(List<String> languageHints) {
-			options.languageHints = languageHints;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions.Builder instruction(String instruction) {
-			options.instruction = instruction;
-			return this;
-		}
-
-		public DashScopeAudioSpeechOptions build() {
-			return options;
-		}
-
-	}
+    }
 
 }

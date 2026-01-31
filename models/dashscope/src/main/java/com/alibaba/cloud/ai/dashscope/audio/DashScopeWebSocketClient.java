@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.cloud.ai.dashscope.protocol;
+package com.alibaba.cloud.ai.dashscope.audio;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.alibaba.cloud.ai.dashscope.api.ApiUtils;
+import com.alibaba.cloud.ai.dashscope.audio.model.AudioDataWithMetadata;
+import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioEventMessage;
+import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -71,12 +70,18 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	FluxSink<String> textEmitter;
 
-    private final CompletableFuture<Void> connectionReadyFuture;
+	FluxSink<AudioDataWithMetadata> audioWithMetadataEmitter;
+
+	// Event context for correlating binary audio data with events
+	private volatile Integer currentSentenceIndex;
+
+	private volatile String currentTaskId;
+
+	private volatile String currentEventType;
 
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
 		this.options = options;
 		this.isOpen = new AtomicBoolean(false);
-        this.connectionReadyFuture = new CompletableFuture<>();
 		this.objectMapper = JsonMapper.builder()
 			// Deserialization configuration
 			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
@@ -99,6 +104,93 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		return flux;
 	}
 
+	/**
+	 * Stream binary output using event-driven duplex flow for CosyVoice.
+	 * This implements the official protocol specification:
+	 * 1. Send run-task
+	 * 2. Wait for task-started event
+	 * 3. Send continue-task
+	 * 4. Send finish-task
+	 * 5. Wait for task-finished event
+	 *
+	 * @param runTaskMessage the run-task JSON message
+	 * @param continueTaskMessage the continue-task JSON message
+	 * @param finishTaskMessage the finish-task JSON message
+	 * @return the binary data flux
+	 */
+	public Flux<ByteBuffer> streamDuplexWithEvents(String runTaskMessage, String continueTaskMessage,
+			String finishTaskMessage) {
+		// Prepare the messages to be sent
+		this.pendingRunTaskMessage = runTaskMessage;
+		this.pendingContinueTaskMessage = continueTaskMessage;
+		this.pendingFinishTaskMessage = finishTaskMessage;
+		this.duplexState = DuplexState.RUN_TASK_SENT;
+
+		return Flux.<ByteBuffer>create(emitter -> {
+			this.binaryEmitter = emitter;
+
+			// Send run-task first
+			logger.info("Event-driven duplex: Sending run-task message");
+			sendText(runTaskMessage);
+
+		}, FluxSink.OverflowStrategy.BUFFER);
+	}
+
+	/**
+	 * Stream binary output with metadata using event-driven duplex flow for CosyVoice.
+	 * This method returns {@link AudioDataWithMetadata} which includes both the audio data
+	 * and event context (sentence index, task ID, etc.).
+	 *
+	 * This implements the official protocol specification:
+	 * 1. Send run-task
+	 * 2. Wait for task-started event
+	 * 3. Send continue-task
+	 * 4. Send finish-task
+	 * 5. Wait for task-finished event
+	 *
+	 * @param runTaskMessage the run-task JSON message
+	 * @param continueTaskMessage the continue-task JSON message
+	 * @param finishTaskMessage the finish-task JSON message
+	 * @return the audio data with metadata flux
+	 */
+	public Flux<AudioDataWithMetadata> streamDuplexWithMetadata(String runTaskMessage, String continueTaskMessage,
+			String finishTaskMessage) {
+		// Prepare the messages to be sent
+		this.pendingRunTaskMessage = runTaskMessage;
+		this.pendingContinueTaskMessage = continueTaskMessage;
+		this.pendingFinishTaskMessage = finishTaskMessage;
+		this.duplexState = DuplexState.RUN_TASK_SENT;
+
+		// Reset event context
+		this.currentSentenceIndex = null;
+		this.currentTaskId = null;
+		this.currentEventType = null;
+
+		return Flux.<AudioDataWithMetadata>create(emitter -> {
+			this.audioWithMetadataEmitter = emitter;
+
+			// Send run-task first
+			logger.info("Event-driven duplex with metadata: Sending run-task message");
+			sendText(runTaskMessage);
+
+		}, FluxSink.OverflowStrategy.BUFFER);
+	}
+
+	// Duplex flow state tracking
+	private enum DuplexState {
+
+		RUN_TASK_SENT, WAITING_TASK_STARTED, CONTINUE_TASK_SENT, FINISH_TASK_SENT, COMPLETED
+
+	}
+
+	private DuplexState duplexState = DuplexState.COMPLETED;
+
+	private String pendingRunTaskMessage;
+
+	private String pendingContinueTaskMessage;
+
+	private String pendingFinishTaskMessage;
+
 	public Flux<String> streamTextOut(Flux<ByteBuffer> binary) {
 		Flux<String> flux = Flux.<String>create(emitter -> {
 			this.textEmitter = emitter;
@@ -110,9 +202,15 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	}
 
 	public void sendText(String text) {
-		if (!isOpen.get()) {
-			establishWebSocketClient();
-		}
+        if (!isOpen.get()) {
+            establishWebSocketClient();
+            try {
+                TimeUnit.SECONDS.sleep(Constants.DEFAULT_READY_TIMEOUT);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // 恢复中断状态
+                throw new RuntimeException("Interrupted while waiting for WebSocket connection", e);
+            }
+        }
 
 		boolean success = webSocketClient.send(text);
 
@@ -188,7 +286,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	public void onOpen(WebSocket webSocket, Response response) {
 		logger.info("receive ws event onOpen: handle={}, body={}", webSocket, getRequestBody(response));
 		isOpen.set(true);
-        connectionReadyFuture.complete(null);
 	}
 
 	@Override
@@ -211,7 +308,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 				getRequestBody(response));
 		logger.error("receive ws event onFailure: handle={}, {}", webSocket, failureMessage);
 		isOpen.set(false);
-        connectionReadyFuture.completeExceptionally(new Exception(failureMessage, t));
 		emittersError("failure", new Exception(failureMessage, t));
 	}
 
@@ -220,30 +316,41 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		logger.debug("receive ws event onMessage(text): handle={}, text={}", webSocket, text);
 
 		try {
-			EventMessage message = this.objectMapper.readValue(text, EventMessage.class);
-			switch (message.header.event) {
+            DashScopeAudioEventMessage message = this.objectMapper.readValue(text, DashScopeAudioEventMessage.class);
+			switch (message.header().event()) {
 				case TASK_STARTED:
 					logger.info("task started: text={}", text);
+					// Handle event-driven duplex flow
+					handleTaskStartedEvent();
 					break;
 				case TASK_FINISHED:
 					logger.info("task finished: text={}", text);
+					// Mark duplex flow as completed
+					if (this.duplexState != DuplexState.COMPLETED) {
+						this.duplexState = DuplexState.COMPLETED;
+					}
 					emittersComplete("finished");
 					break;
 				case TASK_FAILED:
-                    String errorCode = message.header.code != null ? message.header.code : "UNKNOWN";
+                    String errorCode = message.header().code() != null ? message.header().code() : "UNKNOWN";
                     String errorMessage =
-                            message.header.message != null ? message.header.message : "No error message provided";
+                            message.header().message() != null ? message.header().message() : "No error message provided";
                     String errorDetail = String.format("Task failed with error_code='%s', error_message='%s'", errorCode, errorMessage);
                     logger.error("task failed: text={}, error_code={}, error_message={}", text, errorCode, errorMessage);
+                    // Reset duplex state on error
+                    this.duplexState = DuplexState.COMPLETED;
                     emittersError("task failed", new Exception(errorDetail));
 					break;
 				case RESULT_GENERATED:
+                    logger.info("result generated: text={}", text);
+                    // Track event context for binary audio correlation
+                    trackEventContext(message);
 					if (this.textEmitter != null) {
 						textEmitter.next(text);
 					}
 					break;
 				default:
-                    String eventName = message.header.event != null ? message.header.event.getValue() : "UNKNOWN_EVENT";
+                    String eventName = message.header().event().getValue();
                     String unsupportedError = String.format("Unsupported event type: %s", eventName);
                     logger.error("task error: text={}, event={}", text, eventName);
                     emittersError("unsupported event", new Exception(unsupportedError));
@@ -254,11 +361,97 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		}
 	}
 
+	/**
+	 * Handle task-started event for event-driven duplex flow.
+	 */
+	private void handleTaskStartedEvent() {
+		if (this.duplexState == DuplexState.RUN_TASK_SENT
+				|| this.duplexState == DuplexState.WAITING_TASK_STARTED) {
+			logger.info("Event-driven duplex: Received task-started, sending continue-task");
+			this.duplexState = DuplexState.CONTINUE_TASK_SENT;
+			sendText(this.pendingContinueTaskMessage);
+
+			// After a short delay, send finish-task
+			try {
+				TimeUnit.MILLISECONDS.sleep(500);
+				logger.info("Event-driven duplex: Sending finish-task");
+				this.duplexState = DuplexState.FINISH_TASK_SENT;
+				sendText(this.pendingFinishTaskMessage);
+			}
+			catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				logger.error("Interrupted while sending finish-task", e);
+			}
+		}
+	}
+
+	/**
+	 * Track event context for correlating binary audio data with events.
+	 * When a sentence-synthesis event is received, store the sentence index and task ID
+	 * so that the subsequent binary audio data can be associated with this event.
+	 *
+	 * @param message the event message
+	 */
+	private void trackEventContext(DashScopeAudioEventMessage message) {
+		if (message.payload() == null || message.payload().output() == null) {
+			return;
+		}
+
+		var output = message.payload().output();
+		var typeNode = output.get("type");
+		var sentenceNode = output.get("sentence");
+
+		// Check if this is a sentence-synthesis event
+		if (typeNode != null && "sentence-synthesis".equals(typeNode.asText())) {
+			this.currentEventType = "sentence-synthesis";
+
+			// Extract task ID
+			if (message.header() != null && message.header().taskId() != null) {
+				this.currentTaskId = message.header().taskId();
+			}
+
+			// Extract sentence index
+			if (sentenceNode != null) {
+				var indexNode = sentenceNode.get("index");
+				if (indexNode != null && indexNode.isInt()) {
+					this.currentSentenceIndex = indexNode.asInt();
+					logger.debug("Tracking sentence-synthesis event: taskId={}, sentenceIndex={}",
+							this.currentTaskId, this.currentSentenceIndex);
+				}
+			}
+		}
+		// Clear context for other event types
+		else if (typeNode != null && "sentence-end".equals(typeNode.asText())) {
+			this.currentSentenceIndex = null;
+			this.currentEventType = null;
+		}
+	}
+
 	@Override
 	public void onMessage(WebSocket webSocket, ByteString bytes) {
 		logger.debug("receive ws event onMessage(bytes): handle={}, size={}", webSocket, bytes.size());
+		ByteBuffer audioData = bytes.asByteBuffer();
+
+		// Emit to binary emitter (legacy behavior)
 		if (this.binaryEmitter != null) {
-			binaryEmitter.next(bytes.asByteBuffer());
+			binaryEmitter.next(audioData);
+		}
+
+		// Emit to metadata emitter if available
+		if (this.audioWithMetadataEmitter != null) {
+			AudioDataWithMetadata audioWithMetadata;
+			if (this.currentSentenceIndex != null && this.currentTaskId != null) {
+				// Create with event context
+				audioWithMetadata = AudioDataWithMetadata.fromSentence(
+						audioData, this.currentSentenceIndex, this.currentTaskId);
+				logger.debug("Emitting audio with metadata: sentenceIndex={}, size={}",
+						this.currentSentenceIndex, bytes.size());
+			}
+			else {
+				// Create without event context (fallback)
+				audioWithMetadata = AudioDataWithMetadata.of(audioData);
+			}
+			this.audioWithMetadataEmitter.next(audioWithMetadata);
 		}
 	}
 
@@ -272,27 +465,11 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			this.textEmitter.complete();
 			logger.info("done");
 		}
+		if (this.audioWithMetadataEmitter != null && !this.audioWithMetadataEmitter.isCancelled()) {
+			logger.info("audio with metadata emitter handling: complete on {}", event);
+			this.audioWithMetadataEmitter.complete();
+		}
 	}
-
-    /**
-     * Ensure WebSocket connection is established and wait for it to be ready.
-     * This method will trigger connection establishment if not already connected,
-     * and block until the connection is ready or timeout occurs.
-     *
-     * @param timeout the maximum time to wait for connection
-     * @param unit    the time unit of the timeout argument
-     *
-     * @throws java.util.concurrent.TimeoutException   if connection is not ready within timeout
-     * @throws InterruptedException                    if the current thread is interrupted while waiting
-     * @throws java.util.concurrent.ExecutionException if connection fails
-     */
-    public void ensureConnectionReady(long timeout, TimeUnit unit) throws TimeoutException, InterruptedException, ExecutionException {
-        if (!isOpen.get()) {
-            establishWebSocketClient();
-        }
-        connectionReadyFuture.get(timeout, unit);
-        logger.info("WebSocket connection is ready");
-    }
 
 	private void emittersError(String event, Throwable t) {
 		if (this.binaryEmitter != null && !this.binaryEmitter.isCancelled()) {
@@ -302,6 +479,10 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		if (this.textEmitter != null && !this.textEmitter.isCancelled()) {
 			logger.info("text emitter handling: error on {}", event);
 			this.textEmitter.error(t);
+		}
+		if (this.audioWithMetadataEmitter != null && !this.audioWithMetadataEmitter.isCancelled()) {
+			logger.info("audio with metadata emitter handling: error on {}", event);
+			this.audioWithMetadataEmitter.error(t);
 		}
 	}
 
@@ -314,6 +495,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		private static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(300);
 
 		private static final Duration DEFAULT_CONNECTION_IDLE_TIMEOUT = Duration.ofSeconds(300);
+
+        private static final Integer DEFAULT_READY_TIMEOUT = 1;
 
 		private static final Integer DEFAULT_CONNECTION_POOL_SIZE = 32;
 
@@ -361,23 +544,5 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			return value;
 		}
 	}
-
-	@JsonInclude(JsonInclude.Include.NON_NULL)
-	public record EventMessage(
-		@JsonProperty("header") EventMessageHeader header,
-		@JsonProperty("payload") EventMessagePayload payload
-	) {
-		public record EventMessageHeader (
-			@JsonProperty("task_id") String taskId,
-			@JsonProperty("event") EventType event,
-			@JsonProperty("error_code") String code,
-			@JsonProperty("error_message") String message
-		){}
-		public record EventMessagePayload(
-			@JsonProperty("output") JsonNode output,
-			@JsonProperty("usage")  JsonNode usage
-		){}
-	}
-	// @formatter:on
 
 }

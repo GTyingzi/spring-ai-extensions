@@ -16,9 +16,7 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechOptions;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -34,21 +32,8 @@ public class DashScopeAudioSpeechSynthesisProperties extends DashScopeParentProp
 	 */
 	public static final String CONFIG_PREFIX = "spring.ai.dashscope.audio.synthesis";
 
-	private final String DEFAULT_MODEL = DashScopeModel.AudioModel.COSYVOICE_V1.getValue();
-
-	private static final Double SPEED = 1.0;
-
-	private static final String DEFAULT_VOICE = "longhua";
-
-	private static final DashScopeAudioSpeechApi.ResponseFormat DEFAULT_RESPONSE_FORMAT = DashScopeAudioSpeechApi.ResponseFormat.MP3;
-
 	@NestedConfigurationProperty
-	private DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder()
-		.model(DEFAULT_MODEL)
-		.voice(DEFAULT_VOICE)
-		.speed(SPEED)
-		.responseFormat(DEFAULT_RESPONSE_FORMAT)
-		.build();
+	private DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder().build();
 
 	public DashScopeAudioSpeechOptions getOptions() {
 		return options;

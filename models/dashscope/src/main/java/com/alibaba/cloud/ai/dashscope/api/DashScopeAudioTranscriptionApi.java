@@ -20,12 +20,12 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
-import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClient;
+import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -143,14 +143,6 @@ public class DashScopeAudioTranscriptionApi {
 
 		return new Builder();
 	}
-
-    public void ensureWebSocketConnectionReady(long timeout, TimeUnit unit) {
-        try {
-            this.webSocketClient.ensureConnectionReady(timeout, unit);
-        } catch (Exception e) {
-            throw new DashScopeException("Failed to establish WebSocket connection", e);
-        }
-    }
 
 	public ResponseEntity<Response> submitTask(DashScopeAudioTranscriptionApi.Request request) {
 		return this.restClient.post()
@@ -505,7 +497,7 @@ public class DashScopeAudioTranscriptionApi {
 
 		private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
 
-		private String webSocketUrl = DashScopeApiConstants.DEFAULT_WEBSOCKET_URL;
+		private String webSocketUrl = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
 
 		private RestClient.Builder restClientBuilder = RestClient.builder();
 

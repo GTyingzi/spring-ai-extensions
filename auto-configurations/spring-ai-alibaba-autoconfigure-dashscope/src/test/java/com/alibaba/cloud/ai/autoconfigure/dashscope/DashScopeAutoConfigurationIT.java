@@ -18,6 +18,7 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechOptions;
+import com.alibaba.cloud.ai.dashscope.audio.model.AudioCommonType;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
@@ -94,7 +95,7 @@ public class DashScopeAutoConfigurationIT {
 				byte[] response = speechModel
 					.call(new TextToSpeechPrompt("H",
 							DashScopeAudioSpeechOptions.builder()
-								.responseFormat(DashScopeAudioSpeechApi.ResponseFormat.MP3)
+								.format(AudioCommonType.Format.MP3.getValue())
 								.build()))
 					.getResult()
 					.getOutput();

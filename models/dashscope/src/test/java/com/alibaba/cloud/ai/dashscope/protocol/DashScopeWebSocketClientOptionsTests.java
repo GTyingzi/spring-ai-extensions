@@ -17,7 +17,7 @@ package com.alibaba.cloud.ai.dashscope.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -37,7 +37,7 @@ class DashScopeWebSocketClientOptionsTests {
     DashScopeWebSocketClientOptions options = new DashScopeWebSocketClientOptions();
 
     // Verify default values
-    assertThat(options.getUrl()).isEqualTo(DashScopeApiConstants.DEFAULT_WEBSOCKET_URL);
+    assertThat(options.getUrl()).isEqualTo(DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL);
     assertThat(options.getApiKey()).isNull();
     assertThat(options.getWorkSpaceId()).isNull();
   }
@@ -91,7 +91,7 @@ class DashScopeWebSocketClientOptionsTests {
         DashScopeWebSocketClientOptions.builder().apiKey(testApiKey).build();
 
     // Verify default URL is used when not specified
-    assertThat(options.getUrl()).isEqualTo(DashScopeApiConstants.DEFAULT_WEBSOCKET_URL);
+    assertThat(options.getUrl()).isEqualTo(DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL);
     assertThat(options.getApiKey()).isEqualTo(testApiKey);
     assertThat(options.getWorkSpaceId()).isNull();
   }
