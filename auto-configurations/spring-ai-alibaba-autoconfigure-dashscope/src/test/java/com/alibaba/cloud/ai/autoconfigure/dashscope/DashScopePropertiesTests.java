@@ -449,7 +449,7 @@ public class DashScopePropertiesTests {
 				List<String> languageHints = transcriptionProperties.getOptions().getLanguageHints();
 				assertThat(languageHints.contains("en")).isTrue();
 				assertThat(transcriptionProperties.getOptions().getFormat())
-					.isEqualTo(DashScopeAudioTranscriptionApi.AudioFormat.MP3.getValue());
+					.isEqualTo(DashScopeAudioTranscriptionApi.AudioFormat.MP3);
 			});
 	}
 
