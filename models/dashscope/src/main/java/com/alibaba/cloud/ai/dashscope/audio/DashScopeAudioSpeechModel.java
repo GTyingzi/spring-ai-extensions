@@ -17,7 +17,6 @@ package com.alibaba.cloud.ai.dashscope.audio;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
 import com.alibaba.cloud.ai.dashscope.audio.model.AudioCommonType;
-import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioRequest;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.jetbrains.annotations.NotNull;
@@ -76,59 +75,8 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
             return this.audioSpeechApi.callQwenTTS(prompt.getInstructions().getText(), options);
         }
 
-        String taskId = UUID.randomUUID().toString();
-        String text = prompt.getInstructions().getText();
-        String model = options.getModel();
-
-        logger.info("Starting TTS call for model: {}", model);
-
-        // For CosyVoice models, use full duplex flow
-        if (DashScopeAudioApiConstants.COSY_VOICE_MODEL_LIST.contains(model)) {
-            logger.info("Using CosyVoice duplex flow: run-task -> continue-task -> finish-task");
-            return this.retryTemplate.execute(ctx -> this.audioSpeechApi.streamDuplexOut(taskId, text, options)
-                    .collectList()
-                    .map(byteBuffers -> {
-                        // combine all byte buffers
-                        ByteBuffer combined = ByteBuffer.allocate(byteBuffers.stream()
-                                .mapToInt(ByteBuffer::remaining)
-                                .sum());
-
-                        for (ByteBuffer byteBuffer : byteBuffers) {
-                            combined.put(byteBuffer);
-                        }
-
-                        combined.flip();
-
-                        byte[] data = new byte[combined.remaining()];
-                        combined.get(data);
-                        return new TextToSpeechResponse(List.of(new Speech(data)));
-                    })
-                    .block());
-        }
-
-        // For Sambert models, use simple run-task flow
-        DashScopeAudioRequest runTaskRequest = this.createRequest(prompt, taskId);
-        logger.info("Using Sambert simple flow: run-task");
-        return this.retryTemplate.execute(ctx -> this.audioSpeechApi.streamBinaryOut(runTaskRequest)
-                .collectList()
-                .map(byteBuffers -> {
-                    // combine all byte buffers
-                    ByteBuffer combined = ByteBuffer.allocate(byteBuffers.stream()
-                            .mapToInt(ByteBuffer::remaining)
-                            .sum());
-
-                    for (ByteBuffer byteBuffer : byteBuffers) {
-                        combined.put(byteBuffer);
-                    }
-
-                    combined.flip();
-
-                    byte[] data = new byte[combined.remaining()];
-                    combined.get(data);
-                    return new TextToSpeechResponse(List.of(new Speech(data)));
-                })
-                .block());
-	}
+        throw new IllegalArgumentException("Model " + options.getModel() + " is not supported call method.");
+    }
 
     @Override
 	public Flux<TextToSpeechResponse> stream(TextToSpeechPrompt prompt) {
@@ -138,65 +86,19 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
                     .map(response -> (TextToSpeechResponse) response);
         }
 
+        if (!DashScopeAudioApiConstants.isWebsocketByModelName(options.getModel())) {
+            throw new IllegalArgumentException("Model " + options.getModel() + " is not supported.");
+        }
+
+        // 下面是websocket任务
         String taskId = UUID.randomUUID().toString();
         String text = prompt.getInstructions().getText();
-        String model = options.getModel();
-
-        logger.info("Starting TTS stream for model: {}", model);
-
-        // For CosyVoice models, use full duplex flow
-        if (DashScopeAudioApiConstants.COSY_VOICE_MODEL_LIST.contains(model)) {
-            logger.info("Using CosyVoice duplex flow: run-task -> continue-task -> finish-task");
-            return this.retryTemplate.execute(ctx -> this.audioSpeechApi.streamDuplexOut(taskId, text, options)
-                .map(byteBuffer -> {
-                    byte[] data = new byte[byteBuffer.remaining()];
-                    byteBuffer.get(data);
-                    return new TextToSpeechResponse(List.of(new Speech(data)));
-                }));
-        }
-
-        // For Sambert models, use simple run-task flow
-        DashScopeAudioRequest runTaskRequest = this.createRequest(prompt, taskId);
-        logger.info("Using Sambert simple flow: run-task");
-        return this.retryTemplate.execute(ctx -> this.audioSpeechApi.streamBinaryOut(runTaskRequest)
-            .map(byteBuffer -> {
-                byte[] data = new byte[byteBuffer.remaining()];
-                byteBuffer.get(data);
-                return new TextToSpeechResponse(List.of(new Speech(data)));
-            }));
-	}
-
-	private DashScopeAudioRequest createRequest(TextToSpeechPrompt prompt,
-		String taskId) {
-		DashScopeAudioSpeechOptions options = this.mergeOptions(prompt);
-        String model = options.getModel();
-        boolean isSambert = false;
-        if (DashScopeAudioApiConstants.COSY_VOICE_MODEL_LIST.contains(model)) {
-            isSambert = false;
-        } else if (DashScopeAudioApiConstants.SAMBERT_MODEL_LIST.contains(model)) {
-            isSambert = true;
-        } else {
-            throw new IllegalArgumentException("Audio Unsupported model: " + model);
-        }
-
-        return DashScopeAudioRequest.builder()
-			.header(DashScopeAudioRequest.RequestHeader.builder()
-				.action(DashScopeWebSocketClient.EventType.RUN_TASK)
-				.taskId(taskId)
-				.streaming(isSambert ? "out" : "duplex") // "out" for sambert, "duplex" for cosy voice
-				.build())
-			.payload(DashScopeAudioRequest.RequestPayload.builder()
-				.model(options.getModel())
-				.taskGroup("audio")
-				.task("tts")
-				.function("SpeechSynthesizer")
-				.input(DashScopeAudioRequest.RequestPayloadInput.builder()
-					.text(prompt.getInstructions().getText())
-					.build())
-				.parameters(DashScopeAudioRequest.RequestPayloadParameters
-                        .optionsConvertReq(options))
-			    .build())
-                .build();
+        Flux<ByteBuffer> webSocketTask = this.audioSpeechApi.createWebSocketTask(taskId, text, options);
+        return webSocketTask.map(byteBuffer -> {
+            byte[] data = new byte[byteBuffer.remaining()];
+            byteBuffer.get(data);
+            return new TextToSpeechResponse(List.of(new Speech(data)));
+        });
 	}
 
 	private DashScopeAudioSpeechOptions mergeOptions(TextToSpeechPrompt prompt) {

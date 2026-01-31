@@ -81,16 +81,12 @@ public class DashScopeAudioApiConstants {
             AudioModel.QWEN_TTS_2025_04_10.getValue()
     );
 
-    public static String getPathByModelName(String modelName) {
-        if (QWEN_TTS_MODEL_LIST.contains(modelName)) {
-            return MULTIMODAL_GENERATION;
-        }
-
+    public static boolean isWebsocketByModelName(String modelName) {
         if (COSY_VOICE_MODEL_LIST.contains(modelName) || SAMBERT_MODEL_LIST.contains(modelName)) {
-            return DEFAULT_WEBSOCKET_URL;
+            return true;
         }
 
-        throw new IllegalArgumentException("Invalid model name: " + modelName);
+        return false;
     }
 
     public static boolean isQwenTTSModel(String modelName) {

@@ -17,9 +17,12 @@ package com.alibaba.cloud.ai.dashscope.api;
 
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechOptions;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeSpeechResponse;
-import com.alibaba.cloud.ai.dashscope.audio.model.AudioDataWithMetadata;
+import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient.EventType;
 import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioRequest;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient;
+import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioRequest.RequestHeader;
+import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioRequest.RequestPayload;
+import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioRequest.RequestPayloadInput;
 import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioTTSModel.DashScopeAudioTTSRequest;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
@@ -93,156 +96,6 @@ public class DashScopeAudioSpeechApi {
                 .build();
 	}
 
-	public Flux<ByteBuffer> streamBinaryOut(DashScopeAudioRequest request) {
-		try {
-			String message = this.objectMapper.writeValueAsString(request);
-			return this.webSocketClient.streamBinaryOut(message);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * Send a continue-task request for CosyVoice duplex mode.
-	 *
-	 * @param taskId the task ID
-	 * @param text the text to send
-	 */
-	public void sendContinueTask(String taskId, String text) {
-		try {
-			DashScopeAudioRequest request = DashScopeAudioRequest.createContinueTaskRequest(taskId, text);
-			String message = this.objectMapper.writeValueAsString(request);
-			this.webSocketClient.sendText(message);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * Send a finish-task request for CosyVoice duplex mode.
-	 *
-	 * @param taskId the task ID
-	 */
-	public void sendFinishTask(String taskId) {
-		try {
-			DashScopeAudioRequest request = DashScopeAudioRequest.createFinishTaskRequest(taskId);
-			String message = this.objectMapper.writeValueAsString(request);
-			this.webSocketClient.sendText(message);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * Stream audio output with full duplex flow for CosyVoice models.
-	 * This method implements event-driven flow:
-	 * 1. Send run-task (without text in input)
-	 * 2. Wait for task-started event
-	 * 3. Send continue-task (with text)
-	 * 4. Send finish-task (empty input)
-	 * 5. Receive audio data
-	 * 6. Wait for task-finished event
-	 *
-	 * @param taskId the task ID
-	 * @param text the text to synthesize
-	 * @param options the speech options
-	 * @return the audio data flux
-	 */
-	public Flux<ByteBuffer> streamDuplexOut(String taskId, String text,
-			DashScopeAudioSpeechOptions options) {
-		try {
-			// Create run-task request (without text in input for CosyVoice)
-			DashScopeAudioRequest runTaskRequest = DashScopeAudioRequest.builder()
-					.header(DashScopeAudioRequest.RequestHeader.builder()
-							.action(DashScopeWebSocketClient.EventType.RUN_TASK)
-							.taskId(taskId)
-							.streaming("duplex")
-							.build())
-					.payload(DashScopeAudioRequest.RequestPayload.builder()
-							.model(options.getModel())
-							.taskGroup("audio")
-							.task("tts")
-							.function("SpeechSynthesizer")
-							.input(DashScopeAudioRequest.RequestPayloadInput.builder()
-									.build())
-							.parameters(DashScopeAudioRequest.RequestPayloadParameters
-									.optionsConvertReq(options))
-							.build())
-					.build();
-
-			String runTaskMessage = this.objectMapper.writeValueAsString(runTaskRequest);
-			String continueTaskMessage = this.objectMapper.writeValueAsString(
-					DashScopeAudioRequest.createContinueTaskRequest(taskId, text));
-			String finishTaskMessage = this.objectMapper.writeValueAsString(
-					DashScopeAudioRequest.createFinishTaskRequest(taskId));
-
-			// Use event-driven duplex flow
-			return this.webSocketClient.streamDuplexWithEvents(runTaskMessage, continueTaskMessage,
-					finishTaskMessage);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * Stream audio output with full duplex flow for CosyVoice models, including metadata.
-	 * This method returns {@link AudioDataWithMetadata} which includes both the audio data
-	 * and event context (sentence index, task ID, etc.) for proper correlation.
-	 *
-	 * This method implements event-driven flow:
-	 * 1. Send run-task (without text in input)
-	 * 2. Wait for task-started event
-	 * 3. Send continue-task (with text)
-	 * 4. Send finish-task (empty input)
-	 * 5. Receive audio data with metadata
-	 * 6. Wait for task-finished event
-	 *
-	 * @param taskId the task ID
-	 * @param text the text to synthesize
-	 * @param options the speech options
-	 * @return the audio data with metadata flux
-	 */
-	public Flux<AudioDataWithMetadata> streamDuplexOutWithMetadata(String taskId, String text,
-			DashScopeAudioSpeechOptions options) {
-		try {
-			// Create run-task request (without text in input for CosyVoice)
-			DashScopeAudioRequest runTaskRequest = DashScopeAudioRequest.builder()
-					.header(DashScopeAudioRequest.RequestHeader.builder()
-							.action(DashScopeWebSocketClient.EventType.RUN_TASK)
-							.taskId(taskId)
-							.streaming("duplex")
-							.build())
-					.payload(DashScopeAudioRequest.RequestPayload.builder()
-							.model(options.getModel())
-							.taskGroup("audio")
-							.task("tts")
-							.function("SpeechSynthesizer")
-							.input(DashScopeAudioRequest.RequestPayloadInput.builder()
-									.build())
-							.parameters(DashScopeAudioRequest.RequestPayloadParameters
-									.optionsConvertReq(options))
-							.build())
-					.build();
-
-			String runTaskMessage = this.objectMapper.writeValueAsString(runTaskRequest);
-			String continueTaskMessage = this.objectMapper.writeValueAsString(
-					DashScopeAudioRequest.createContinueTaskRequest(taskId, text));
-			String finishTaskMessage = this.objectMapper.writeValueAsString(
-					DashScopeAudioRequest.createFinishTaskRequest(taskId));
-
-			// Use event-driven duplex flow with metadata
-			return this.webSocketClient.streamDuplexWithMetadata(runTaskMessage, continueTaskMessage,
-					finishTaskMessage);
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
     public DashScopeSpeechResponse callQwenTTS(String text, DashScopeAudioSpeechOptions options) {
         DashScopeAudioTTSRequest request = DashScopeAudioTTSRequest.builder()
                 .model(options.getModel())
@@ -297,4 +150,68 @@ public class DashScopeAudioSpeechApi {
                     }
                 });
     }
+
+    public Flux<ByteBuffer> createWebSocketTask(String taskId, String text, DashScopeAudioSpeechOptions options) {
+        boolean isCosyVoiceModel = DashScopeAudioApiConstants.COSY_VOICE_MODEL_LIST.contains(options.getModel());
+
+        // run-task
+        DashScopeAudioRequest runTaskRequest = DashScopeAudioRequest.builder()
+                .header(DashScopeAudioRequest.RequestHeader.builder()
+                        .action(EventType.RUN_TASK)
+                        .taskId(taskId)
+                        .streaming(isCosyVoiceModel ? "duplex" : "output") // duplex对应cosy voice，output对应 sambert
+                        .build())
+                .payload(DashScopeAudioRequest.RequestPayload.builder()
+                        .model(options.getModel())
+                        .taskGroup("audio")
+                        .task("tts")
+                        .function("SpeechSynthesizer")
+                        .input(DashScopeAudioRequest.RequestPayloadInput.builder()
+                                .text(isCosyVoiceModel ? null : text) // cosy voice不需要text, sambert需要text
+                                .build())
+                        .parameters(DashScopeAudioRequest.RequestPayloadParameters
+                                .optionsConvertReq(options))
+                        .build())
+                .build();
+        // continue-task
+        DashScopeAudioRequest continueTaskRequest = DashScopeAudioRequest.builder()
+                .header(RequestHeader.builder()
+                        .action(EventType.CONTINUE_TASK)
+                        .taskId(taskId)
+                        .streaming(isCosyVoiceModel ? "duplex" : "output") // duplex对应cosy voice，output对应 sambert
+                        .build())
+                .payload(RequestPayload.builder().
+                        input(RequestPayloadInput.builder()
+                            .text(text)
+                            .build()
+                ).build())
+                .build();
+        // finish-task
+        DashScopeAudioRequest finishTaskRequest = DashScopeAudioRequest.builder()
+                .header(RequestHeader.builder()
+                        .action(EventType.FINISH_TASK)
+                        .taskId(taskId)
+                        .streaming(isCosyVoiceModel ? "duplex" : "output") // duplex对应cosy voice，output对应 sambert
+                        .build())
+                .payload(RequestPayload.builder()
+                        .input(RequestPayloadInput.builder()
+                                .build())
+                        .build())
+                .build();
+        try {
+            String runTaskMessage = this.objectMapper.writeValueAsString(runTaskRequest);
+            String continueTaskMessage = this.objectMapper.writeValueAsString(continueTaskRequest);
+            String finishTaskMessage = this.objectMapper.writeValueAsString(finishTaskRequest);
+            if (isCosyVoiceModel) {
+                return this.webSocketClient.command(runTaskMessage, continueTaskMessage,
+                        finishTaskMessage);
+            } else {
+                return this.webSocketClient.command(runTaskMessage);
+            }
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

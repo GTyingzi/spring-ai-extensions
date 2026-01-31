@@ -656,46 +656,4 @@ public class DashScopeAudioRequest {
 
     }
 
-    /**
-     * Create a continue-task request for CosyVoice duplex mode.
-     *
-     * @param taskId the task ID
-     * @param text the text to send
-     * @return the continue-task request
-     */
-    public static DashScopeAudioRequest createContinueTaskRequest(String taskId, String text) {
-        return DashScopeAudioRequest.builder()
-                .header(RequestHeader.builder()
-                        .action(DashScopeWebSocketClient.EventType.CONTINUE_TASK)
-                        .taskId(taskId)
-                        .streaming("duplex")
-                        .build())
-                .payload(RequestPayload.builder()
-                        .input(RequestPayloadInput.builder()
-                                .text(text)
-                                .build())
-                        .build())
-                .build();
-    }
-
-    /**
-     * Create a finish-task request for CosyVoice duplex mode.
-     *
-     * @param taskId the task ID
-     * @return the finish-task request
-     */
-    public static DashScopeAudioRequest createFinishTaskRequest(String taskId) {
-        return DashScopeAudioRequest.builder()
-                .header(RequestHeader.builder()
-                        .action(DashScopeWebSocketClient.EventType.FINISH_TASK)
-                        .taskId(taskId)
-                        .streaming("duplex")
-                        .build())
-                .payload(RequestPayload.builder()
-                        .input(RequestPayloadInput.builder()
-                                .build())
-                        .build())
-                .build();
-    }
-
 }

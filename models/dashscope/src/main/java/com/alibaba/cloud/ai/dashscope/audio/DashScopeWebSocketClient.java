@@ -47,12 +47,12 @@ import okio.ByteString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.util.JacksonUtils;
+import org.springframework.util.ObjectUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 /**
- * @author kevinlin09
- * @author xuguan
+ * @author kevinlin09, xuguan, yingzi
  */
 public class DashScopeWebSocketClient extends WebSocketListener {
 
@@ -72,12 +72,9 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
 	FluxSink<AudioDataWithMetadata> audioWithMetadataEmitter;
 
-	// Event context for correlating binary audio data with events
-	private volatile Integer currentSentenceIndex;
+    private String continueTaskMessage;
 
-	private volatile String currentTaskId;
-
-	private volatile String currentEventType;
+    private String finishTaskMessage;
 
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
 		this.options = options;
@@ -118,78 +115,32 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 	 * @param finishTaskMessage the finish-task JSON message
 	 * @return the binary data flux
 	 */
-	public Flux<ByteBuffer> streamDuplexWithEvents(String runTaskMessage, String continueTaskMessage,
+	public Flux<ByteBuffer> command(String runTaskMessage, String continueTaskMessage,
 			String finishTaskMessage) {
 		// Prepare the messages to be sent
-		this.pendingRunTaskMessage = runTaskMessage;
-		this.pendingContinueTaskMessage = continueTaskMessage;
-		this.pendingFinishTaskMessage = finishTaskMessage;
-		this.duplexState = DuplexState.RUN_TASK_SENT;
+		this.continueTaskMessage = continueTaskMessage;
+		this.finishTaskMessage = finishTaskMessage;
 
 		return Flux.<ByteBuffer>create(emitter -> {
 			this.binaryEmitter = emitter;
 
 			// Send run-task first
-			logger.info("Event-driven duplex: Sending run-task message");
+			logger.info("Event-driven : Sending run-task message");
 			sendText(runTaskMessage);
 
 		}, FluxSink.OverflowStrategy.BUFFER);
 	}
 
-	/**
-	 * Stream binary output with metadata using event-driven duplex flow for CosyVoice.
-	 * This method returns {@link AudioDataWithMetadata} which includes both the audio data
-	 * and event context (sentence index, task ID, etc.).
-	 *
-	 * This implements the official protocol specification:
-	 * 1. Send run-task
-	 * 2. Wait for task-started event
-	 * 3. Send continue-task
-	 * 4. Send finish-task
-	 * 5. Wait for task-finished event
-	 *
-	 * @param runTaskMessage the run-task JSON message
-	 * @param continueTaskMessage the continue-task JSON message
-	 * @param finishTaskMessage the finish-task JSON message
-	 * @return the audio data with metadata flux
-	 */
-	public Flux<AudioDataWithMetadata> streamDuplexWithMetadata(String runTaskMessage, String continueTaskMessage,
-			String finishTaskMessage) {
-		// Prepare the messages to be sent
-		this.pendingRunTaskMessage = runTaskMessage;
-		this.pendingContinueTaskMessage = continueTaskMessage;
-		this.pendingFinishTaskMessage = finishTaskMessage;
-		this.duplexState = DuplexState.RUN_TASK_SENT;
+    public Flux<ByteBuffer> command(String runTaskMessage) {
+        return Flux.<ByteBuffer>create(emitter -> {
+            this.binaryEmitter = emitter;
 
-		// Reset event context
-		this.currentSentenceIndex = null;
-		this.currentTaskId = null;
-		this.currentEventType = null;
+            // Send run-task first
+            logger.info("Event-driven : Sending run-task message");
+            sendText(runTaskMessage);
 
-		return Flux.<AudioDataWithMetadata>create(emitter -> {
-			this.audioWithMetadataEmitter = emitter;
-
-			// Send run-task first
-			logger.info("Event-driven duplex with metadata: Sending run-task message");
-			sendText(runTaskMessage);
-
-		}, FluxSink.OverflowStrategy.BUFFER);
-	}
-
-	// Duplex flow state tracking
-	private enum DuplexState {
-
-		RUN_TASK_SENT, WAITING_TASK_STARTED, CONTINUE_TASK_SENT, FINISH_TASK_SENT, COMPLETED
-
-	}
-
-	private DuplexState duplexState = DuplexState.COMPLETED;
-
-	private String pendingRunTaskMessage;
-
-	private String pendingContinueTaskMessage;
-
-	private String pendingFinishTaskMessage;
+        }, FluxSink.OverflowStrategy.BUFFER);
+    }
 
 	public Flux<String> streamTextOut(Flux<ByteBuffer> binary) {
 		Flux<String> flux = Flux.<String>create(emitter -> {
@@ -211,7 +162,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
                 throw new RuntimeException("Interrupted while waiting for WebSocket connection", e);
             }
         }
-
+        logger.info("send text: {}", text);
 		boolean success = webSocketClient.send(text);
 
 		if (!success) {
@@ -320,15 +271,21 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			switch (message.header().event()) {
 				case TASK_STARTED:
 					logger.info("task started: text={}", text);
-					// Handle event-driven duplex flow
-					handleTaskStartedEvent();
+                    if (!ObjectUtils.isEmpty(this.continueTaskMessage)) {
+                        sendText(this.continueTaskMessage);
+                    }
 					break;
+                case RESULT_GENERATED:
+                    logger.debug("result generated: text={}", text);
+                    if (this.textEmitter != null) {
+                        textEmitter.next(text);
+                    }
+                    break;
 				case TASK_FINISHED:
 					logger.info("task finished: text={}", text);
-					// Mark duplex flow as completed
-					if (this.duplexState != DuplexState.COMPLETED) {
-						this.duplexState = DuplexState.COMPLETED;
-					}
+                    if (!ObjectUtils.isEmpty(this.finishTaskMessage)) {
+                        sendText(this.finishTaskMessage);
+                    }
 					emittersComplete("finished");
 					break;
 				case TASK_FAILED:
@@ -338,22 +295,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
                     String errorDetail = String.format("Task failed with error_code='%s', error_message='%s'", errorCode, errorMessage);
                     logger.error("task failed: text={}, error_code={}, error_message={}", text, errorCode, errorMessage);
                     // Reset duplex state on error
-                    this.duplexState = DuplexState.COMPLETED;
                     emittersError("task failed", new Exception(errorDetail));
 					break;
-				case RESULT_GENERATED:
-                    logger.info("result generated: text={}", text);
-                    // Track event context for binary audio correlation
-                    trackEventContext(message);
-					if (this.textEmitter != null) {
-						textEmitter.next(text);
-					}
-					break;
-				default:
-                    String eventName = message.header().event().getValue();
-                    String unsupportedError = String.format("Unsupported event type: %s", eventName);
-                    logger.error("task error: text={}, event={}", text, eventName);
-                    emittersError("unsupported event", new Exception(unsupportedError));
 			}
 		}
 		catch (Exception e) {
@@ -361,98 +304,12 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		}
 	}
 
-	/**
-	 * Handle task-started event for event-driven duplex flow.
-	 */
-	private void handleTaskStartedEvent() {
-		if (this.duplexState == DuplexState.RUN_TASK_SENT
-				|| this.duplexState == DuplexState.WAITING_TASK_STARTED) {
-			logger.info("Event-driven duplex: Received task-started, sending continue-task");
-			this.duplexState = DuplexState.CONTINUE_TASK_SENT;
-			sendText(this.pendingContinueTaskMessage);
-
-			// After a short delay, send finish-task
-			try {
-				TimeUnit.MILLISECONDS.sleep(500);
-				logger.info("Event-driven duplex: Sending finish-task");
-				this.duplexState = DuplexState.FINISH_TASK_SENT;
-				sendText(this.pendingFinishTaskMessage);
-			}
-			catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-				logger.error("Interrupted while sending finish-task", e);
-			}
-		}
-	}
-
-	/**
-	 * Track event context for correlating binary audio data with events.
-	 * When a sentence-synthesis event is received, store the sentence index and task ID
-	 * so that the subsequent binary audio data can be associated with this event.
-	 *
-	 * @param message the event message
-	 */
-	private void trackEventContext(DashScopeAudioEventMessage message) {
-		if (message.payload() == null || message.payload().output() == null) {
-			return;
-		}
-
-		var output = message.payload().output();
-		var typeNode = output.get("type");
-		var sentenceNode = output.get("sentence");
-
-		// Check if this is a sentence-synthesis event
-		if (typeNode != null && "sentence-synthesis".equals(typeNode.asText())) {
-			this.currentEventType = "sentence-synthesis";
-
-			// Extract task ID
-			if (message.header() != null && message.header().taskId() != null) {
-				this.currentTaskId = message.header().taskId();
-			}
-
-			// Extract sentence index
-			if (sentenceNode != null) {
-				var indexNode = sentenceNode.get("index");
-				if (indexNode != null && indexNode.isInt()) {
-					this.currentSentenceIndex = indexNode.asInt();
-					logger.debug("Tracking sentence-synthesis event: taskId={}, sentenceIndex={}",
-							this.currentTaskId, this.currentSentenceIndex);
-				}
-			}
-		}
-		// Clear context for other event types
-		else if (typeNode != null && "sentence-end".equals(typeNode.asText())) {
-			this.currentSentenceIndex = null;
-			this.currentEventType = null;
-		}
-	}
-
 	@Override
 	public void onMessage(WebSocket webSocket, ByteString bytes) {
 		logger.debug("receive ws event onMessage(bytes): handle={}, size={}", webSocket, bytes.size());
 		ByteBuffer audioData = bytes.asByteBuffer();
+        this.binaryEmitter.next(audioData);
 
-		// Emit to binary emitter (legacy behavior)
-		if (this.binaryEmitter != null) {
-			binaryEmitter.next(audioData);
-		}
-
-		// Emit to metadata emitter if available
-		if (this.audioWithMetadataEmitter != null) {
-			AudioDataWithMetadata audioWithMetadata;
-			if (this.currentSentenceIndex != null && this.currentTaskId != null) {
-				// Create with event context
-				audioWithMetadata = AudioDataWithMetadata.fromSentence(
-						audioData, this.currentSentenceIndex, this.currentTaskId);
-				logger.debug("Emitting audio with metadata: sentenceIndex={}, size={}",
-						this.currentSentenceIndex, bytes.size());
-			}
-			else {
-				// Create without event context (fallback)
-				audioWithMetadata = AudioDataWithMetadata.of(audioData);
-			}
-			this.audioWithMetadataEmitter.next(audioWithMetadata);
-		}
 	}
 
 	private void emittersComplete(String event) {

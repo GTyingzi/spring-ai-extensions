@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * @author yingzi
@@ -68,6 +69,55 @@ public class AudioUtils {
         }
 
         logger.info("Audio saved to: {} (size: {} bytes)", path.toAbsolutePath(), Files.size(path));
+    }
+
+    /**
+     * 将原始音频字节数组保存为文件
+     * <p>适用于 WebSocket 流式传输返回的原始音频数据（如 CosyVoice、Sambert 模型）</p>
+     *
+     * @param audioData 原始音频字节数组（已编码的音频格式，如 MP3）
+     * @param outputPath 相对输出文件路径 (相对于项目根目录)
+     * @throws IOException 保存失败时抛出
+     */
+    public static void saveAudioFromBytes(byte[] audioData, String outputPath) throws IOException {
+        logger.info("Saving audio from byte array ({} bytes)", audioData.length);
+
+        // 确保输出目录存在
+        Path path = Paths.get(outputPath);
+        Path parentDir = path.getParent();
+        if (parentDir != null && !Files.exists(parentDir)) {
+            Files.createDirectories(parentDir);
+        }
+
+        // 直接保存字节数组
+        Files.write(path, audioData);
+
+        logger.info("Audio saved to: {} (size: {} bytes)", path.toAbsolutePath(), audioData.length);
+    }
+
+    /**
+     * 将多个音频字节数组拼接后保存为文件
+     * <p>适用于 WebSocket 流式传输返回的多个音频数据块</p>
+     *
+     * @param audioChunks 音频数据块列表
+     * @param outputPath 相对输出文件路径 (相对于项目根目录)
+     * @throws IOException 保存失败时抛出
+     */
+    public static void saveAudioFromByteChunks(List<byte[]> audioChunks, String outputPath) throws IOException {
+        // 计算总大小
+        int totalSize = audioChunks.stream().mapToInt(chunk -> chunk.length).sum();
+        logger.info("Concatenating {} audio chunks (total: {} bytes)", audioChunks.size(), totalSize);
+
+        // 拼接所有音频块
+        byte[] combinedAudio = new byte[totalSize];
+        int offset = 0;
+        for (byte[] chunk : audioChunks) {
+            System.arraycopy(chunk, 0, combinedAudio, offset, chunk.length);
+            offset += chunk.length;
+        }
+
+        // 保存合并后的音频
+        saveAudioFromBytes(combinedAudio, outputPath);
     }
 
     /**

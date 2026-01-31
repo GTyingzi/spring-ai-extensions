@@ -43,37 +43,37 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
     private String voice = "longwan";
 
     @JsonProperty("format")
-    private String format = "mp3";
+    private String format;
 
     @JsonProperty("sample_rate")
-    private Integer sampleRate = 22050;
+    private Integer sampleRate;
 
     @JsonProperty("volume")
-    private Integer volume = 50;
+    private Integer volume;
 
     @JsonProperty("rate")
-    private Float rate = 1.0f;
+    private Float rate;
 
     @JsonProperty("pitch")
-    private Float pitch = 1.0f;
+    private Float pitch;
 
     @JsonProperty("enable_ssml")
     private Boolean enableSsml;
 
     @JsonProperty("bit_rate")
-    private Integer bitRate = 32;
+    private Integer bitRate;
 
     @JsonProperty("speed")
-    private Double speed = 1.0;
+    private Double speed;
 
     @JsonProperty("seed")
-    private Integer seed = 0;
+    private Integer seed;
 
     @JsonProperty("word_timestamp_enabled")
-    private Boolean wordTimestampEnabled = false;
+    private Boolean wordTimestampEnabled;
 
     @JsonProperty("phoneme_timestamp_enabled")
-    private Boolean phonemeTimestampEnabled = false;
+    private Boolean phonemeTimestampEnabled;
 
 	@JsonProperty("language_hints")
 	private List<String> languageHints;
@@ -91,7 +91,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
     private String aigcPropagateId;
 
     @JsonProperty("language_type")
-    private String languageType = "Auto";
+    private String languageType;
 
     @Override
     public String getModel() {
@@ -280,29 +280,29 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 
         private String textType = TextType.PLAIN_TEXT.getValue();
 
-        private String voice = "longwan";
+        private String voice = "longanyang";
 
-        private String format = "mp3";
+        private String format;
 
-        private Integer sampleRate = 22050;
+        private Integer sampleRate;
 
-        private Integer volume = 50;
+        private Integer volume;
 
-        private float rate = 1.0f;
+        private float rate;
 
-        private float pitch = 1.0f;
+        private float pitch;
 
         private Boolean enableSsml;
 
-        private Integer bitRate = 32;
+        private Integer bitRate;
 
-        private Double speed = 1.0;
+        private Double speed;
 
-        private Integer seed = 0;
+        private Integer seed;
 
-        private Boolean wordTimestampEnabled = false;
+        private Boolean wordTimestampEnabled;
 
-        private Boolean phonemeTimestampEnabled = false;
+        private Boolean phonemeTimestampEnabled;
 
         private List<String> languageHints;
 
@@ -314,7 +314,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 
         private String aigcPropagateId;
 
-        private String languageType = "Auto";
+        private String languageType;
 
         public Builder model(String model) {
             this.model = model;
@@ -346,7 +346,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
             return this;
         }
 
-        public Builder rate(float rate) {
+        public Builder rate(Float rate) {
             this.rate = rate;
             return this;
         }
