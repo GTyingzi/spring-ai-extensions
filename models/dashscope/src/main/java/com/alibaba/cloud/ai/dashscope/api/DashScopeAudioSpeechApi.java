@@ -16,7 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.api;
 
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechOptions;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeSpeechResponse;
+import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeSpeechResponse;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient.EventType;
 import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioRequest;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient;
