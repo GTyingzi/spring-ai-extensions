@@ -239,7 +239,7 @@ public class DashScopePropertiesTests {
 				assertThat(speechProperties.getOptions().getModel()).isEqualTo("TTS_1");
 				assertThat(speechProperties.getOptions().getVoice()).isEqualTo("longhua_test");
 				assertThat(speechProperties.getOptions().getFormat())
-					.isEqualTo(AudioCommonType.Format.MP3);
+					.isEqualTo(AudioCommonType.Format.MP3.getValue());
 				assertThat(speechProperties.getOptions().getSpeed()).isEqualTo(0.75f);
 			});
 	}
@@ -271,7 +271,7 @@ public class DashScopePropertiesTests {
 				assertThat(speechProperties.getOptions().getModel()).isEqualTo("TTS_2");
 				assertThat(speechProperties.getOptions().getVoice()).isEqualTo("echo");
 				assertThat(speechProperties.getOptions().getFormat())
-					.isEqualTo(AudioCommonType.Format.PCM);
+					.isEqualTo(AudioCommonType.Format.PCM.getValue());
 				assertThat(speechProperties.getOptions().getSpeed()).isEqualTo(0.8);
 			});
 	}
@@ -449,7 +449,7 @@ public class DashScopePropertiesTests {
 				List<String> languageHints = transcriptionProperties.getOptions().getLanguageHints();
 				assertThat(languageHints.contains("en")).isTrue();
 				assertThat(transcriptionProperties.getOptions().getFormat())
-					.isEqualTo(DashScopeAudioTranscriptionApi.AudioFormat.MP3);
+					.isEqualTo(DashScopeAudioTranscriptionApi.AudioFormat.MP3.getValue());
 			});
 	}
 
