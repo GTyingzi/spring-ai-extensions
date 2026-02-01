@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.cloud.ai.dashscope.audio;
+package com.alibaba.cloud.ai.dashscope.audio.tts;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
-import com.alibaba.cloud.ai.dashscope.audio.model.AudioCommonType;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +30,7 @@ import org.springframework.ai.retry.RetryUtils;
 import org.springframework.retry.support.RetryTemplate;
 import reactor.core.publisher.Flux;
 
-import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Audio Speech: input text, output audio.
@@ -86,15 +82,13 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
                     .map(response -> (TextToSpeechResponse) response);
         }
 
-        if (!DashScopeAudioApiConstants.isWebsocketByModelName(options.getModel())) {
+        if (!DashScopeAudioApiConstants.isWebsocketByTTSModelName(options.getModel())) {
             throw new IllegalArgumentException("Model " + options.getModel() + " is not supported.");
         }
 
         // 下面是websocket任务
-        String taskId = UUID.randomUUID().toString();
-        String text = prompt.getInstructions().getText();
-        Flux<ByteBuffer> webSocketTask = this.audioSpeechApi.createWebSocketTask(taskId, text, options);
-        return webSocketTask.map(byteBuffer -> {
+        return this.audioSpeechApi.createWebSocketTask(prompt.getInstructions().getText(), options)
+                .map(byteBuffer -> {
             byte[] data = new byte[byteBuffer.remaining()];
             byteBuffer.get(data);
             return new TextToSpeechResponse(List.of(new Speech(data)));
@@ -103,14 +97,11 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 
 	private DashScopeAudioSpeechOptions mergeOptions(TextToSpeechPrompt prompt) {
 		DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder().build();
-		if (prompt.getOptions() != null) {
-			DashScopeAudioSpeechOptions runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(),
-				TextToSpeechOptions.class, DashScopeAudioSpeechOptions.class);
+        DashScopeAudioSpeechOptions runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(), TextToSpeechOptions.class, DashScopeAudioSpeechOptions.class);
 
-			options = ModelOptionsUtils.merge(runtimeOptions, options, DashScopeAudioSpeechOptions.class);
-		}
+        options = ModelOptionsUtils.merge(runtimeOptions, options, DashScopeAudioSpeechOptions.class);
 
-		return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioSpeechOptions.class);
+        return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioSpeechOptions.class);
 	}
 
     /**
@@ -125,17 +116,6 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
         return this.mutate().build();
     }
 
-    /**
-     * Returns the underlying {@link DashScopeAudioSpeechApi} for advanced usage.
-     * This can be used to access methods like {@code streamDuplexOutWithMetadata()}
-     * that return audio data with event metadata.
-     *
-     * @return the audio speech API
-     */
-    public DashScopeAudioSpeechApi audioSpeechApi() {
-        return this.audioSpeechApi;
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -144,12 +124,7 @@ public class DashScopeAudioSpeechModel implements TextToSpeechModel {
 
         private DashScopeAudioSpeechApi audioSpeechApi;
 
-        private DashScopeAudioSpeechOptions defaultOptions = DashScopeAudioSpeechOptions.builder()
-                .model(DashScopeModel.AudioModel.COSYVOICE_V1.getValue())
-                .voice("longhua")
-                .speed(1.0)
-                .format(AudioCommonType.Format.MP3.getValue())
-                .build();
+        private DashScopeAudioSpeechOptions defaultOptions = DashScopeAudioSpeechOptions.builder().build();
 
         private RetryTemplate retryTemplate = RetryUtils.DEFAULT_RETRY_TEMPLATE;
 

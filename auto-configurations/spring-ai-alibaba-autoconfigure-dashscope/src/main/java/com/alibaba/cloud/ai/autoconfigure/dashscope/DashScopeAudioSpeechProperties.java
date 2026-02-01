@@ -16,23 +16,26 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechOptions;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechOptions;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
- * @author kevinlin09
+ * @author kevinlin09、yingzi
  */
 
-@ConfigurationProperties(DashScopeAudioSpeechSynthesisProperties.CONFIG_PREFIX)
-public class DashScopeAudioSpeechSynthesisProperties extends DashScopeParentProperties {
+@ConfigurationProperties(DashScopeAudioSpeechProperties.CONFIG_PREFIX)
+public class DashScopeAudioSpeechProperties extends DashScopeParentProperties {
 
 	/**
 	 * Spring AI Alibaba configuration prefix.
 	 */
-	public static final String CONFIG_PREFIX = "spring.ai.dashscope.audio.synthesis";
+	public static final String CONFIG_PREFIX = "spring.ai.dashscope.audio.speech";
 
-	@NestedConfigurationProperty
+    private String websocketUrl = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
+
+    @NestedConfigurationProperty
 	private DashScopeAudioSpeechOptions options = DashScopeAudioSpeechOptions.builder().build();
 
 	public DashScopeAudioSpeechOptions getOptions() {
@@ -42,5 +45,13 @@ public class DashScopeAudioSpeechSynthesisProperties extends DashScopeParentProp
 	public void setOptions(DashScopeAudioSpeechOptions options) {
 		this.options = options;
 	}
+
+    public String getWebsocketUrl() {
+        return websocketUrl;
+    }
+
+    public void setWebsocketUrl(String websocketUrl) {
+        this.websocketUrl = websocketUrl;
+    }
 
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.cloud.ai.dashscope.audio;
+package com.alibaba.cloud.ai.dashscope.audio.tts;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
-import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeSpeechResponse;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import com.alibaba.cloud.ai.util.AudioUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,8 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.audio.tts.Speech;
 import org.springframework.ai.audio.tts.TextToSpeechPrompt;
 import org.springframework.ai.audio.tts.TextToSpeechResponse;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.ai.model.SimpleApiKey;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -75,13 +73,10 @@ class DashScopeAudioSpeechIT {
 			return;
 		}
 
-		// Build API with real credentials
-		RestClient.Builder restClientBuilder = RestClient.builder();
-		WebClient.Builder webClientBuilder = WebClient.builder();
-
-		DashScopeAudioSpeechApi speechApi = new DashScopeAudioSpeechApi(BASE_URL, apiKey, null,
-				restClientBuilder, webClientBuilder);
-
+		DashScopeAudioSpeechApi speechApi =
+				DashScopeAudioSpeechApi.builder()
+						.apiKey(new SimpleApiKey(apiKey))
+						.build();
 		// Build model with default options
 		DashScopeAudioSpeechOptions defaultOptions = DashScopeAudioSpeechOptions.builder().build();
 
@@ -109,7 +104,7 @@ class DashScopeAudioSpeechIT {
 //
 //		// Act
 //		TextToSpeechPrompt prompt = new TextToSpeechPrompt(TEST_TEXT, options);
-//		Flux<TextToSpeechResponse> result = speechModel.stream(prompt);
+//		Flux<TextToDashScopeAudioTTSResponse> result = speechModel.stream(prompt);
 //
 //		List<byte[]> speechChunks = new ArrayList<>();
 //
@@ -203,10 +198,10 @@ class DashScopeAudioSpeechIT {
 
 		// Assert
 		assertThat(response).isNotNull();
-		assertThat(response).isInstanceOf(DashScopeSpeechResponse.class);
+		assertThat(response).isInstanceOf(TTSReqRes.DashScopeAudioTTSResponse.class);
 
-		DashScopeSpeechResponse dashScopeResponse = (DashScopeSpeechResponse) response;
-		assertThat(dashScopeResponse.getOutput()).isNotNull();
+		TTSReqRes.DashScopeAudioTTSResponse dashScopeResponse = (TTSReqRes.DashScopeAudioTTSResponse) response;
+		assertThat(dashScopeResponse.getResult()).isNotNull();
 		assertThat(dashScopeResponse.getRequestId()).isNotEmpty();
 		assertThat(dashScopeResponse.getOutput().audio()).isNotNull();
 		assertThat(dashScopeResponse.getOutput().audio().url()).isNotEmpty();
@@ -247,14 +242,14 @@ class DashScopeAudioSpeechIT {
 		StepVerifier.create(result)
 				.thenConsumeWhile(response -> {
 					assertThat(response).isNotNull();
-					assertThat(response).isInstanceOf(DashScopeSpeechResponse.class);
+					assertThat(response).isInstanceOf(TTSReqRes.DashScopeAudioTTSResponse.class);
 
-					DashScopeSpeechResponse r = (DashScopeSpeechResponse) response;
+					TTSReqRes.DashScopeAudioTTSResponse r = (TTSReqRes.DashScopeAudioTTSResponse) response;
 					assertThat(r.getOutput()).isNotNull();
 					assertThat(r.getRequestId()).isNotEmpty();
 
 					// 记录音频数据信息并收集 Base64 数据
-					DashScopeSpeechResponse.DashScopeSpeechAudio audio = r.getOutput().audio();
+					TTSReqRes.DashScopeAudioTTSResponse.TTSAudio audio = r.getOutput().audio();
 					if (audio != null) {
 						logger.info("Audio data received:");
 						if (audio.data() != null && !audio.data().isEmpty()) {

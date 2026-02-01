@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.alibaba.cloud.ai.dashscope.api.ApiUtils;
-import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioEventMessage;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -72,6 +71,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
     private String continueTaskMessage;
 
     private String finishTaskMessage;
+
+    private ByteBuffer binaryData;
 
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
 		this.options = options;
@@ -139,15 +140,19 @@ public class DashScopeWebSocketClient extends WebSocketListener {
         }, FluxSink.OverflowStrategy.BUFFER);
     }
 
-	public Flux<String> streamTextOut(Flux<ByteBuffer> binary) {
-		Flux<String> flux = Flux.<String>create(emitter -> {
-			this.textEmitter = emitter;
-		}, FluxSink.OverflowStrategy.BUFFER);
 
-		binary.subscribe(this::sendBinary);
+    public Flux<String> command(String runTaskMessage, ByteBuffer binaryData, String finishTaskMessage) {
+        this.binaryData = binaryData;
+        this.finishTaskMessage = finishTaskMessage;
 
-		return flux;
-	}
+        return Flux.<String>create(emitter -> {
+            this.textEmitter = emitter;
+
+            // Send run-task first
+            logger.info("Event-driven : Sending run-task message");
+            sendText(runTaskMessage);
+        }, FluxSink.OverflowStrategy.BUFFER);
+    }
 
 	public void sendText(String text) {
         if (!isOpen.get()) {
@@ -264,12 +269,15 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 		logger.debug("receive ws event onMessage(text): handle={}, text={}", webSocket, text);
 
 		try {
-            DashScopeAudioEventMessage message = this.objectMapper.readValue(text, DashScopeAudioEventMessage.class);
+            EventMessage message = this.objectMapper.readValue(text, EventMessage.class);
 			switch (message.header().event()) {
 				case TASK_STARTED:
 					logger.info("task started: text={}", text);
                     if (!ObjectUtils.isEmpty(this.continueTaskMessage)) {
                         sendText(this.continueTaskMessage);
+                    }
+                    if (!ObjectUtils.isEmpty(this.binaryData)) {
+                        sendBinary(this.binaryData);
                     }
 					break;
                 case RESULT_GENERATED:
@@ -277,6 +285,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
                     if (this.textEmitter != null) {
                         textEmitter.next(text);
                     }
+
                     break;
 				case TASK_FINISHED:
 					logger.info("task finished: text={}", text);

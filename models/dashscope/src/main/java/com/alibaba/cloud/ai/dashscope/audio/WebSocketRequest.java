@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package com.alibaba.cloud.ai.dashscope.audio.model;
+package com.alibaba.cloud.ai.dashscope.audio;
 
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechOptions;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
 /**
- * DashScope Audio Speech Request.
+ * DashScope WebSocket Request.
  *
  * @author yingzi
  * @since 2026/1/25
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DashScopeAudioRequest {
+public class WebSocketRequest {
 
     @JsonProperty("header")
     private RequestHeader header;
@@ -38,7 +37,7 @@ public class DashScopeAudioRequest {
     @JsonProperty("payload")
     private RequestPayload payload;
 
-    public DashScopeAudioRequest(RequestHeader header, RequestPayload payload) {
+    public WebSocketRequest(RequestHeader header, RequestPayload payload) {
         this.header = header;
         this.payload = payload;
     }
@@ -79,8 +78,8 @@ public class DashScopeAudioRequest {
             return this;
         }
 
-        public DashScopeAudioRequest build() {
-            return new DashScopeAudioRequest(this.header, this.payload);
+        public WebSocketRequest build() {
+            return new WebSocketRequest(this.header, this.payload);
         }
 
     }
@@ -389,6 +388,24 @@ public class DashScopeAudioRequest {
         @JsonProperty("aigc_propagate_id")
         private String aigcPropagateId;
 
+        @JsonProperty("vocabulary_id")
+        private String vocabularyId;
+
+        @JsonProperty("source_language")
+        private String sourceLanguage;
+
+        @JsonProperty("transcription_enabled")
+        private Boolean transcriptionEnabled;
+
+        @JsonProperty("translation_enabled")
+        private Boolean translationEnabled;
+
+        @JsonProperty("translation_target_languages")
+        private List<String> translationTargetLanguages;
+
+        @JsonProperty("max_end_silence")
+        private Integer maxEndSilence;
+
         public RequestPayloadParameters() {
         }
 
@@ -532,6 +549,54 @@ public class DashScopeAudioRequest {
             this.aigcPropagateId = aigcPropagateId;
         }
 
+        public String getVocabularyId() {
+            return vocabularyId;
+        }
+
+        public void setVocabularyId(String vocabularyId) {
+            this.vocabularyId = vocabularyId;
+        }
+
+        public String getSourceLanguage() {
+            return sourceLanguage;
+        }
+
+        public void setSourceLanguage(String sourceLanguage) {
+            this.sourceLanguage = sourceLanguage;
+        }
+
+        public Boolean getTranscriptionEnabled() {
+            return transcriptionEnabled;
+        }
+
+        public void setTranscriptionEnabled(Boolean transcriptionEnabled) {
+            this.transcriptionEnabled = transcriptionEnabled;
+        }
+
+        public Boolean getTranslationEnabled() {
+            return translationEnabled;
+        }
+
+        public void setTranslationEnabled(Boolean translationEnabled) {
+            this.translationEnabled = translationEnabled;
+        }
+
+        public List<String> getTranslationTargetLanguages() {
+            return translationTargetLanguages;
+        }
+
+        public void setTranslationTargetLanguages(List<String> translationTargetLanguages) {
+            this.translationTargetLanguages = translationTargetLanguages;
+        }
+
+        public Integer getMaxEndSilence() {
+            return maxEndSilence;
+        }
+
+        public void setMaxEndSilence(Integer maxEndSilence) {
+            this.maxEndSilence = maxEndSilence;
+        }
+
         public static class Builder {
 
             private final RequestPayloadParameters parameters;
@@ -625,13 +690,43 @@ public class DashScopeAudioRequest {
                 return this;
             }
 
+            public Builder vocabularyId(String vocabularyId) {
+                this.parameters.vocabularyId = vocabularyId;
+                return this;
+            }
+
+            public Builder sourceLanguage(String sourceLanguage) {
+                this.parameters.sourceLanguage = sourceLanguage;
+                return this;
+            }
+
+            public Builder transcriptionEnabled(Boolean transcriptionEnabled) {
+                this.parameters.transcriptionEnabled = transcriptionEnabled;
+                return this;
+            }
+
+            public Builder translationEnabled(Boolean translationEnabled) {
+                this.parameters.translationEnabled = translationEnabled;
+                return this;
+            }
+
+            public Builder translationTargetLanguages(List<String> translationTargetLanguages) {
+                this.parameters.translationTargetLanguages = translationTargetLanguages;
+                return this;
+            }
+
+            public Builder maxEndSilence(Integer maxEndSilence) {
+                this.parameters.maxEndSilence = maxEndSilence;
+                return this;
+            }
+
             public RequestPayloadParameters build() {
                 return parameters;
             }
 
         }
 
-        public static RequestPayloadParameters optionsConvertReq(DashScopeAudioSpeechOptions options) {
+        public static RequestPayloadParameters speechOptionsConvertReq(DashScopeAudioSpeechOptions options) {
             return RequestPayloadParameters.builder()
                     .volume(options.getVolume())
                     .textType(options.getTextType())

@@ -15,9 +15,9 @@
  */
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechOptions;
-import com.alibaba.cloud.ai.dashscope.audio.model.AudioCommonType;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechModel;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechOptions;
+import com.alibaba.cloud.ai.dashscope.audio.AudioCommonType;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.cloud.ai.dashscope.audio;
+package com.alibaba.cloud.ai.dashscope.audio.tts;
 
-import com.alibaba.cloud.ai.dashscope.audio.model.AudioCommonType.TextType;
+import com.alibaba.cloud.ai.dashscope.audio.AudioCommonType.TextType;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.audio.tts.TextToSpeechOptions;
@@ -193,11 +193,11 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
         this.speed = speed;
     }
 
-    public float getRate() {
+    public Float getRate() {
         return rate;
     }
 
-    public void setRate(float rate) {
+    public void setRate(Float rate) {
         this.rate = rate;
     }
 
@@ -270,175 +270,119 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
         return new Builder();
     }
 
-
     /**
      * Builder for DashScopeAudioSpeechOptions.
      */
     public static class Builder {
 
-        private String model;
+        private final DashScopeAudioSpeechOptions options;
 
-        private String textType = TextType.PLAIN_TEXT.getValue();
-
-        private String voice = "longanyang";
-
-        private String format;
-
-        private Integer sampleRate;
-
-        private Integer volume;
-
-        private float rate;
-
-        private float pitch;
-
-        private Boolean enableSsml;
-
-        private Integer bitRate;
-
-        private Double speed;
-
-        private Integer seed;
-
-        private Boolean wordTimestampEnabled;
-
-        private Boolean phonemeTimestampEnabled;
-
-        private List<String> languageHints;
-
-        private String instruction;
-
-        private Boolean enableAigcTag;
-
-        private String aigcPropagator;
-
-        private String aigcPropagateId;
-
-        private String languageType;
+        public Builder() {
+            this.options = new DashScopeAudioSpeechOptions();
+        }
 
         public Builder model(String model) {
-            this.model = model;
+            this.options.model = model;
             return this;
         }
 
         public Builder textType(String textType) {
-            this.textType = textType;
+            this.options.textType = textType;
             return this;
         }
 
         public Builder voice(String voice) {
-            this.voice = voice;
+            this.options.voice = voice;
             return this;
         }
 
         public Builder format(String format) {
-            this.format = format;
+            this.options.format = format;
             return this;
         }
 
         public Builder sampleRate(Integer sampleRate) {
-            this.sampleRate = sampleRate;
+            this.options.sampleRate = sampleRate;
             return this;
         }
 
         public Builder volume(Integer volume) {
-            this.volume = volume;
+            this.options.volume = volume;
             return this;
         }
 
         public Builder rate(Float rate) {
-            this.rate = rate;
+            this.options.rate = rate;
             return this;
         }
 
         public Builder pitch(Float pitch) {
-            this.pitch = pitch;
+            this.options.pitch = pitch;
             return this;
         }
 
         public Builder enableSsml(Boolean enableSsml) {
-            this.enableSsml = enableSsml;
+            this.options.enableSsml = enableSsml;
             return this;
         }
 
         public Builder bitRate(Integer bitRate) {
-            this.bitRate = bitRate;
+            this.options.bitRate = bitRate;
             return this;
         }
 
         public Builder speed(Double speed) {
-            this.speed = speed;
+            this.options.speed = speed;
             return this;
         }
 
         public Builder seed(Integer seed) {
-            this.seed = seed;
+            this.options.seed = seed;
             return this;
         }
 
         public Builder wordTimestampEnabled(Boolean wordTimestampEnabled) {
-            this.wordTimestampEnabled = wordTimestampEnabled;
+            this.options.wordTimestampEnabled = wordTimestampEnabled;
             return this;
         }
 
         public Builder phonemeTimestampEnabled(Boolean phonemeTimestampEnabled) {
-            this.phonemeTimestampEnabled = phonemeTimestampEnabled;
+            this.options.phonemeTimestampEnabled = phonemeTimestampEnabled;
             return this;
         }
 
         public Builder languageHints(List<String> languageHints) {
-            this.languageHints = languageHints;
+            this.options.languageHints = languageHints;
             return this;
         }
 
         public Builder instruction(String instruction) {
-            this.instruction = instruction;
+            this.options.instruction = instruction;
             return this;
         }
 
         public Builder enableAigcTag(Boolean enableAigcTag) {
-            this.enableAigcTag = enableAigcTag;
+            this.options.enableAigcTag = enableAigcTag;
             return this;
         }
 
         public Builder aigcPropagator(String aigcPropagator) {
-            this.aigcPropagator = aigcPropagator;
+            this.options.aigcPropagator = aigcPropagator;
             return this;
         }
 
         public Builder aigcPropagateId(String aigcPropagateId) {
-            this.aigcPropagateId = aigcPropagateId;
+            this.options.aigcPropagateId = aigcPropagateId;
             return this;
         }
 
         public Builder languageType(String languageType) {
-            this.languageType = languageType;
+            this.options.languageType = languageType;
             return this;
         }
 
         public DashScopeAudioSpeechOptions build() {
-            DashScopeAudioSpeechOptions options = new DashScopeAudioSpeechOptions();
-            options.model = this.model;
-            options.textType = this.textType;
-            options.voice = this.voice;
-            options.format = this.format;
-            options.sampleRate = this.sampleRate;
-            options.volume = this.volume;
-            options.rate = this.rate;
-            options.pitch = this.pitch;
-            options.enableSsml = this.enableSsml;
-            options.bitRate = this.bitRate;
-            options.speed = this.speed;
-            options.seed = this.seed;
-            options.wordTimestampEnabled = this.wordTimestampEnabled;
-            options.phonemeTimestampEnabled = this.phonemeTimestampEnabled;
-            options.languageHints = this.languageHints;
-            options.instruction = this.instruction;
-            options.enableAigcTag = this.enableAigcTag;
-            options.aigcPropagator = this.aigcPropagator;
-            options.aigcPropagateId = this.aigcPropagateId;
-            options.languageType = this.languageType;
-            return options;
+            return this.options;
         }
 
     }

@@ -17,8 +17,9 @@
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioSpeechApi;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
+import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.model.SpringAIModelProperties;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
@@ -32,6 +33,7 @@ import org.springframework.boot.autoconfigure.web.reactive.function.client.WebCl
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
@@ -39,8 +41,7 @@ import org.springframework.web.reactive.function.client.WebClient.Builder;
 import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUtils.resolveConnectionProperties;
 
 /**
- * @author yuluo
- * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
+ * @author yuluo, yingzi
  */
 
 @AutoConfiguration(after = { RestClientAutoConfiguration.class, WebClientAutoConfiguration.class,
@@ -49,7 +50,7 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
 @ConditionalOnDashScopeEnabled
 @ConditionalOnProperty(name = SpringAIModelProperties.AUDIO_SPEECH_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
 		matchIfMissing = true)
-@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeAudioSpeechSynthesisProperties.class })
+@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeAudioSpeechProperties.class })
 @ImportAutoConfiguration(classes = { SpringAiRetryAutoConfiguration.class, RestClientAutoConfiguration.class,
 		WebClientAutoConfiguration.class })
 public class DashScopeAudioSpeechAutoConfiguration {
@@ -57,33 +58,29 @@ public class DashScopeAudioSpeechAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public DashScopeAudioSpeechModel dashScopeSpeechSynthesisModel(DashScopeConnectionProperties commonProperties,
-                                                                   DashScopeAudioSpeechSynthesisProperties audioSpeechProperties, RetryTemplate retryTemplate,
+                                                                   DashScopeAudioSpeechProperties audioSpeechProperties, RetryTemplate retryTemplate,
                                                                    ObjectProvider<Builder> webClientBuilderProvider,
-                                                                   ObjectProvider<RestClient.Builder> restClientBuilderProvider) {
+                                                                   ObjectProvider<RestClient.Builder> restClientBuilderProvider, ResponseErrorHandler responseErrorHandle) {
 
-		var dashScopeSpeechSynthesisApi = audioSpeechApi(commonProperties, audioSpeechProperties,
-                restClientBuilderProvider.getIfAvailable(RestClient::builder),
-                webClientBuilderProvider.getIfAvailable(WebClient::builder));
+        ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, audioSpeechProperties,
+                "audio.speech");
+
+        var dashScopeAudioSpeechApi = DashScopeAudioSpeechApi.builder()
+                .baseUrl(resolved.baseUrl())
+                .websocketUrl(audioSpeechProperties.getWebsocketUrl())
+                .apiKey(new SimpleApiKey(resolved.apiKey()))
+                .workSpaceId(resolved.workspaceId())
+                .restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
+                .webClientBuilder(webClientBuilderProvider.getIfAvailable(WebClient::builder))
+                .headers(resolved.headers())
+                .responseErrorHandler(responseErrorHandle)
+                .build();
 
 		return DashScopeAudioSpeechModel.builder()
-                .audioSpeechApi(dashScopeSpeechSynthesisApi)
+                .audioSpeechApi(dashScopeAudioSpeechApi)
                 .defaultOptions(audioSpeechProperties.getOptions())
                 .retryTemplate(retryTemplate)
                 .build();
-	}
-
-	private DashScopeAudioSpeechApi audioSpeechApi(DashScopeConnectionProperties commonProperties,
-			DashScopeAudioSpeechSynthesisProperties audioSpeechProperties,
-                                                   RestClient.Builder restClientBuilder,
-                                                   WebClient.Builder webClientBuilder) {
-
-		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, audioSpeechProperties,
-				"audio.synthesis");
-
-		return new DashScopeAudioSpeechApi(
-                resolved.baseUrl(),
-                resolved.apiKey(), resolved.workspaceId(),
-                restClientBuilder, webClientBuilder);
 	}
 
 }

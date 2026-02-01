@@ -30,6 +30,8 @@ public class DashScopeAudioApiConstants {
 
     public static final String MULTIMODAL_GENERATION = "api/v1/services/aigc/multimodal-generation/generation";
 
+    public static final String CHAT_COMPLETIONS = "/compatible-mode/v1/chat/completions";
+
     // 实时语音合成 - CosyVocie
     public static List<String> COSY_VOICE_MODEL_LIST = List.of(
         AudioModel.COSYVOICE_V1.getValue(),
@@ -96,15 +98,39 @@ public class DashScopeAudioApiConstants {
             AudioModel.QWEN_TTS_2025_04_10.getValue()
     );
 
-    public static boolean isWebsocketByModelName(String modelName) {
+    // 语音翻译 - 音视频翻译 - 通义千问
+    public static List<String> QWEN3_LIVE_TRANSLATE_LIST = List.of(
+            AudioModel.QWEN3_LIVETRANSLATE_FLASH.getValue(),
+            AudioModel.QWEN3_LIVETRANSLATE_FLASH_2025_12_01.getValue()
+    );
+
+    // 语音翻译 - 实时长（短）语音翻译
+    public static List<String> QWEN3_LONG_SHORT_TRANSLATE_LIST = List.of(
+            AudioModel.FUN_ASR_REALTIME.getValue(),
+            AudioModel.GUMMY_REALTIME_V1.getValue(),
+            AudioModel.GUMMY_CHAT_V1.getValue(),
+            AudioModel.PARAFORMER_REALTIME_V2.getValue(),
+            AudioModel.PARAFORMER_REALTIME_V1.getValue(),
+            AudioModel.PARAFORMER_REALTIME_8K_V2.getValue(),
+            AudioModel.PARAFORMER_REALTIME_8K_V1.getValue()
+    );
+
+    public static boolean isWebsocketByTTSModelName(String modelName) {
         if (COSY_VOICE_MODEL_LIST.contains(modelName) || SAMBERT_MODEL_LIST.contains(modelName)) {
             return true;
         }
-
         return false;
     }
 
     public static boolean isQwenTTSModel(String modelName) {
         return QWEN_TTS_MODEL_LIST.contains(modelName);
+    }
+
+    public static boolean isLiveTranslate(String modelName) {
+        return QWEN3_LIVE_TRANSLATE_LIST.contains(modelName);
+    }
+
+    public static boolean isWebsocketByTranscriptionModelName(String modelName) {
+        return QWEN3_LONG_SHORT_TRANSLATE_LIST.contains(modelName);
     }
 }

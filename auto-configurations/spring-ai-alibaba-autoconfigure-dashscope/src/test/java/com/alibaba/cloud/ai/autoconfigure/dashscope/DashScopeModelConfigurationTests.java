@@ -16,8 +16,8 @@
 
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionModel;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionModel;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechModel;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
@@ -210,14 +210,14 @@ class DashScopeModelConfigurationTests {
 		this.contextRunner.withPropertyValues("spring.ai.model.audio.speech=none")
 			.withConfiguration(AutoConfigurations.of(DashScopeAudioSpeechAutoConfiguration.class))
 			.run(context -> {
-				assertThat(context.getBeansOfType(DashScopeAudioSpeechSynthesisProperties.class)).isEmpty();
+				assertThat(context.getBeansOfType(DashScopeAudioSpeechProperties.class)).isEmpty();
 				assertThat(context.getBeansOfType(DashScopeAudioSpeechModel.class)).isEmpty();
 			});
 
 		this.contextRunner.withPropertyValues("spring.ai.model.audio.speech=dashscope")
 			.withConfiguration(AutoConfigurations.of(DashScopeAudioSpeechAutoConfiguration.class))
 			.run(context -> {
-				assertThat(context.getBeansOfType(DashScopeAudioSpeechSynthesisProperties.class)).isNotEmpty();
+				assertThat(context.getBeansOfType(DashScopeAudioSpeechProperties.class)).isNotEmpty();
 				assertThat(context.getBeansOfType(DashScopeAudioSpeechModel.class)).isNotEmpty();
 			});
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.cloud.ai.dashscope.audio.model;
+package com.alibaba.cloud.ai.dashscope.audio;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -26,10 +26,8 @@ public class AudioCommonType {
 
     public enum TextType {
 
-        // @formatter:off
         @JsonProperty("PlainText") PLAIN_TEXT("PlainText"),
         @JsonProperty("SSML") SSML("SSML");
-        // @formatter:on
 
         private final String value;
 
@@ -47,7 +45,11 @@ public class AudioCommonType {
 
         @JsonProperty("pcm") PCM("pcm"),
         @JsonProperty("wav") WAV("wav"),
-        @JsonProperty("mp3") MP3("mp3");
+        @JsonProperty("mp3") MP3("mp3"),
+        @JsonProperty("opus") OPUS("opus"),
+        @JsonProperty("speex") SPEEX("speex"),
+        @JsonProperty("aac") AAC("aac"),
+        @JsonProperty("amr") AMR("amr");
 
         public final String formatType;
 

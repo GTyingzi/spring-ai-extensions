@@ -15,15 +15,16 @@
  */
 package com.alibaba.cloud.ai.dashscope.api;
 
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechOptions;
-import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeSpeechResponse;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechOptions;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient.EventType;
-import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioRequest;
+import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest;
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient;
-import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioRequest.RequestHeader;
-import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioRequest.RequestPayload;
-import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioRequest.RequestPayloadInput;
-import com.alibaba.cloud.ai.dashscope.audio.model.DashScopeAudioTTSModel.DashScopeAudioTTSRequest;
+import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestHeader;
+import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestPayload;
+import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestPayloadInput;
+import com.alibaba.cloud.ai.dashscope.audio.tts.TTSReqRes.DashScopeAudioTTSRequest;
+import com.alibaba.cloud.ai.dashscope.audio.tts.TTSReqRes.DashScopeAudioTTSResponse;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.protocol.DashScopeWebSocketClientOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,46 +35,95 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.model.ApiKey;
+import org.springframework.ai.model.NoopApiKey;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.util.JacksonUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Assert;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ENABLED;
 import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_SSE;
-import static com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants.MULTIMODAL_GENERATION;
 
 /**
  * @author xuguan
  */
 public class DashScopeAudioSpeechApi {
 
-    // 日志
     private static final Logger log = LoggerFactory.getLogger(DashScopeAudioSpeechApi.class);
 
-	private final DashScopeWebSocketClient webSocketClient;
+    private final String baseUrl;
 
-	private final ObjectMapper objectMapper;
+    private final String websocketUrl;
+
+    private final ApiKey apiKey;
+
+    private final String workSpaceId;
+
+    private final MultiValueMap<String, String> headers;
+
+    private final DashScopeWebSocketClient webSocketClient;
 
     private final RestClient restClient;
 
     private final WebClient webClient;
 
-    private final String apiKey;
+    private final ObjectMapper objectMapper;
 
-	public DashScopeAudioSpeechApi(String baseUrl, String apiKey, String workSpaceId, RestClient.Builder restClientBuilder,
-                                   WebClient.Builder webClientBuilder) {
-		this.apiKey = apiKey;
-		this.webSocketClient = new DashScopeWebSocketClient(DashScopeWebSocketClientOptions.builder()
-			.apiKey(apiKey)
-			.workSpaceId(workSpaceId)
-			.url(DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL)
-			.build());
+    public DashScopeAudioSpeechApi(String baseUrl,
+                                   String  websocketUrl,
+                                   ApiKey apiKey,
+                                   String workSpaceId,
+                                   MultiValueMap<String, String> headers,
+                                   RestClient.Builder restClientBuilder,
+                                   WebClient.Builder webClientBuilder,
+                                   ResponseErrorHandler responseErrorHandler) {
+        this.baseUrl = baseUrl;
+        this.websocketUrl = websocketUrl;
+        this.apiKey = apiKey;
+        this.workSpaceId = workSpaceId;
+        this.headers = headers;
+
+        Consumer<HttpHeaders> authHeaders = h -> {
+            h.addAll(headers);
+            h.setContentType(MediaType.APPLICATION_JSON);
+            if (!(apiKey instanceof NoopApiKey)) {
+                h.setBearerAuth(apiKey.getValue());
+            }
+
+        };
+
+        this.restClient = restClientBuilder.clone()
+                .baseUrl(baseUrl)
+                .defaultHeaders(authHeaders)
+                .defaultStatusHandler(responseErrorHandler)
+                .build();
+
+        this.webClient = webClientBuilder.clone()
+                .baseUrl(baseUrl)
+                .defaultHeaders(authHeaders)
+                .build();
+
+		this.webSocketClient = new DashScopeWebSocketClient(
+                DashScopeWebSocketClientOptions.builder()
+			        .apiKey(apiKey.getValue())
+			        .workSpaceId(workSpaceId)
+			        .url(websocketUrl)
+			        .build());
 
 		this.objectMapper =
 			JsonMapper.builder()
@@ -86,17 +136,9 @@ public class DashScopeAudioSpeechApi {
 				// Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
 				.addModules(JacksonUtils.instantiateAvailableModules())
 				.build();
-
-        this.restClient = restClientBuilder.clone()
-                .baseUrl(baseUrl)
-                .build();
-
-        this.webClient = webClientBuilder
-                .baseUrl(baseUrl)
-                .build();
 	}
 
-    public DashScopeSpeechResponse callQwenTTS(String text, DashScopeAudioSpeechOptions options) {
+    public DashScopeAudioTTSResponse callQwenTTS(String text, DashScopeAudioSpeechOptions options) {
         DashScopeAudioTTSRequest request = DashScopeAudioTTSRequest.builder()
                 .model(options.getModel())
                 .text(text)
@@ -104,13 +146,11 @@ public class DashScopeAudioSpeechApi {
                 .languageType(options.getLanguageType())
                 .build();
 
-        // 构建REST API请求，添加 Authorization 头
-        ResponseEntity<DashScopeSpeechResponse> response = restClient.post()
-                .uri(MULTIMODAL_GENERATION)
-                .headers(headers -> headers.setBearerAuth(this.apiKey))
+        ResponseEntity<DashScopeAudioTTSResponse> response = restClient.post()
+                .uri(DashScopeAudioApiConstants.MULTIMODAL_GENERATION)
                 .body(request)
                 .retrieve()
-                .toEntity(DashScopeSpeechResponse.class);
+                .toEntity(DashScopeAudioTTSResponse.class);
         if (response.getStatusCode().is2xxSuccessful()) {
             return response.getBody();
         }
@@ -119,7 +159,7 @@ public class DashScopeAudioSpeechApi {
         throw new RuntimeException("Failed to call Qwen TTS API: " + response.getStatusCode());
     }
 
-    public Flux<DashScopeSpeechResponse> streamQwenTTS(String text, DashScopeAudioSpeechOptions options) {
+    public Flux<DashScopeAudioTTSResponse> streamQwenTTS(String text, DashScopeAudioSpeechOptions options) {
         DashScopeAudioTTSRequest request = DashScopeAudioTTSRequest.builder()
                 .model(options.getModel())
                 .text(text)
@@ -131,9 +171,8 @@ public class DashScopeAudioSpeechApi {
         Predicate<String> SSE_DONE_PREDICATE = "[DONE]"::equals;
 
         return this.webClient.post()
-                .uri(MULTIMODAL_GENERATION)
+                .uri(DashScopeAudioApiConstants.MULTIMODAL_GENERATION)
                 .headers(headers -> {
-                    headers.setBearerAuth(this.apiKey);
                     headers.add(HEADER_SSE, ENABLED);  // X-DashScope-SSE: enable
                 })
                 .body(Mono.just(request), DashScopeAudioTTSRequest.class)
@@ -142,39 +181,39 @@ public class DashScopeAudioSpeechApi {
                 .takeUntil(SSE_DONE_PREDICATE)  // 遇到 [DONE] 停止
                 .filter(SSE_DONE_PREDICATE.negate())  // 过滤掉 [DONE]
                 .map(content -> {
-                    // 解析 JSON 响应
                     try {
-                        return this.objectMapper.readValue(content, DashScopeSpeechResponse.class);
+                        return this.objectMapper.readValue(content, DashScopeAudioTTSResponse.class);
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException("Failed to parse TTS response: " + content, e);
                     }
                 });
     }
 
-    public Flux<ByteBuffer> createWebSocketTask(String taskId, String text, DashScopeAudioSpeechOptions options) {
+    public Flux<ByteBuffer> createWebSocketTask(String text, DashScopeAudioSpeechOptions options) {
         boolean isCosyVoiceModel = DashScopeAudioApiConstants.COSY_VOICE_MODEL_LIST.contains(options.getModel());
 
+        String taskId = UUID.randomUUID().toString();
         // run-task
-        DashScopeAudioRequest runTaskRequest = DashScopeAudioRequest.builder()
-                .header(DashScopeAudioRequest.RequestHeader.builder()
+        WebSocketRequest runTaskRequest = WebSocketRequest.builder()
+                .header(WebSocketRequest.RequestHeader.builder()
                         .action(EventType.RUN_TASK)
                         .taskId(taskId)
                         .streaming(isCosyVoiceModel ? "duplex" : "output") // duplex对应cosy voice，output对应 sambert
                         .build())
-                .payload(DashScopeAudioRequest.RequestPayload.builder()
+                .payload(WebSocketRequest.RequestPayload.builder()
                         .model(options.getModel())
                         .taskGroup("audio")
                         .task("tts")
                         .function("SpeechSynthesizer")
-                        .input(DashScopeAudioRequest.RequestPayloadInput.builder()
+                        .input(WebSocketRequest.RequestPayloadInput.builder()
                                 .text(isCosyVoiceModel ? null : text) // cosy voice不需要text, sambert需要text
                                 .build())
-                        .parameters(DashScopeAudioRequest.RequestPayloadParameters
-                                .optionsConvertReq(options))
+                        .parameters(WebSocketRequest.RequestPayloadParameters
+                                .speechOptionsConvertReq(options))
                         .build())
                 .build();
         // continue-task
-        DashScopeAudioRequest continueTaskRequest = DashScopeAudioRequest.builder()
+        WebSocketRequest continueTaskRequest = WebSocketRequest.builder()
                 .header(RequestHeader.builder()
                         .action(EventType.CONTINUE_TASK)
                         .taskId(taskId)
@@ -187,7 +226,7 @@ public class DashScopeAudioSpeechApi {
                 ).build())
                 .build();
         // finish-task
-        DashScopeAudioRequest finishTaskRequest = DashScopeAudioRequest.builder()
+        WebSocketRequest finishTaskRequest = WebSocketRequest.builder()
                 .header(RequestHeader.builder()
                         .action(EventType.FINISH_TASK)
                         .taskId(taskId)
@@ -211,6 +250,124 @@ public class DashScopeAudioSpeechApi {
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public Builder mutate() {
+        return new Builder(this);
+    }
+
+    public String getBaseUrl() {
+        return this.baseUrl;
+    }
+
+    public String getWebsocketUrl() {
+        return this.websocketUrl;
+    }
+
+    public ApiKey getApiKey() {
+        return this.apiKey;
+    }
+
+    public String getWorkSpaceId() {
+        return this.workSpaceId;
+    }
+
+    public MultiValueMap<String, String> getHeaders() {
+        return this.headers;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private String baseUrl = DashScopeApiConstants.DEFAULT_BASE_URL;
+
+        private String websocketUrl = DashScopeAudioApiConstants.DEFAULT_WEBSOCKET_URL;
+
+        private ApiKey apiKey;
+
+        private String workSpaceId;
+
+        private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+
+        private RestClient.Builder restClientBuilder = RestClient.builder();
+
+        private WebClient.Builder webClientBuilder = WebClient.builder();
+
+        private ResponseErrorHandler responseErrorHandler = RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER;
+
+        public Builder() {
+        }
+
+        public Builder(DashScopeAudioSpeechApi api) {
+            this.baseUrl = api.getBaseUrl();
+            this.websocketUrl = api.getWebsocketUrl();
+            this.apiKey = api.getApiKey();
+            this.workSpaceId = api.getWorkSpaceId();
+            this.headers = api.getHeaders();
+        }
+
+        public Builder baseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
+            return this;
+        }
+
+        public Builder websocketUrl(String websocketUrl) {
+            this.websocketUrl = websocketUrl;
+            return this;
+        }
+
+        public Builder apiKey(ApiKey apiKey) {
+            this.apiKey = apiKey;
+            return this;
+        }
+
+        public Builder workSpaceId(String workSpaceId) {
+            this.workSpaceId = workSpaceId;
+            return this;
+        }
+
+        public Builder headers(MultiValueMap<String, String> headers) {
+            this.headers = headers;
+            return this;
+        }
+
+        public Builder restClientBuilder(RestClient.Builder restClientBuilder) {
+            this.restClientBuilder = restClientBuilder;
+            return this;
+        }
+
+        public Builder webClientBuilder(WebClient.Builder webClientBuilder) {
+            this.webClientBuilder = webClientBuilder;
+            return this;
+        }
+
+        public Builder responseErrorHandler(ResponseErrorHandler responseErrorHandler) {
+            this.responseErrorHandler = responseErrorHandler;
+            return this;
+        }
+
+        public DashScopeAudioSpeechApi build() {
+            Assert.hasText(this.baseUrl, "baseUrl cannot be null or empty");
+            Assert.hasText(this.websocketUrl, "websocketUrl cannot be null or empty");
+            Assert.notNull(this.apiKey, "apiKey must be set");
+            Assert.notNull(this.headers, "headers cannot be null");
+            Assert.notNull(this.restClientBuilder, "restClientBuilder cannot be null");
+            Assert.notNull(this.webClientBuilder, "webClientBuilder cannot be null");
+            Assert.notNull(this.responseErrorHandler, "responseErrorHandler cannot be null");
+
+            return new DashScopeAudioSpeechApi(
+                    this.baseUrl,
+                    this.websocketUrl,
+                    this.apiKey,
+                    this.workSpaceId,
+                    this.headers,
+                    this.restClientBuilder,
+                    this.webClientBuilder,
+                    this.responseErrorHandler);
         }
     }
 

@@ -18,10 +18,9 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionModel;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioSpeechModel;
-import com.alibaba.cloud.ai.dashscope.audio.model.AudioCommonType;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionModel;
+import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechModel;
+import com.alibaba.cloud.ai.dashscope.audio.AudioCommonType;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
@@ -227,7 +226,7 @@ public class DashScopePropertiesTests {
 				// @formatter:on
 			.withConfiguration(AutoConfigurations.of(DashScopeAudioSpeechAutoConfiguration.class))
 			.run(context -> {
-				var speechProperties = context.getBean(DashScopeAudioSpeechSynthesisProperties.class);
+				var speechProperties = context.getBean(DashScopeAudioSpeechProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
 
 				assertThat(connectionProperties.getApiKey()).isEqualTo("abc123_test");
@@ -259,7 +258,7 @@ public class DashScopePropertiesTests {
 				// @formatter:on
 			.withConfiguration(AutoConfigurations.of(DashScopeAudioSpeechAutoConfiguration.class))
 			.run(context -> {
-				var speechProperties = context.getBean(DashScopeAudioSpeechSynthesisProperties.class);
+				var speechProperties = context.getBean(DashScopeAudioSpeechProperties.class);
 				var connectionProperties = context.getBean(DashScopeConnectionProperties.class);
 
 				assertThat(connectionProperties.getApiKey()).isEqualTo("abc123_test");
@@ -446,10 +445,6 @@ public class DashScopePropertiesTests {
 				assertThat(connectionProperties.getApiKey()).isEqualTo("API_KEY");
 
 				assertThat(transcriptionProperties.getOptions().getModel()).isEqualTo("MODEL_CUSTOM");
-				List<String> languageHints = transcriptionProperties.getOptions().getLanguageHints();
-				assertThat(languageHints.contains("en")).isTrue();
-				assertThat(transcriptionProperties.getOptions().getFormat())
-					.isEqualTo(DashScopeAudioTranscriptionApi.AudioFormat.MP3);
 			});
 	}
 
@@ -609,7 +604,7 @@ public class DashScopePropertiesTests {
 					"spring.ai.dashscope.audio.speech.enabled=false")
 			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
-				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechSynthesisProperties.class));
+				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechModel.class));
 			});
 
@@ -617,7 +612,7 @@ public class DashScopePropertiesTests {
 			.withPropertyValues("spring.ai.dashscope.api-key=API_KEY", "spring.ai.dashscope.base-url=TEST_BASE_URL")
 			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
-				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechSynthesisProperties.class));
+				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechModel.class));
 			});
 
@@ -626,7 +621,7 @@ public class DashScopePropertiesTests {
 					"spring.ai.dashscope.audio.speech.enabled=true")
 			.withConfiguration(AutoConfigurations.of(DashScopeChatAutoConfiguration.class))
 			.run(context -> {
-				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechSynthesisProperties.class));
+				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechProperties.class));
 				assertNotNull(context.getBeansOfType(DashScopeAudioSpeechModel.class));
 			});
 
