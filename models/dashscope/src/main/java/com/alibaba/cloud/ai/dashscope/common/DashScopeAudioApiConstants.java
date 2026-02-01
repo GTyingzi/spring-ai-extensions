@@ -106,13 +106,17 @@ public class DashScopeAudioApiConstants {
 
     // 语音翻译 - 实时长（短）语音翻译
     public static List<String> QWEN3_LONG_SHORT_TRANSLATE_LIST = List.of(
-            AudioModel.FUN_ASR_REALTIME.getValue(),
             AudioModel.GUMMY_REALTIME_V1.getValue(),
-            AudioModel.GUMMY_CHAT_V1.getValue(),
+            AudioModel.GUMMY_CHAT_V1.getValue()
+    );
+
+    // 实时语音识别
+    public static List<String> PARAFORMER_FUNAS_LIST = List.of(
             AudioModel.PARAFORMER_REALTIME_V2.getValue(),
             AudioModel.PARAFORMER_REALTIME_V1.getValue(),
             AudioModel.PARAFORMER_REALTIME_8K_V2.getValue(),
-            AudioModel.PARAFORMER_REALTIME_8K_V1.getValue()
+            AudioModel.PARAFORMER_REALTIME_8K_V1.getValue(),
+            AudioModel.FUN_ASR_REALTIME.getValue()
     );
 
     public static boolean isWebsocketByTTSModelName(String modelName) {
@@ -130,7 +134,4 @@ public class DashScopeAudioApiConstants {
         return QWEN3_LIVE_TRANSLATE_LIST.contains(modelName);
     }
 
-    public static boolean isWebsocketByTranscriptionModelName(String modelName) {
-        return QWEN3_LONG_SHORT_TRANSLATE_LIST.contains(modelName);
-    }
 }

@@ -15,13 +15,16 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Sentence;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Transcription;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Translation;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Usage;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -104,21 +107,43 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
                     options);
         }
         // 下面是websocket任务
-        ByteBuffer binaryData = null;
+        byte[] audioBytes = null;
+        try {
+            audioBytes = prompt.getInstructions().getInputStream().readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        ByteBuffer binaryData = ByteBuffer.wrap(audioBytes);
         return audioTranscriptionApi.createWebSocketTask(binaryData, options).map(
                 response -> {
                     try {
+                        logger.debug("Raw WebSocket response: {}", response);
                         JsonNode jsonNode = mapper.readTree(response).get("payload").get("output");
-                        JsonNode translationsNode = jsonNode.get("translations");
-                        JsonNode transcriptionNode = jsonNode.get("transcription");
+                        if (DashScopeAudioApiConstants.QWEN3_LONG_SHORT_TRANSLATE_LIST.contains(options.getModel())) {
+                            JsonNode translationsNode = jsonNode.get("translations");
+                            JsonNode transcriptionNode = jsonNode.get("transcription");
+                            logger.debug("translationsNode: {}", translationsNode);
+                            logger.debug("transcriptionNode: {}", transcriptionNode);
 
-                        // 将 JsonNode 转换为 List<Translation> 和 List<Transcription>
-                        List<Translation> translations = mapper.convertValue(translationsNode, new TypeReference<>() {});
-                        List<Transcription> transcription = mapper.convertValue(transcriptionNode, new TypeReference<>() {});
+                            List<Translation> translations = mapper.convertValue(translationsNode, new TypeReference<>() {});
+                            Transcription transcription = mapper.convertValue(transcriptionNode, new TypeReference<>() {});
+                            return new DashScopeTranscriptionResponse(translations, transcription);
+                        } else if (DashScopeAudioApiConstants.PARAFORMER_FUNAS_LIST.contains(options.getModel())) {
+                            JsonNode sentenceNode = jsonNode.get("sentence");
+                            JsonNode usageNode = jsonNode.get("usage");
 
-                        // 构造 DashScopeTranscriptionResponse
-                        return new DashScopeTranscriptionResponse(translations, transcription);
+                            logger.debug("sentenceNode: {}", sentenceNode);
+                            logger.debug("usageNode: {}", usageNode);
+
+                            Sentence sentence = mapper.convertValue(sentenceNode, new TypeReference<>() {});
+                            Usage usage = mapper.convertValue(usageNode, new TypeReference<>() {});
+                            return new DashScopeTranscriptionResponse(sentence, usage);
+                        } else {
+                            throw new IllegalArgumentException("Model " + options.getModel() + " is not supported stream method.");
+                        }
+
                     } catch (JsonProcessingException e) {
+                        logger.error("Failed to parse WebSocket response: {}", response, e);
                         throw new RuntimeException(e);
                     }
                 }

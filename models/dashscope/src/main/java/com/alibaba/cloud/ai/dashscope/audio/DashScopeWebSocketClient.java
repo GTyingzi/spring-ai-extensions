@@ -89,16 +89,6 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			.build();
 	}
 
-	public Flux<ByteBuffer> streamBinaryOut(String text) {
-		Flux<ByteBuffer> flux = Flux.<ByteBuffer>create(emitter -> {
-			this.binaryEmitter = emitter;
-		}, FluxSink.OverflowStrategy.BUFFER);
-
-		sendText(text);
-
-		return flux;
-	}
-
 	/**
 	 * Stream binary output using event-driven duplex flow for CosyVoice.
 	 * This implements the official protocol specification:
@@ -278,6 +268,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
                     }
                     if (!ObjectUtils.isEmpty(this.binaryData)) {
                         sendBinary(this.binaryData);
+                        sendText(this.finishTaskMessage);
                     }
 					break;
                 case RESULT_GENERATED:

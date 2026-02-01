@@ -247,7 +247,14 @@ public class DashScopeAudioTranscriptionApi {
                                 .translationEnabled(options.getTranslationEnabled())
                                 .translationTargetLanguages(options.getTranslationTargetLanguages())
                                 .maxEndSilence(options.getMaxEndSilence())
+                                .multiThresholdModeEnabled(options.getMultiThresholdModeEnabled())
+                                .punctuationPredictionEnabled(options.getPunctuationPredictionEnabled())
+                                .heartbeat(options.getHeartbeat())
+                                .inverseTextNormalizationEnabled(options.getInverseTextNormalizationEnabled())
+                                .disfluencyRemovalEnabled(options.getDisfluencyRemovalEnabled())
+                                .languageHints(options.getLanguageHints())
                                 .build())
+                        .resources(options.getResources())
                         .build())
                 .build();
         // finish-task

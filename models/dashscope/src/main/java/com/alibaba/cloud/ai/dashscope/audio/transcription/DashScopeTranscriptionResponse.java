@@ -15,20 +15,42 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
 
     private final List<Translation> translations;
 
-    private final List<Transcription> transcription;
+    private final Transcription transcription;
 
-    public DashScopeTranscriptionResponse(List<Translation> translations, List<Transcription> transcription) {
+    private final Sentence sentence;
+
+    private final Usage usage;
+
+    public DashScopeTranscriptionResponse(List<Translation> translations, Transcription transcription) {
         super(null);
         this.translations = translations;
         this.transcription = transcription;
+        this.sentence = null;
+        this.usage = null;
+    }
+
+    public DashScopeTranscriptionResponse(Sentence sentence, Usage usage) {
+        super(null);
+        this.sentence = sentence;
+        this.usage = usage;
+        this.translations = null;
+        this.transcription = null;
     }
 
     public List<Translation> getTranslations() {
         return translations;
     }
 
-    public List<Transcription> getTranscription() {
+    public Transcription getTranscription() {
         return transcription;
+    }
+
+    public Sentence getSentence() {
+        return sentence;
+    }
+
+    public Usage getUsage() {
+        return usage;
     }
 
     public record Translation(
@@ -56,6 +78,21 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
             @JsonProperty("text") String text,
             @JsonProperty("words") List<Word> words,
             @JsonProperty("sentence_end") Boolean sentenceEnd
+    ) {}
+
+    public record Sentence(
+            @JsonProperty("begin_time") Integer beginTime,
+            @JsonProperty("end_time") Integer endTime,
+            @JsonProperty("text") String text,
+            @JsonProperty("heartbeat") Boolean heartbeat,
+            @JsonProperty("sentence_end") Boolean sentenceEnd,
+            @JsonProperty("emo_tag") String emoTag,
+            @JsonProperty("emo_confidence") Double emoConfidence,
+            @JsonProperty("words") List<Word> words
+            ) {}
+
+    public record Usage(
+            @JsonProperty("duration") Integer duration
     ) {}
 }
 

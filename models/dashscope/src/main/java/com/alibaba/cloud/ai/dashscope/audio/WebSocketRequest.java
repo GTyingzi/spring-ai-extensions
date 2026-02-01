@@ -16,6 +16,7 @@
 
 package com.alibaba.cloud.ai.dashscope.audio;
 
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions.Resource;
 import com.alibaba.cloud.ai.dashscope.audio.tts.DashScopeAudioSpeechOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -185,6 +186,12 @@ public class WebSocketRequest {
         @JsonProperty("parameters")
         private RequestPayloadParameters parameters;
 
+        @JsonProperty("output")
+        private Object output;
+
+        @JsonProperty("resources")
+        private List<Resource> resources;
+
         public RequestPayload() {
         }
 
@@ -240,6 +247,22 @@ public class WebSocketRequest {
             this.parameters = parameters;
         }
 
+        public Object getOutput() {
+            return output;
+        }
+
+        public void setOutput(Object output) {
+            this.output = output;
+        }
+
+        public List<Resource> getResources() {
+            return resources;
+        }
+
+        public void setResources(List<Resource> resources) {
+            this.resources = resources;
+        }
+
         public static class Builder {
 
             private final RequestPayload payload;
@@ -275,6 +298,16 @@ public class WebSocketRequest {
 
             public Builder parameters(RequestPayloadParameters parameters) {
                 this.payload.parameters = parameters;
+                return this;
+            }
+
+            public Builder output(Object output) {
+                this.payload.output = output;
+                return this;
+            }
+
+            public Builder resources(List<Resource> resources) {
+                this.payload.resources = resources;
                 return this;
             }
 
@@ -405,6 +438,27 @@ public class WebSocketRequest {
 
         @JsonProperty("max_end_silence")
         private Integer maxEndSilence;
+
+        @JsonProperty("disfluency_removal_enabled")
+        private Boolean disfluencyRemovalEnabled;
+
+        @JsonProperty("semantic_punctuation_enabled")
+        private Boolean semanticPunctuationEnabled;
+
+        @JsonProperty("max_sentence_silence")
+        private Integer maxSentenceSilence;
+
+        @JsonProperty("multi_threshold_mode_enabled")
+        private Boolean multiThresholdModeEnabled;
+
+        @JsonProperty("punctuation_prediction_enabled")
+        private Boolean punctuationPredictionEnabled;
+
+        @JsonProperty("heartbeat")
+        private Boolean heartbeat;
+
+        @JsonProperty("inverse_text_normalization_enabled")
+        private Boolean inverseTextNormalizationEnabled;
 
         public RequestPayloadParameters() {
         }
@@ -597,6 +651,62 @@ public class WebSocketRequest {
             this.maxEndSilence = maxEndSilence;
         }
 
+        public Boolean getDisfluencyRemovalEnabled() {
+            return disfluencyRemovalEnabled;
+        }
+
+        public void setDisfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+            this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
+        }
+
+        public Boolean getSemanticPunctuationEnabled() {
+            return semanticPunctuationEnabled;
+        }
+
+        public void setSemanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+            this.semanticPunctuationEnabled = semanticPunctuationEnabled;
+        }
+
+        public Integer getMaxSentenceSilence() {
+            return maxSentenceSilence;
+        }
+
+        public void setMaxSentenceSilence(Integer maxSentenceSilence) {
+            this.maxSentenceSilence = maxSentenceSilence;
+        }
+
+        public Boolean getMultiThresholdModeEnabled() {
+            return multiThresholdModeEnabled;
+        }
+
+        public void setMultiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+            this.multiThresholdModeEnabled = multiThresholdModeEnabled;
+        }
+
+        public Boolean getPunctuationPredictionEnabled() {
+            return punctuationPredictionEnabled;
+        }
+
+        public void setPunctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+            this.punctuationPredictionEnabled = punctuationPredictionEnabled;
+        }
+
+        public Boolean getHeartbeat() {
+            return heartbeat;
+        }
+
+        public void setHeartbeat(Boolean heartbeat) {
+            this.heartbeat = heartbeat;
+        }
+
+        public Boolean getInverseTextNormalizationEnabled() {
+            return inverseTextNormalizationEnabled;
+        }
+
+        public void setInverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+            this.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
+        }
+
         public static class Builder {
 
             private final RequestPayloadParameters parameters;
@@ -717,6 +827,41 @@ public class WebSocketRequest {
 
             public Builder maxEndSilence(Integer maxEndSilence) {
                 this.parameters.maxEndSilence = maxEndSilence;
+                return this;
+            }
+
+            public Builder disfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+                this.parameters.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
+                return this;
+            }
+
+            public Builder semanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+                this.parameters.semanticPunctuationEnabled = semanticPunctuationEnabled;
+                return this;
+            }
+
+            public Builder maxSentenceSilence(Integer maxSentenceSilence) {
+                this.parameters.maxSentenceSilence = maxSentenceSilence;
+                return this;
+            }
+
+            public Builder multiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+                this.parameters.multiThresholdModeEnabled = multiThresholdModeEnabled;
+                return this;
+            }
+
+            public Builder punctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+                this.parameters.punctuationPredictionEnabled = punctuationPredictionEnabled;
+                return this;
+            }
+
+            public Builder heartbeat(Boolean heartbeat) {
+                this.parameters.heartbeat = heartbeat;
+                return this;
+            }
+
+            public Builder inverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+                this.parameters.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
                 return this;
             }
 

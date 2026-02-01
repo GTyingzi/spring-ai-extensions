@@ -96,6 +96,33 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
     @JsonProperty("translation_options")
     private TranslationOptions translationOptions;
 
+    @JsonProperty("disfluency_removal_enabled")
+    private Boolean disfluencyRemovalEnabled;
+
+    @JsonProperty("language_hints")
+    private List<String> languageHints;
+
+    @JsonProperty("semantic_punctuation_enabled")
+    private Boolean semanticPunctuationEnabled;
+
+    @JsonProperty("max_sentence_silence")
+    private Integer maxSentenceSilence;
+
+    @JsonProperty("multi_threshold_mode_enabled")
+    private Boolean multiThresholdModeEnabled;
+
+    @JsonProperty("punctuation_prediction_enabled")
+    private Boolean punctuationPredictionEnabled;
+
+    @JsonProperty("heartbeat")
+    private Boolean heartbeat;
+
+    @JsonProperty("inverse_text_normalization_enabled")
+    private Boolean inverseTextNormalizationEnabled;
+
+    @JsonProperty("resources")
+    private List<Resource> resources;
+
     @Override
 	public String getModel() {
 		return model;
@@ -265,6 +292,78 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
         this.translationOptions = translationOptions;
     }
 
+    public Boolean getDisfluencyRemovalEnabled() {
+        return disfluencyRemovalEnabled;
+    }
+
+    public void setDisfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+        this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
+    }
+
+    public List<String> getLanguageHints() {
+        return languageHints;
+    }
+
+    public void setLanguageHints(List<String> languageHints) {
+        this.languageHints = languageHints;
+    }
+
+    public Boolean getSemanticPunctuationEnabled() {
+        return semanticPunctuationEnabled;
+    }
+
+    public void setSemanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+        this.semanticPunctuationEnabled = semanticPunctuationEnabled;
+    }
+
+    public Integer getMaxSentenceSilence() {
+        return maxSentenceSilence;
+    }
+
+    public void setMaxSentenceSilence(Integer maxSentenceSilence) {
+        this.maxSentenceSilence = maxSentenceSilence;
+    }
+
+    public Boolean getMultiThresholdModeEnabled() {
+        return multiThresholdModeEnabled;
+    }
+
+    public void setMultiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+        this.multiThresholdModeEnabled = multiThresholdModeEnabled;
+    }
+
+    public Boolean getPunctuationPredictionEnabled() {
+        return punctuationPredictionEnabled;
+    }
+
+    public void setPunctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+        this.punctuationPredictionEnabled = punctuationPredictionEnabled;
+    }
+
+    public Boolean getHeartbeat() {
+        return heartbeat;
+    }
+
+    public void setHeartbeat(Boolean heartbeat) {
+        this.heartbeat = heartbeat;
+    }
+
+    public Boolean getInverseTextNormalizationEnabled() {
+        return inverseTextNormalizationEnabled;
+    }
+
+    public void setInverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+        this.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
+    }
+
+    public List<Resource> getResources() {
+        return resources;
+    }
+
+    public void setResources(List<Resource> resources) {
+        this.resources = resources;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -381,6 +480,51 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
             return this;
         }
 
+        public Builder disfluencyRemovalEnabled(Boolean disfluencyRemovalEnabled) {
+            options.setDisfluencyRemovalEnabled(disfluencyRemovalEnabled);
+            return this;
+        }
+
+        public Builder languageHints(List<String> languageHints) {
+            options.setLanguageHints(languageHints);
+            return this;
+        }
+
+        public Builder semanticPunctuationEnabled(Boolean semanticPunctuationEnabled) {
+            options.setSemanticPunctuationEnabled(semanticPunctuationEnabled);
+            return this;
+        }
+
+        public Builder maxSentenceSilence(Integer maxSentenceSilence) {
+            options.setMaxSentenceSilence(maxSentenceSilence);
+            return this;
+        }
+
+        public Builder multiThresholdModeEnabled(Boolean multiThresholdModeEnabled) {
+            options.setMultiThresholdModeEnabled(multiThresholdModeEnabled);
+            return this;
+        }
+
+        public Builder punctuationPredictionEnabled(Boolean punctuationPredictionEnabled) {
+            options.setPunctuationPredictionEnabled(punctuationPredictionEnabled);
+            return this;
+        }
+
+        public Builder heartbeat(Boolean heartbeat) {
+            options.setHeartbeat(heartbeat);
+            return this;
+        }
+
+        public Builder inverseTextNormalizationEnabled(Boolean inverseTextNormalizationEnabled) {
+            options.setInverseTextNormalizationEnabled(inverseTextNormalizationEnabled);
+            return this;
+        }
+
+        public Builder resources(List<Resource> resources) {
+            options.setResources(resources);
+            return this;
+        }
+
         public DashScopeAudioTranscriptionOptions build() {
             return this.options;
         }
@@ -464,6 +608,30 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 
         public void setTargetLang(String targetLang) {
             this.targetLang = targetLang;
+        }
+    }
+
+    public static class Resource {
+        @JsonProperty("resource_id")
+        private String resourceId;
+
+        @JsonProperty("resource_type")
+        private String resourceType;
+
+        public String getResourceId() {
+            return resourceId;
+        }
+
+        public void setResourceId(String resourceId) {
+            this.resourceId = resourceId;
+        }
+
+        public String getResourceType() {
+            return resourceType;
+        }
+
+        public void setResourceType(String resourceType) {
+            this.resourceType = resourceType;
         }
     }
 
