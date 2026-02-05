@@ -17,10 +17,11 @@
 package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
-import com.alibaba.cloud.ai.dashscope.audio.DashScopeAudioTranscriptionModel;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionModel;
 import com.alibaba.cloud.ai.model.SpringAIAlibabaModels;
 import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.model.SpringAIModelProperties;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -29,6 +30,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.client.RestClientAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.retry.support.RetryTemplate;
@@ -40,6 +42,7 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
 
 /**
  * Spring AI Alibaba DashScope Audio Transcription Auto Configuration.
+ *
  * @author yuluo
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
  */
@@ -70,21 +73,21 @@ public class DashScopeAudioTranscriptionAutoConfiguration {
 			DashScopeConnectionProperties commonProperties,
 			DashScopeAudioTranscriptionProperties audioTranscriptionProperties,
 			ObjectProvider<RestClient.Builder> restClientBuilderProvider,
-			ObjectProvider<RetryTemplate> retryTemplate,
-			ObjectProvider<ResponseErrorHandler> responseErrorHandler) {
             ObjectProvider<WebClient.Builder> webClientBuilderProvider,
-	) {
+			ObjectProvider<RetryTemplate> retryTemplate,
+			ObjectProvider<ResponseErrorHandler> responseErrorHandler)
+	 {
 
 		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties,
 				audioTranscriptionProperties, "audio.transcription");
 
 		var dashScopeAudioTranscriptionApi = DashScopeAudioTranscriptionApi.builder()
-			.baseUrl(resolved.baseUrl())
-			.apiKey(new SimpleApiKey(resolved.apiKey()))
-			.model(audioTranscriptionProperties.getOptions().getModel())
-			.workSpaceId(resolved.workspaceId())
-			.restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
-			.headers(resolved.headers())
+			    .baseUrl(resolved.baseUrl())
+			    .apiKey(new SimpleApiKey(resolved.apiKey()))
+			    .workSpaceId(resolved.workspaceId())
+			    .restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
+                .webClientBuilder(webClientBuilderProvider.getIfAvailable(WebClient::builder))
+			    .headers(resolved.headers())
                 .responseErrorHandler(responseErrorHandler.getIfAvailable(() -> RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER))
 			.build();
 
