@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.AsrTranscriptionReqRes.DashScopeAudioAsrTranscriptionResponse;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.AsrTranscriptionReqRes.DashScopeAudioAsrTranscriptionResponse.TranscriptionResult;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Sentence;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Transcription;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Translation;
@@ -54,6 +56,13 @@ class DashScopeAudioTranscriptionIT {
 
 	// Test audio URL from DashScope official documentation
 	private static final String TEST_AUDIO_URL = "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20250211/tixcef/cherry.wav";
+
+	// Test audio URLs for Paraformer and Fun-ASR file recognition
+	private static final String PARAFORMER_TEST_AUDIO_URL_1 = "https://dashscope.oss-cn-beijing.aliyuncs.com/samples/audio/paraformer/hello_world_female2.wav";
+	private static final String PARAFORMER_TEST_AUDIO_URL_2 = "https://dashscope.oss-cn-beijing.aliyuncs.com/samples/audio/paraformer/hello_world_male2.wav";
+
+	// Test audio URL for Qwen-ASR
+	private static final String QWEN_ASR_TEST_AUDIO_URL = "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3";
 
 	private String apiKey;
 
@@ -490,5 +499,353 @@ class DashScopeAudioTranscriptionIT {
         assertThat(responses).isNotEmpty();
         logger.info("Paraformer WebSocket test passed, total responses: {}", responses.size());
     }
+
+	/**
+	 * 录音文件识别：Paraformer
+	 *
+	 * 测试 paraformer-v2 模型的文件识别功能
+	 *
+	 * <p>curl 示例:</p>
+	 * <pre>
+	 * curl -X POST https://dashscope.aliyuncs.com/api/v1/services/audio/asr/transcription \
+	 * -H "Authorization: Bearer $DASHSCOPE_API_KEY" \
+	 * -H "Content-Type: application/json" \
+	 * -d '{
+	 *     "model": "paraformer-v2",
+	 *     "input": {
+	 *         "file_urls": [
+	 *             "https://dashscope.oss-cn-beijing.aliyuncs.com/samples/audio/paraformer/hello_world_female2.wav",
+	 *             "https://dashscope.oss-cn-beijing.aliyuncs.com/samples/audio/paraformer/hello_world_male2.wav"
+	 *         ]
+	 *     },
+	 *     "parameters": {
+	 *         "channel_id": [0],
+	 *         "disfluency_removal_enabled": false,
+	 *         "timestamp_alignment_enabled": false,
+	 *         "language_hints": ["zh", "en"],
+	 *         "diarization_enabled": false,
+	 *         "speaker_count": 2
+	 *     }
+	 * }'
+	 * </pre>
+	 */
+	@org.junit.jupiter.api.Test
+	void testAsr_Paraformer_call_RealApi() {
+		// Arrange - 构造 Options
+		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+				.model(AudioModel.PARAFORMER_V2.getValue())
+				.channelId(List.of(0))
+				.disfluencyRemovalEnabled(false)
+				.timestampAlignmentEnabled(false)
+				.languageHints(List.of("zh", "en"))
+				.diarizationEnabled(false)
+				.speakerCount(2)
+				.build();
+
+		// Arrange - 构造 Prompt（使用fileUrls）
+		List<String> fileUrls = List.of(PARAFORMER_TEST_AUDIO_URL_1, PARAFORMER_TEST_AUDIO_URL_2);
+		AudioTranscriptionPrompt prompt = new DashScopeAudioTranscriptionPrompt(options, fileUrls);
+
+		// Act
+		AudioTranscriptionResponse response = transcriptionModel.call(prompt);
+
+		// Assert
+		assertThat(response).isNotNull();
+		assertThat(response).isInstanceOf(DashScopeAudioAsrTranscriptionResponse.class);
+
+		DashScopeAudioAsrTranscriptionResponse asrResponse = (DashScopeAudioAsrTranscriptionResponse) response;
+		assertThat(asrResponse.getTranscriptionResults()).isNotNull();
+		assertThat(asrResponse.getTranscriptionResults()).isNotEmpty();
+
+		// 验证转录结果
+		for (TranscriptionResult result : asrResponse.getTranscriptionResults()) {
+			assertThat(result.fileUrl()).isNotEmpty();
+			assertThat(result.transcripts()).isNotNull();
+			logger.info("Paraformer transcription result for file: {}", result.fileUrl());
+
+			if (result.transcripts() != null) {
+				for (Transcription transcript : result.transcripts()) {
+					logger.info("  - Channel: {}, Text: {}", transcript.channelId(), transcript.text());
+					assertThat(transcript.text()).isNotEmpty();
+				}
+			}
+
+			if (result.properties() != null) {
+				logger.info("  - Audio Format: {}", result.properties().audioFormat());
+				logger.info("  - Original Sample Rate: {} Hz", result.properties().originalSamplingRate());
+				logger.info("  - Duration: {} ms", result.properties().originalDurationInMilliseconds());
+			}
+		}
+
+		logger.info("Paraformer ASR call test passed");
+	}
+
+	/**
+	 * 录音文件识别：Fun-ASR
+	 *
+	 * 测试 fun-asr 模型的文件识别功能
+	 *
+	 * <p>curl 示例:</p>
+	 * <pre>
+	 * curl -X POST https://dashscope.aliyuncs.com/api/v1/services/audio/asr/transcription \
+	 * -H "Authorization: Bearer $DASHSCOPE_API_KEY" \
+	 * -H "Content-Type: application/json" \
+	 * -d '{
+	 *     "model": "fun-asr",
+	 *     "input": {
+	 *         "file_urls": [
+	 *             "https://dashscope.oss-cn-beijing.aliyuncs.com/samples/audio/paraformer/hello_world_female2.wav",
+	 *             "https://dashscope.oss-cn-beijing.aliyuncs.com/samples/audio/paraformer/hello_world_male2.wav"
+	 *         ]
+	 *     },
+	 *     "parameters": {
+	 *         "channel_id": [0],
+	 *         "diarization_enabled": false,
+	 *         "speaker_count": 2
+	 *     }
+	 * }'
+	 * </pre>
+	 */
+	@org.junit.jupiter.api.Test
+	void testAsr_FunAsr_call_RealApi() {
+		// Arrange - 构造 Options
+		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+				.model(AudioModel.FUN_ASR.getValue())
+				.channelId(List.of(0))
+				.diarizationEnabled(false)
+				.speakerCount(2)
+				.build();
+
+		// Arrange - 构造 Prompt（使用fileUrls）
+		List<String> fileUrls = List.of(PARAFORMER_TEST_AUDIO_URL_1, PARAFORMER_TEST_AUDIO_URL_2);
+		AudioTranscriptionPrompt prompt = new DashScopeAudioTranscriptionPrompt(options, fileUrls);
+
+		// Act
+		AudioTranscriptionResponse response = transcriptionModel.call(prompt);
+
+		// Assert
+		assertThat(response).isNotNull();
+		assertThat(response).isInstanceOf(DashScopeAudioAsrTranscriptionResponse.class);
+
+		DashScopeAudioAsrTranscriptionResponse asrResponse = (DashScopeAudioAsrTranscriptionResponse) response;
+		assertThat(asrResponse.getTranscriptionResults()).isNotNull();
+		assertThat(asrResponse.getTranscriptionResults()).isNotEmpty();
+
+		// 验证转录结果
+		for (TranscriptionResult result : asrResponse.getTranscriptionResults()) {
+			assertThat(result.fileUrl()).isNotEmpty();
+			assertThat(result.transcripts()).isNotNull();
+			logger.info("Fun-ASR transcription result for file: {}", result.fileUrl());
+
+			if (result.transcripts() != null) {
+				for (Transcription transcript : result.transcripts()) {
+					logger.info("  - Channel: {}, Text: {}", transcript.channelId(), transcript.text());
+					assertThat(transcript.text()).isNotEmpty();
+				}
+			}
+
+			if (result.properties() != null) {
+				logger.info("  - Audio Format: {}", result.properties().audioFormat());
+				logger.info("  - Original Sample Rate: {} Hz", result.properties().originalSamplingRate());
+				logger.info("  - Duration: {} ms", result.properties().originalDurationInMilliseconds());
+			}
+		}
+
+		logger.info("Fun-ASR call test passed");
+	}
+
+	/**
+	 * 录音文件识别：Qwen-ASR (call)
+	 *
+	 * 测试 qwen3-asr-flash 模型的同步调用方法
+	 *
+	 * <p>curl 示例:</p>
+	 * <pre>
+	 * curl -X POST 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions' \
+	 * -H "Authorization: Bearer $DASHSCOPE_API_KEY" \
+	 * -H "Content-Type: application/json" \
+	 * -d '{
+	 *     "model": "qwen3-asr-flash",
+	 *     "messages": [
+	 *         {
+	 *             "content": [
+	 *                 {
+	 *                     "type": "input_audio",
+	 *                     "input_audio": {
+	 *                         "data": "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3"
+	 *                     }
+	 *                 }
+	 *             ],
+	 *             "role": "user"
+	 *         }
+	 *     ],
+	 *     "stream": false,
+	 *     "asr_options": {
+	 *         "enable_itn": false
+	 *     }
+	 * }'
+	 * </pre>
+	 */
+	@org.junit.jupiter.api.Test
+	void testAsr_QwenAsr_Call_RealApi() {
+		// Arrange - 构造 Options
+		DashScopeAudioTranscriptionOptions.AsrOptions asrOptions =
+				new DashScopeAudioTranscriptionOptions.AsrOptions();
+		asrOptions.setLanguage("zh");
+		asrOptions.setEnableItn(false);
+
+		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+				.model(AudioModel.QWEN3_ASR_FLASH.getValue())
+				.asrOptions(asrOptions)
+				.build();
+
+		// Arrange - 构造 Prompt
+		DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage.InputAudio inputAudio =
+				new DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage.InputAudio(QWEN_ASR_TEST_AUDIO_URL, null);
+		DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage.Content content =
+				new DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage.Content("input_audio", inputAudio);
+		DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage message =
+				new DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage(List.of(content));
+		AudioTranscriptionPrompt prompt = new DashScopeAudioTranscriptionPrompt(options, message);
+
+		// Act
+		AudioTranscriptionResponse response = transcriptionModel.call(prompt);
+
+		// Assert
+		assertThat(response).isNotNull();
+		assertThat(response).isInstanceOf(DashScopeAudioTranscriptionResponse.class);
+
+		DashScopeAudioTranscriptionResponse dashScopeResponse =
+				(DashScopeAudioTranscriptionResponse) response;
+		assertThat(dashScopeResponse.getId()).isNotEmpty();
+		assertThat(dashScopeResponse.getModel()).isEqualTo(AudioModel.QWEN3_ASR_FLASH.getValue());
+		assertThat(dashScopeResponse.getObject()).isEqualTo("chat.completion");
+		assertThat(dashScopeResponse.getChoices()).isNotNull();
+		assertThat(dashScopeResponse.getChoices()).isNotEmpty();
+
+		logger.info("Qwen-ASR call test passed");
+		logger.info("Response ID: {}", dashScopeResponse.getId());
+		logger.info("Model: {}", dashScopeResponse.getModel());
+		logger.info("Object: {}", dashScopeResponse.getObject());
+
+		if (dashScopeResponse.getUsage() != null) {
+			logger.info("Prompt Tokens: {}", dashScopeResponse.getUsage().promptTokens());
+			logger.info("Completion Tokens: {}", dashScopeResponse.getUsage().completionTokens());
+			logger.info("Total Tokens: {}", dashScopeResponse.getUsage().totalTokens());
+		}
+
+		// 输出转录内容
+		if (dashScopeResponse.getChoices() != null && !dashScopeResponse.getChoices().isEmpty()) {
+			var choice = dashScopeResponse.getChoices().get(0);
+			if (choice.message() != null && choice.message().content() != null) {
+				logger.info("Transcription content: {}", choice.message().content());
+				assertThat(choice.message().content()).isNotEmpty();
+			}
+		}
+	}
+
+	/**
+	 * 录音文件识别：Qwen-ASR (stream)
+	 *
+	 * 测试 qwen3-asr-flash 模型的流式调用方法
+	 *
+	 * <p>curl 示例:</p>
+	 * <pre>
+	 * curl -X POST 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions' \
+	 * -H "Authorization: Bearer $DASHSCOPE_API_KEY" \
+	 * -H "Content-Type: application/json" \
+	 * -d '{
+	 *     "model": "qwen3-asr-flash",
+	 *     "messages": [
+	 *         {
+	 *             "content": [
+	 *                 {
+	 *                     "type": "input_audio",
+	 *                     "input_audio": {
+	 *                         "data": "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3"
+	 *                     }
+	 *                 }
+	 *             ],
+	 *             "role": "user"
+	 *         }
+	 *     ],
+	 *     "stream": true,
+	 *     "asr_options": {
+	 *         "enable_itn": false
+	 *     }
+	 * }'
+	 * </pre>
+	 */
+	@org.junit.jupiter.api.Test
+	void testAsr_QwenAsr_Stream_RealApi() {
+		// Arrange - 构造 Options
+		DashScopeAudioTranscriptionOptions.AsrOptions asrOptions =
+				new DashScopeAudioTranscriptionOptions.AsrOptions();
+		asrOptions.setLanguage("zh");
+		asrOptions.setEnableItn(false);
+
+		DashScopeAudioTranscriptionOptions.StreamOptions streamOptions =
+				new DashScopeAudioTranscriptionOptions.StreamOptions();
+		streamOptions.setIncludeUsage(true);
+
+		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+				.model(AudioModel.QWEN3_ASR_FLASH.getValue())
+				.asrOptions(asrOptions)
+				.streamOptions(streamOptions)
+				.build();
+
+		// Arrange - 构造 Prompt
+		DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage.InputAudio inputAudio =
+				new DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage.InputAudio(QWEN_ASR_TEST_AUDIO_URL, null);
+		DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage.Content content =
+				new DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage.Content("input_audio", inputAudio);
+		DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage message =
+				new DashScopeAudioTranscriptionPrompt.TranscriptionUserMessage(List.of(content));
+		AudioTranscriptionPrompt prompt = new DashScopeAudioTranscriptionPrompt(options, message);
+
+		// 用于收集所有响应
+		List<AudioTranscriptionResponse> responses = new ArrayList<>();
+
+		// Act
+		Flux<AudioTranscriptionResponse> result = transcriptionModel.stream(prompt);
+
+		// Assert - 使用 StepVerifier 处理流式响应
+		StepVerifier.create(result)
+				.thenConsumeWhile(response -> {
+					assertThat(response).isNotNull();
+					assertThat(response).isInstanceOf(DashScopeAudioTranscriptionResponse.class);
+
+					DashScopeAudioTranscriptionResponse r =
+							(DashScopeAudioTranscriptionResponse) response;
+					assertThat(r.getId()).isNotEmpty();
+					assertThat(r.getModel()).isEqualTo(AudioModel.QWEN3_ASR_FLASH.getValue());
+
+					responses.add(response);
+
+					// 输出 choices 中的 delta 内容
+					if (r.getChoices() != null && !r.getChoices().isEmpty()) {
+						var choice = r.getChoices().get(0);
+						if (choice.delta() != null && choice.delta().content() != null) {
+							logger.info("  - Delta content: {}", choice.delta().content());
+						}
+						if (choice.message() != null && choice.message().content() != null) {
+							logger.info("  - Message content: {}", choice.message().content());
+						}
+					}
+
+					if (r.getUsage() != null) {
+						logger.info("  - Usage - Prompt: {}, Completion: {}, Total: {}",
+								r.getUsage().promptTokens(), r.getUsage().completionTokens(),
+								r.getUsage().totalTokens());
+					}
+
+					return true; // 继续消费更多元素
+				})
+				.verifyComplete();
+
+		// 验证至少收到了一些响应
+		assertThat(responses).isNotEmpty();
+		logger.info("Qwen-ASR stream test passed, total chunks: {}", responses.size());
+	}
 
 }

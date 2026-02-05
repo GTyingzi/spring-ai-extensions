@@ -1,6 +1,7 @@
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Translation.Word;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 
@@ -53,6 +54,7 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
         return usage;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Translation(
             @JsonProperty("sentence_id") Integer sentenceId,
             @JsonProperty("begin_time") Integer beginTime,
@@ -60,8 +62,10 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
             @JsonProperty("text") String text,
             @JsonProperty("lang") String lang,
             @JsonProperty("words") List<Word> words,
-            @JsonProperty("sentence_end") Boolean sentenceEnd
+            @JsonProperty("sentence_end") Boolean sentenceEnd,
+            @JsonProperty("speaker_id") Integer speakerId
     ) {
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Word(
                 @JsonProperty("begin_time") Integer beginTime,
                 @JsonProperty("end_time") Integer endTime,
@@ -71,15 +75,20 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
         }
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Transcription(
             @JsonProperty("sentence_id") Integer sentenceId,
             @JsonProperty("begin_time") Integer beginTime,
             @JsonProperty("end_time") Integer endTime,
             @JsonProperty("text") String text,
             @JsonProperty("words") List<Word> words,
-            @JsonProperty("sentence_end") Boolean sentenceEnd
+            @JsonProperty("sentence_end") Boolean sentenceEnd,
+            @JsonProperty("channel_id") Integer channelId,
+            @JsonProperty("content_duration_in_milliseconds") Integer contentDurationInMilliseconds,
+            @JsonProperty("sentences") List<Sentence> sentences
     ) {}
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Sentence(
             @JsonProperty("begin_time") Integer beginTime,
             @JsonProperty("end_time") Integer endTime,
@@ -88,9 +97,12 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
             @JsonProperty("sentence_end") Boolean sentenceEnd,
             @JsonProperty("emo_tag") String emoTag,
             @JsonProperty("emo_confidence") Double emoConfidence,
-            @JsonProperty("words") List<Word> words
+            @JsonProperty("words") List<Word> words,
+            @JsonProperty("sentence_id") Integer sentenceId,
+            @JsonProperty("speaker_id") Integer speakerId
             ) {}
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Usage(
             @JsonProperty("duration") Integer duration
     ) {}

@@ -16,7 +16,14 @@
 
 package com.alibaba.cloud.ai.dashscope.api;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -27,6 +34,11 @@ import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestHeader;
 import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestPayload;
 import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestPayloadInput;
 import com.alibaba.cloud.ai.dashscope.audio.WebSocketRequest.RequestPayloadParameters;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.AsrTranscriptionReqRes.AsrOutPut;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.AsrTranscriptionReqRes.AsrResponse;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.AsrTranscriptionReqRes.AsrResponse.Output.Result;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.AsrTranscriptionReqRes.AsrTranscriptionRequest;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.AsrTranscriptionReqRes.DashScopeAudioAsrTranscriptionResponse;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionPrompt;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.TranscriptionReqRes.DashScopeAudioTranscriptionRequest;
@@ -44,7 +56,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
@@ -61,6 +72,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.ENABLED;
+import static com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants.HEADER_ASYNC;
+
 /**
  * Turn audio into text or text into audio. Based on <a href=
  * "https://help.aliyun.com/zh/model-studio/user-guide/speech-recognition-and-synthesis">DashScope
@@ -74,6 +88,10 @@ import reactor.core.publisher.Mono;
 public class DashScopeAudioTranscriptionApi {
 
     private static final Logger log = LoggerFactory.getLogger(DashScopeAudioTranscriptionApi.class);
+
+    private static final int MAX_POLL_ATTEMPTS = 30;
+
+    private static final long POLL_INTERVAL_MS = 2000;
 
     private final String baseUrl;
 
@@ -113,6 +131,7 @@ public class DashScopeAudioTranscriptionApi {
 			if (!(apiKey instanceof NoopApiKey)) {
 				h.setBearerAuth(apiKey.getValue());
 			}
+            h.add("Content-Type", "application/json");
 		};
 
 		this.restClient = restClientBuilder.clone()
@@ -146,14 +165,13 @@ public class DashScopeAudioTranscriptionApi {
 	}
 
     public AudioTranscriptionResponse callLiveTranslate(
-            AudioTranscriptionPrompt prompt,
+            DashScopeAudioTranscriptionPrompt prompt,
             DashScopeAudioTranscriptionOptions options) {
-        DashScopeAudioTranscriptionPrompt dashScopeAudioTranscriptionPrompt = (DashScopeAudioTranscriptionPrompt) prompt;
 
         DashScopeAudioTranscriptionRequest request = DashScopeAudioTranscriptionRequest
                 .builder()
                 .model(options.getModel())
-                .messages(dashScopeAudioTranscriptionPrompt.getMessages())
+                .messages(prompt.getMessages())
                 .modalities(options.getModalities())
                 .stream(false)
                 .audio(options.getAudio())
@@ -181,14 +199,12 @@ public class DashScopeAudioTranscriptionApi {
     }
 
     public Flux<AudioTranscriptionResponse> streamLiveTranslate(
-            AudioTranscriptionPrompt prompt,
+            DashScopeAudioTranscriptionPrompt prompt,
             DashScopeAudioTranscriptionOptions options) {
-        DashScopeAudioTranscriptionPrompt dashScopeAudioTranscriptionPrompt = (DashScopeAudioTranscriptionPrompt) prompt;
-
         DashScopeAudioTranscriptionRequest request = DashScopeAudioTranscriptionRequest
                 .builder()
                 .model(options.getModel())
-                .messages(dashScopeAudioTranscriptionPrompt.getMessages())
+                .messages(prompt.getMessages())
                 .modalities(options.getModalities())
                 .stream(true)
                 .streamOptions(options.getStreamOptions())
@@ -278,6 +294,170 @@ public class DashScopeAudioTranscriptionApi {
         }
     }
 
+    public AudioTranscriptionResponse callAsr(
+            DashScopeAudioTranscriptionPrompt prompt,
+            DashScopeAudioTranscriptionOptions options) {
+
+        AsrTranscriptionRequest asrReq = AsrTranscriptionRequest.builder()
+                .model(options.getModel())
+                .input(AsrTranscriptionRequest.Input.builder()
+                        .fileUrls(prompt.getFileUrls())
+                        .build())
+                .parameters(AsrTranscriptionRequest.Parameters.builder()
+                        .vocabularyId(options.getVocabularyId())
+                        .channelId(options.getChannelId())
+                        .disfluencyRemovalEnabled(options.getDisfluencyRemovalEnabled())
+                        .timestampAlignmentEnabled(options.getTimestampAlignmentEnabled())
+                        .specialWordFilter(options.getSpecialWordFilter())
+                        .diarizationEnabled(options.getDiarizationEnabled())
+                        .languageHints(options.getLanguageHints())
+                        .speakerCount(options.getSpeakerCount())
+                        .build())
+                .resources(options.getResources())
+                .build();
+        ResponseEntity<AsrOutPut> response = this.restClient.post()
+                .uri(DashScopeAudioApiConstants.ASR_TRANSCRIPTION)
+                .header(HEADER_ASYNC, ENABLED)
+                .body(asrReq)
+                .retrieve()
+                .toEntity(AsrOutPut.class);
+        String taskId;
+        if (response.getStatusCode().is2xxSuccessful()) {
+            taskId = response.getBody().output().taskId();
+            log.info("ASR transcription taskId: {}", taskId);
+        } else {
+            throw new RuntimeException("Failed to call ASR transcription: " + response.getStatusCode());
+        }
+
+        int attempts = 0;
+        while (attempts < MAX_POLL_ATTEMPTS) {
+            ResponseEntity<AsrResponse> asrResponse = this.restClient.post()
+                    .uri("/api/v1/tasks" + "/{taskId}", taskId)
+                    .body(Collections.emptyMap()) // 使用 Collections.emptyMap() 传递空请求体
+                    .retrieve()
+                    .toEntity(AsrResponse.class);
+
+
+            if (!asrResponse.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Failed to get ASR transcription: " + asrResponse.getStatusCode());
+            }
+
+            String taskStatus = asrResponse.getBody().output().taskStatus();
+
+            if ("SUCCEEDED".equals(taskStatus)) {
+                return parseAsrResponse(asrResponse.getBody());
+            } else if ("FAILED".equals(taskStatus)) {
+                throw new RuntimeException("ASR transcription task failed");
+            } else if ("PENDING".equals(taskStatus)) {
+                attempts++;
+                try {
+                    Thread.sleep(POLL_INTERVAL_MS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("ASR transcription polling interrupted", e);
+                }
+            } else {
+                log.warn("Unknown task status: " + taskStatus);
+                attempts++;
+                try {
+                    Thread.sleep(POLL_INTERVAL_MS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("ASR transcription polling interrupted", e);
+                }
+            }
+        }
+
+        throw new RuntimeException("ASR transcription timeout after " + MAX_POLL_ATTEMPTS + " attempts");
+    }
+
+    private DashScopeAudioAsrTranscriptionResponse parseAsrResponse(AsrResponse asrResponse) {
+        List<DashScopeAudioAsrTranscriptionResponse.TranscriptionResult> allResults = new ArrayList<>();
+
+        if (asrResponse.output() != null && asrResponse.output().results() != null) {
+            for (Result result : asrResponse.output().results()) {
+                log.debug("file_url: {}, subtask_status: {}", result.fileUrl(), result.subtaskStatus());
+
+                if ("SUCCEEDED".equals(result.subtaskStatus()) && result.transcriptionUrl() != null) {
+                    try {
+                        // Use Java's HttpClient directly to access signed OSS URL without extra headers
+                        HttpClient httpClient = HttpClient.newHttpClient();
+                        HttpRequest httpRequest = HttpRequest.newBuilder()
+                                .uri(URI.create(result.transcriptionUrl()))
+                                .GET()
+                                .build();
+
+                        HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+                        String responseBody = httpResponse.body();
+
+                        // Parse the JSON response using ObjectMapper
+                        DashScopeAudioAsrTranscriptionResponse.TranscriptionResult transcriptionResult =
+                                objectMapper.readValue(responseBody, DashScopeAudioAsrTranscriptionResponse.TranscriptionResult.class);
+
+                        if (transcriptionResult != null) {
+                            allResults.add(transcriptionResult);
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to parse transcription result from URL: {}", result.transcriptionUrl(), e);
+                    }
+                }
+            }
+        }
+
+        return new DashScopeAudioAsrTranscriptionResponse(allResults);
+    }
+
+    public AudioTranscriptionResponse callQwenAsr(DashScopeAudioTranscriptionPrompt prompt, DashScopeAudioTranscriptionOptions options) {
+        DashScopeAudioTranscriptionRequest request = DashScopeAudioTranscriptionRequest.builder()
+                .model(options.getModel())
+                .messages(prompt.getMessages())
+                .asrOptions(options.getAsrOptions())
+                .stream(false)
+                .build();
+
+        ResponseEntity<DashScopeAudioTranscriptionResponse> response = restClient.post()
+                .uri(DashScopeAudioApiConstants.QWEN_ASR)
+                .body(request)
+                .retrieve()
+                .toEntity(DashScopeAudioTranscriptionResponse.class);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            return response.getBody();
+        }
+
+        log.error("Failed to call Qwen ASR API: " + response.getStatusCode());
+        throw new RuntimeException("Failed to call Qwen ASR API: " + response.getStatusCode());
+    }
+
+    public Flux<AudioTranscriptionResponse> streamQwenAsr(
+            DashScopeAudioTranscriptionPrompt prompt,
+            DashScopeAudioTranscriptionOptions options) {
+        DashScopeAudioTranscriptionRequest request = DashScopeAudioTranscriptionRequest.builder()
+                .model(options.getModel())
+                .messages(prompt.getMessages())
+                .asrOptions(options.getAsrOptions())
+                .stream(true)
+                .streamOptions(options.getStreamOptions())
+                .build();
+
+        // SSE 流结束标志
+        Predicate<String> SSE_DONE_PREDICATE = "[DONE]"::equals;
+
+        return this.webClient.post()
+                .uri(DashScopeAudioApiConstants.QWEN_ASR)
+                .body(Mono.just(request), DashScopeAudioTranscriptionResponse.class)
+                .retrieve()
+                .bodyToFlux(String.class)  // 接收 SSE 流数据
+                .takeUntil(SSE_DONE_PREDICATE)  // 遇到 [DONE] 停止
+                .filter(SSE_DONE_PREDICATE.negate())  // 过滤掉 [DONE]
+                .map(content -> {
+                    try {
+                        return this.objectMapper.readValue(content, DashScopeAudioTranscriptionResponse.class);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("Failed to parse TTS response: " + content, e);
+                    }
+                });
+    }
+
     /**
      * Returns a builder pre-populated with the current configuration for mutation.
      */
@@ -309,7 +489,7 @@ public class DashScopeAudioTranscriptionApi {
         return new Builder();
     }
 
-	public static class Builder {
+    public static class Builder {
 
 		private String baseUrl = DashScopeApiConstants.DEFAULT_BASE_URL;
 

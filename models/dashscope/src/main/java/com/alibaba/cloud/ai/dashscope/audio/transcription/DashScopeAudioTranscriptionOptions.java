@@ -123,6 +123,24 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
     @JsonProperty("resources")
     private List<Resource> resources;
 
+    @JsonProperty("timestamp_alignment_enabled")
+    private Boolean timestampAlignmentEnabled;
+
+    @JsonProperty("specialWordFilter")
+    private String specialWordFilter;
+
+    @JsonProperty("diarizationEnabled")
+    private Boolean diarizationEnabled;
+
+    @JsonProperty("speaker_count")
+    private Integer speakerCount;
+
+    @JsonProperty("channel_id")
+    private List<Integer> channelId;
+
+    @JsonProperty("asr_options")
+    private AsrOptions asrOptions;
+
     @Override
 	public String getModel() {
 		return model;
@@ -186,6 +204,14 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 
     public void setTranslationTargetLanguages(List<String> translationTargetLanguages) {
         this.translationTargetLanguages = translationTargetLanguages;
+    }
+
+    public AsrOptions getAsrOptions() {
+        return asrOptions;
+    }
+
+    public void setAsrOptions(AsrOptions asrOptions) {
+        this.asrOptions = asrOptions;
     }
 
     public Integer getMaxEndSilence() {
@@ -364,6 +390,46 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
         this.resources = resources;
     }
 
+    public Boolean getTimestampAlignmentEnabled() {
+        return timestampAlignmentEnabled;
+    }
+
+    public void setTimestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+        this.timestampAlignmentEnabled = timestampAlignmentEnabled;
+    }
+
+    public String getSpecialWordFilter() {
+        return specialWordFilter;
+    }
+
+    public void setSpecialWordFilter(String specialWordFilter) {
+        this.specialWordFilter = specialWordFilter;
+    }
+
+    public Boolean getDiarizationEnabled() {
+        return diarizationEnabled;
+    }
+
+    public void setDiarizationEnabled(Boolean diarizationEnabled) {
+        this.diarizationEnabled = diarizationEnabled;
+    }
+
+    public Integer getSpeakerCount() {
+        return speakerCount;
+    }
+
+    public void setSpeakerCount(Integer speakerCount) {
+        this.speakerCount = speakerCount;
+    }
+
+    public List<Integer> getChannelId() {
+        return channelId;
+    }
+
+    public void setChannelId(List<Integer> channelId) {
+        this.channelId = channelId;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -525,6 +591,36 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
             return this;
         }
 
+        public Builder timestampAlignmentEnabled(Boolean timestampAlignmentEnabled) {
+            options.setTimestampAlignmentEnabled(timestampAlignmentEnabled);
+            return this;
+        }
+
+        public Builder specialWordFilter(String specialWordFilter) {
+            options.setSpecialWordFilter(specialWordFilter);
+            return this;
+        }
+
+        public Builder diarizationEnabled(Boolean diarizationEnabled) {
+            options.setDiarizationEnabled(diarizationEnabled);
+            return this;
+        }
+
+        public Builder speakerCount(Integer speakerCount) {
+            options.setSpeakerCount(speakerCount);
+            return this;
+        }
+
+        public Builder channelId(List<Integer> channelId) {
+            options.setChannelId(channelId);
+            return this;
+        }
+
+        public Builder asrOptions(AsrOptions asrOptions) {
+            options.setAsrOptions(asrOptions);
+            return this;
+        }
+
         public DashScopeAudioTranscriptionOptions build() {
             return this.options;
         }
@@ -633,6 +729,30 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
         public void setResourceType(String resourceType) {
             this.resourceType = resourceType;
         }
+    }
+
+    public static class AsrOptions {
+        @JsonProperty("language")
+        private String language;
+
+        public String getLanguage() {
+            return language;
+        }
+
+        public void setLanguage(String language) {
+            this.language = language;
+        }
+
+        public Boolean getEnableItn() {
+            return enableItn;
+        }
+
+        public void setEnableItn(Boolean enableItn) {
+            this.enableItn = enableItn;
+        }
+
+        @JsonProperty("enable_itn")
+        private Boolean enableItn;
     }
 
 }

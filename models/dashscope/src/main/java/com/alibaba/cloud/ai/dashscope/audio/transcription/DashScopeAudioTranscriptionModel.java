@@ -90,9 +90,31 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	public AudioTranscriptionResponse call(AudioTranscriptionPrompt prompt) {
         DashScopeAudioTranscriptionOptions options = this.mergeOptions(prompt);
         if (DashScopeAudioApiConstants.isLiveTranslate(options.getModel())) {
+            // prompt 类型强转判断
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
+                throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
+            }
             return audioTranscriptionApi.callLiveTranslate(
-                    prompt,
+                    (DashScopeAudioTranscriptionPrompt) prompt,
                     options);
+        }
+
+        // 录音文件识别Paraformer、Fun-ASR
+        if (DashScopeAudioApiConstants.isAsr(options.getModel())) {
+            // prompt 类型强转判断
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
+                throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
+            }
+            return audioTranscriptionApi.callAsr((DashScopeAudioTranscriptionPrompt) prompt, options);
+        }
+
+        // 录音文件识别Qwen-ASR
+        if (DashScopeAudioApiConstants.isQwenAsr(options.getModel())) {
+            // prompt 类型强转判断
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
+                throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
+            }
+            return audioTranscriptionApi.callQwenAsr((DashScopeAudioTranscriptionPrompt) prompt, options);
         }
 
         throw new IllegalArgumentException("Model " + options.getModel() + " is not supported call method.");
@@ -102,10 +124,23 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 	public Flux<AudioTranscriptionResponse> stream(AudioTranscriptionPrompt prompt) {
         DashScopeAudioTranscriptionOptions options = this.mergeOptions(prompt);
         if (DashScopeAudioApiConstants.isLiveTranslate(options.getModel())) {
+            // prompt 类型强转判断
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
+                throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
+            }
             return audioTranscriptionApi.streamLiveTranslate(
-                    prompt,
+                    (DashScopeAudioTranscriptionPrompt) prompt,
                     options);
         }
+        // 录音文件识别Qwen-ASR
+        if (DashScopeAudioApiConstants.isQwenAsr(options.getModel())) {
+            // prompt 类型强转判断
+            if (!(prompt instanceof DashScopeAudioTranscriptionPrompt)) {
+                throw new IllegalArgumentException("Prompt type is not DashScopeAudioTranscriptionPrompt.");
+            }
+            return audioTranscriptionApi.streamQwenAsr((DashScopeAudioTranscriptionPrompt) prompt, options);
+        }
+
         // 下面是websocket任务
         byte[] audioBytes = null;
         try {

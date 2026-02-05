@@ -1,5 +1,6 @@
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions.AsrOptions;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions.Audio;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions.StreamOptions;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions.TranslationOptions;
@@ -63,17 +64,11 @@ public class TranscriptionReqRes {
         @JsonProperty("translation_options")
         private TranslationOptions translationOptions;
 
+        @JsonProperty("asr_options")
+        private AsrOptions asrOptions;
+
         public static Builder builder() {
             return new Builder();
-        }
-
-        @Override
-        public String toString() {
-            return "DashScopeAudioTranscriptionRequest{" + "model='" + model + '\'' + ", messages=" + messages.get(0)
-                    + ", modalities=" + modalities + ", audio=" + audio + ", stream=" + stream + ", streamOptions="
-                    + streamOptions + ", maxTokens=" + maxTokens + ", seed=" + seed + ", temperature=" + temperature
-                    + ", topP=" + topP + ", presencePenalty=" + presencePenalty + ", topK=" + topK
-                    + ", repetitionPenalty=" + repetitionPenalty + ", translationOptions=" + translationOptions + '}';
         }
 
         public static class Builder {
@@ -153,6 +148,11 @@ public class TranscriptionReqRes {
                 return this;
             }
 
+            public Builder asrOptions(AsrOptions asrOptions) {
+                this.request.asrOptions = asrOptions;
+                return this;
+            }
+
             public DashScopeAudioTranscriptionRequest build() {
                 return this.request;
             }
@@ -219,45 +219,62 @@ public class TranscriptionReqRes {
             return choices;
         }
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Choice(
                 @JsonProperty("delta") Delta delta,
                 @JsonProperty("message") Message message,
-                @JsonProperty("finish_reason") String finishReason
+                @JsonProperty("finish_reason") String finishReason,
+                @JsonProperty("index") Integer index
         ) {}
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Delta(
                 @JsonProperty("content") String content,
                 @JsonProperty("role") String role,
                 @JsonProperty("audio") Audio audio
         ) {};
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Message(
                 @JsonProperty("content") String content,
-                @JsonProperty("role") String role
+                @JsonProperty("role") String role,
+                @JsonProperty("annotations") List<Annotation> annotations
         ) {};
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Audio(
                 @JsonProperty("data") String data,
                 @JsonProperty("expires_at") Integer expiresAt,
                 @JsonProperty("id") String id
         ) {};
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Usage(
                 @JsonProperty("prompt_tokens") Integer promptTokens,
                 @JsonProperty("completion_tokens") Integer completionTokens,
                 @JsonProperty("total_tokens") Integer totalTokens,
                 @JsonProperty("completion_tokens_details") CompletionTokensDetails completionTokensDetails,
-                @JsonProperty("prompt_tokens_details") PromptTokensDetails promptTokensDetails
+                @JsonProperty("prompt_tokens_details") PromptTokensDetails promptTokensDetails,
+                @JsonProperty("seconds") Integer seconds
                 ) {}
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record CompletionTokensDetails(
                 @JsonProperty("audio_tokens") Integer audioTokens,
                 @JsonProperty("text_tokens") Integer textTokens
         ) {}
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record PromptTokensDetails(
                 @JsonProperty("audio_tokens") Integer audioTokens,
                 @JsonProperty("video_tokens") Integer videoTokens
+        ) {}
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public record Annotation(
+                @JsonProperty("emotion") String emotion,
+                @JsonProperty("language") String language,
+                @JsonProperty("type") String type
         ) {}
     }
 

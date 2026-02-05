@@ -299,8 +299,32 @@ public class DashScopeModel {
         PARAFORMER_REALTIME_8K_V2("paraformer-realtime-8k-v2"),
 
         QWEN3_LIVETRANSLATE_FLASH("qwen3-livetranslate-flash"),
-        QWEN3_LIVETRANSLATE_FLASH_2025_12_01("qwen3-livetranslate-flash-2025-12-01");
+        QWEN3_LIVETRANSLATE_FLASH_2025_12_01("qwen3-livetranslate-flash-2025-12-01"),
         // =============== Transcription Model ===============
+
+        // =============== 录音文件识别 Model ===============
+        PARAFORMER_V2("paraformer-v2"),
+        PARAFORMER_V1("paraformer-v1"),
+        PARAFORMER_8K_V2("paraformer-8k-v2"),
+        PARAFORMER_8K_V1("paraformer-8k-v1"),
+        PARAFORMER_MTL_V1("paraformer-mtl-v1"),
+        FUN_ASR("fun-asr"),
+        FUN_ASR_2025_11_07("fun-asr-2025-11-07"),
+        FUN_ASR_2025_08_25("fun-asr-2025-08-25"),
+        FUN_ASR_MTL("fun-asr-mtl"),
+        FUN_ASR_MTL_2025_08_25("fun-asr-mtl-2025-08-25"),
+        SPEECH_BIASING("speech-biasing"),
+        // =============== 录音文件识别 Model ===============
+
+        // =============== 千问ASR Model ===============
+        QWEN3_ASR_FLASH_FILETRANS("qwen3-asr-flash-filetrans"),
+        QWEN3_ASR_FLASH("qwen3-asr-flash"),
+        QWEN3_ASR_FLASH_US("qwen3-asr-flash-us"),
+        QWEN3_ASR_FLASH_FILETANS("qwen3-asr-flash-filetrans"),
+        // =============== 千问ASR Model ===============
+
+
+        ;
 
         public final String value;
 

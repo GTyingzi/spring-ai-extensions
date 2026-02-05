@@ -15,6 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
@@ -30,15 +31,29 @@ public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt 
 
     private final List<TranscriptionUserMessage> messages;
 
+    private final List<String> fileUrls;
+
     public DashScopeAudioTranscriptionPrompt(AudioTranscriptionOptions options, TranscriptionUserMessage  message) {
         super(null, options);
         this.messages = List.of(message);
+        this.fileUrls = null;
+    }
+
+    public DashScopeAudioTranscriptionPrompt(AudioTranscriptionOptions options, List<String> fileUrls) {
+        super(null, options);
+        this.messages = null;
+        this.fileUrls = fileUrls;
     }
 
     public List<TranscriptionUserMessage> getMessages() {
         return messages;
     }
 
+    public List<String> getFileUrls() {
+        return fileUrls;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class TranscriptionUserMessage {
         @JsonProperty("role")
         private String role = "user";
@@ -58,6 +73,7 @@ public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt 
             return content;
         }
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public static class Content {
             @JsonProperty("type")
             private String type;
