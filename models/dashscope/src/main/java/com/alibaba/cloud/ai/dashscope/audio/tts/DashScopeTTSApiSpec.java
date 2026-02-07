@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.audio.tts;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.audio.tts.Speech;
 import org.springframework.ai.audio.tts.TextToSpeechResponse;
@@ -30,6 +31,7 @@ import java.util.List;
 
 public class DashScopeTTSApiSpec {
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class DashScopeAudioTTSRequest {
         @JsonProperty("model")
         private String model;
@@ -45,6 +47,7 @@ public class DashScopeTTSApiSpec {
             this.input.languageType = languageType;
         }
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         private class TTSInput {
             @JsonProperty("text")
             private String text;
@@ -93,7 +96,7 @@ public class DashScopeTTSApiSpec {
 
     }
 
-
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class DashScopeAudioTTSResponse extends TextToSpeechResponse {
         @JsonProperty("request_id")
         private String requestId;
@@ -125,11 +128,13 @@ public class DashScopeTTSApiSpec {
             return usage;
         }
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record TTSOutput(
                 @JsonProperty("finish_reason") String finishReason,
                 @JsonProperty("audio") TTSAudio audio) {
         }
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record TTSUsage(
                 @JsonProperty("input_tokens") Integer inputTokens,
                 @JsonProperty("output_tokens") Integer outputTokens,
@@ -139,6 +144,7 @@ public class DashScopeTTSApiSpec {
                 @JsonProperty("total_tokens") Integer totalTokens
         ){}
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record TTSAudio(
                 @JsonProperty("data") String data,
                 @JsonProperty("url") String url,
@@ -146,10 +152,12 @@ public class DashScopeTTSApiSpec {
                 @JsonProperty("expires_at") Integer expiresAt
         ){}
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record InputTokensDetails(
                 @JsonProperty("text_tokens") Integer textTokens) {
         }
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public record OutputTokensDetails(
                 @JsonProperty("audio_tokens") Integer audioTokens,
                 @JsonProperty("text_tokens") Integer textTokens) {

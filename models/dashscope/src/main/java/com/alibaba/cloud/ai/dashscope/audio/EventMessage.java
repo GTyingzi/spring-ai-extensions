@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.audio;
 
 import com.alibaba.cloud.ai.dashscope.audio.DashScopeWebSocketClient.EventType;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -23,17 +24,19 @@ import com.fasterxml.jackson.databind.JsonNode;
  * @author yingzi
  * @since 2026/1/25
  */
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record EventMessage(
         @JsonProperty("header") EventMessageHeader header,
         @JsonProperty("payload") EventMessagePayload payload
 ) {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record EventMessageHeader (
             @JsonProperty("task_id") String taskId,
             @JsonProperty("event") EventType event,
             @JsonProperty("error_code") String code,
             @JsonProperty("error_message") String message
     ){}
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record EventMessagePayload(
             @JsonProperty("output") JsonNode output,
             @JsonProperty("usage")  JsonNode usage

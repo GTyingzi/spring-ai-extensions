@@ -176,6 +176,7 @@ public class DashScopeTranscriptionApiSpec {
 
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class DashScopeAudioTranscriptionResponse extends AudioTranscriptionResponse {
 
         @JsonProperty("id")
