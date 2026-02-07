@@ -25,7 +25,6 @@ import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -48,22 +47,13 @@ import static com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeConnectionUt
  */
 
 // @formatter:off
-@ConditionalOnClass(DashScopeAudioTranscriptionApi.class)
+@AutoConfiguration(after = { RestClientAutoConfiguration.class, WebClientAutoConfiguration.class,
+        SpringAiRetryAutoConfiguration.class })
 @ConditionalOnDashScopeEnabled
-@AutoConfiguration(after = {
-		RestClientAutoConfiguration.class,
-        WebClientAutoConfiguration.class,
-		SpringAiRetryAutoConfiguration.class })
-@ConditionalOnProperty(name = SpringAIModelProperties.AUDIO_TRANSCRIPTION_MODEL, havingValue = SpringAIAlibabaModels.DASHSCOPE,
-		matchIfMissing = true)
-@EnableConfigurationProperties({
-		DashScopeConnectionProperties.class,
-		DashScopeAudioTranscriptionProperties.class })
-@ImportAutoConfiguration(classes = {
-		SpringAiRetryAutoConfiguration.class,
-		RestClientAutoConfiguration.class,
-        WebClientAutoConfiguration.class,
-})
+@ConditionalOnClass(DashScopeAudioTranscriptionApi.class)
+@ConditionalOnProperty(name = SpringAIModelProperties.AUDIO_TRANSCRIPTION_MODEL,
+        havingValue = SpringAIAlibabaModels.DASHSCOPE, matchIfMissing = true)
+@EnableConfigurationProperties({ DashScopeConnectionProperties.class, DashScopeAudioTranscriptionProperties.class })
 // @formatter:on
 public class DashScopeAudioTranscriptionAutoConfiguration {
 
