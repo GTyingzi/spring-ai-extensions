@@ -198,9 +198,9 @@ class DashScopeAudioSpeechIT {
 
 		// Assert
 		assertThat(response).isNotNull();
-		assertThat(response).isInstanceOf(TTSReqRes.DashScopeAudioTTSResponse.class);
+		assertThat(response).isInstanceOf(DashScopeTTSApiSpec.DashScopeAudioTTSResponse.class);
 
-		TTSReqRes.DashScopeAudioTTSResponse dashScopeResponse = (TTSReqRes.DashScopeAudioTTSResponse) response;
+		DashScopeTTSApiSpec.DashScopeAudioTTSResponse dashScopeResponse = (DashScopeTTSApiSpec.DashScopeAudioTTSResponse) response;
 		assertThat(dashScopeResponse.getResult()).isNotNull();
 		assertThat(dashScopeResponse.getRequestId()).isNotEmpty();
 		assertThat(dashScopeResponse.getOutput().audio()).isNotNull();
@@ -242,14 +242,14 @@ class DashScopeAudioSpeechIT {
 		StepVerifier.create(result)
 				.thenConsumeWhile(response -> {
 					assertThat(response).isNotNull();
-					assertThat(response).isInstanceOf(TTSReqRes.DashScopeAudioTTSResponse.class);
+					assertThat(response).isInstanceOf(DashScopeTTSApiSpec.DashScopeAudioTTSResponse.class);
 
-					TTSReqRes.DashScopeAudioTTSResponse r = (TTSReqRes.DashScopeAudioTTSResponse) response;
+					DashScopeTTSApiSpec.DashScopeAudioTTSResponse r = (DashScopeTTSApiSpec.DashScopeAudioTTSResponse) response;
 					assertThat(r.getOutput()).isNotNull();
 					assertThat(r.getRequestId()).isNotEmpty();
 
 					// 记录音频数据信息并收集 Base64 数据
-					TTSReqRes.DashScopeAudioTTSResponse.TTSAudio audio = r.getOutput().audio();
+					DashScopeTTSApiSpec.DashScopeAudioTTSResponse.TTSAudio audio = r.getOutput().audio();
 					if (audio != null) {
 						logger.info("Audio data received:");
 						if (audio.data() != null && !audio.data().isEmpty()) {

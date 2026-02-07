@@ -28,7 +28,7 @@ import java.util.List;
  * @since 2026/1/29
  */
 
-public class TTSReqRes {
+public class DashScopeTTSApiSpec {
 
     public static class DashScopeAudioTTSRequest {
         @JsonProperty("model")

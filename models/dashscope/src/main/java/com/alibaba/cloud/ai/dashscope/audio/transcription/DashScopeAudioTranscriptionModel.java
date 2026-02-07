@@ -21,11 +21,11 @@ import java.util.List;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Sentence;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Transcription;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Translation;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Usage;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.DashScopeAudioTranscription;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Sentence;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Translation;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Usage;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -161,7 +161,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
                             logger.debug("transcriptionNode: {}", transcriptionNode);
 
                             List<Translation> translations = mapper.convertValue(translationsNode, new TypeReference<>() {});
-                            Transcription transcription = mapper.convertValue(transcriptionNode, new TypeReference<>() {});
+                            DashScopeAudioTranscription transcription = mapper.convertValue(transcriptionNode, new TypeReference<>() {});
                             return new DashScopeTranscriptionResponse(translations, transcription);
                         } else if (DashScopeAudioApiConstants.PARAFORMER_FUNAS_LIST.contains(options.getModel())) {
                             JsonNode sentenceNode = jsonNode.get("sentence");

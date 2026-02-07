@@ -16,8 +16,8 @@
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAudioTranscriptionOptions.Resource;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Transcription;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Usage;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.DashScopeAudioTranscription;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Usage;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
@@ -29,7 +29,7 @@ import java.util.List;
  * @since 2026/2/4
  */
 
-public class AsrTranscriptionReqRes {
+public class DashScopeAsrTranscriptionApiSpec {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class AsrTranscriptionRequest {
@@ -353,7 +353,7 @@ public class AsrTranscriptionReqRes {
         public record TranscriptionResult(
                 @JsonProperty("file_url") String fileUrl,
                 @JsonProperty("properties") Properties properties,
-                @JsonProperty("transcripts") List<Transcription> transcripts
+                @JsonProperty("transcripts") List<DashScopeAudioTranscription> transcripts
         ) {
             @JsonInclude(JsonInclude.Include.NON_NULL)
             public record Properties(

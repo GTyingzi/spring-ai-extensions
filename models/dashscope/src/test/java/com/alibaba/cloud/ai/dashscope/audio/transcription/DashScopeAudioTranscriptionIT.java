@@ -19,12 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.AsrTranscriptionReqRes.DashScopeAudioAsrTranscriptionResponse;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.AsrTranscriptionReqRes.DashScopeAudioAsrTranscriptionResponse.TranscriptionResult;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Sentence;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Transcription;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Translation;
-import com.alibaba.cloud.ai.dashscope.audio.transcription.TranscriptionReqRes.DashScopeAudioTranscriptionResponse;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.DashScopeAudioAsrTranscriptionResponse;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeAsrTranscriptionApiSpec.DashScopeAudioAsrTranscriptionResponse.TranscriptionResult;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.DashScopeAudioTranscription;
+import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionApiSpec.DashScopeAudioTranscriptionResponse;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Sentence;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Translation;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -330,9 +330,9 @@ class DashScopeAudioTranscriptionIT {
 					assertThat(response).isInstanceOf(DashScopeTranscriptionResponse.class);
 
 					DashScopeTranscriptionResponse r = (DashScopeTranscriptionResponse) response;
-                    Transcription transcription = r.getTranscription();
-                    logger.info("  - Transcription: {}", transcription.text());
-                    List<Translation> translations = r.getTranslations();
+                    DashScopeAudioTranscription transcription = r.getResult();
+                    logger.info("  - Transcription: {}", transcription.getText());
+                    List<Translation> translations = r.getMetadata().getTranslations();
                     for (Translation translation : translations) {
                         logger.info("  - Translation: {}", translation.text());
                     }
@@ -388,9 +388,9 @@ class DashScopeAudioTranscriptionIT {
                     assertThat(response).isInstanceOf(DashScopeTranscriptionResponse.class);
 
                     DashScopeTranscriptionResponse r = (DashScopeTranscriptionResponse) response;
-                    Transcription transcription = r.getTranscription();
-                    logger.info("  - Transcription: {}", transcription.text());
-                    List<Translation> translations = r.getTranslations();
+                    DashScopeAudioTranscription transcription = r.getResult();
+                    logger.info("  - Transcription: {}", transcription.getText());
+                    List<Translation> translations = r.getMetadata().getTranslations();
                     for (Translation translation : translations) {
                         logger.info("  - Translation: {}", translation.text());
                     }
@@ -445,7 +445,7 @@ class DashScopeAudioTranscriptionIT {
                     DashScopeTranscriptionResponse r = (DashScopeTranscriptionResponse) response;
                     responses.add(r);
 
-                    Sentence sentence = r.getSentence();
+                    Sentence sentence = r.getMetadata().getSentence();
                     logger.info("WebSocket response received: {}", sentence.text());
 
                     return true;
@@ -490,7 +490,7 @@ class DashScopeAudioTranscriptionIT {
                     DashScopeTranscriptionResponse r = (DashScopeTranscriptionResponse) response;
                     responses.add(r);
 
-                    Sentence sentence = r.getSentence();
+                    Sentence sentence = r.getMetadata().getSentence();
                     logger.info("WebSocket response received: {}", sentence.text());
                     return true;
                 })
@@ -564,9 +564,9 @@ class DashScopeAudioTranscriptionIT {
 			logger.info("Paraformer transcription result for file: {}", result.fileUrl());
 
 			if (result.transcripts() != null) {
-				for (Transcription transcript : result.transcripts()) {
-					logger.info("  - Channel: {}, Text: {}", transcript.channelId(), transcript.text());
-					assertThat(transcript.text()).isNotEmpty();
+				for (DashScopeAudioTranscription transcript : result.transcripts()) {
+					logger.info("  - Channel: {}, Text: {}", transcript.getMetadata().channelId(), transcript.getText());
+					assertThat(transcript.getText()).isNotEmpty();
 				}
 			}
 
@@ -638,9 +638,9 @@ class DashScopeAudioTranscriptionIT {
 			logger.info("Fun-ASR transcription result for file: {}", result.fileUrl());
 
 			if (result.transcripts() != null) {
-				for (Transcription transcript : result.transcripts()) {
-					logger.info("  - Channel: {}, Text: {}", transcript.channelId(), transcript.text());
-					assertThat(transcript.text()).isNotEmpty();
+				for (DashScopeAudioTranscription transcript : result.transcripts()) {
+					logger.info("  - Channel: {}, Text: {}", transcript.getMetadata().channelId(), transcript.getText());
+					assertThat(transcript.getText()).isNotEmpty();
 				}
 			}
 

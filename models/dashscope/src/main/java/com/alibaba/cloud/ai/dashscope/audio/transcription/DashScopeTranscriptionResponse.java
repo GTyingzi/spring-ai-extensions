@@ -15,9 +15,15 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
-import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.Translation.Word;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionMetadata;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Sentence;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Translation;
+import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Usage;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.ai.audio.transcription.AudioTranscription;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 
 import java.util.List;
@@ -29,97 +35,56 @@ import java.util.List;
 
 public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
 
-    private final List<Translation> translations;
+    private final DashScopeAudioTranscription transcription;
 
-    private final Transcription transcription;
+    private final DashScopeAudioTranscriptionResponseMetadata metadata;
 
-    private final Sentence sentence;
-
-    private final Usage usage;
-
-    public DashScopeTranscriptionResponse(List<Translation> translations, Transcription transcription) {
-        super(null);
-        this.translations = translations;
+    public DashScopeTranscriptionResponse(List<Translation> transcript, DashScopeAudioTranscription transcription) {
+        super(transcription);
+        this.metadata = new DashScopeAudioTranscriptionResponseMetadata(transcript);
         this.transcription = transcription;
-        this.sentence = null;
-        this.usage = null;
     }
 
     public DashScopeTranscriptionResponse(Sentence sentence, Usage usage) {
         super(null);
-        this.sentence = sentence;
-        this.usage = usage;
-        this.translations = null;
         this.transcription = null;
+        this.metadata = new DashScopeAudioTranscriptionResponseMetadata(sentence, usage);
     }
 
-    public List<Translation> getTranslations() {
-        return translations;
+    @NotNull
+    public DashScopeAudioTranscription getResult() {
+        assert this.transcription != null;
+        return this.transcription;
     }
 
-    public Transcription getTranscription() {
-        return transcription;
-    }
-
-    public Sentence getSentence() {
-        return sentence;
-    }
-
-    public Usage getUsage() {
-        return usage;
+    public DashScopeAudioTranscriptionResponseMetadata getMetadata() {
+        return this.metadata;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record Translation(
-            @JsonProperty("sentence_id") Integer sentenceId,
-            @JsonProperty("begin_time") Integer beginTime,
-            @JsonProperty("end_time") Integer endTime,
-            @JsonProperty("text") String text,
-            @JsonProperty("lang") String lang,
-            @JsonProperty("words") List<Word> words,
-            @JsonProperty("sentence_end") Boolean sentenceEnd,
-            @JsonProperty("speaker_id") Integer speakerId
-    ) {
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        public record Word(
-                @JsonProperty("begin_time") Integer beginTime,
-                @JsonProperty("end_time") Integer endTime,
-                @JsonProperty("text") String text,
-                @JsonProperty("punctuation") String punctuation,
-                @JsonProperty("fixed") Boolean fixed) {
+    public static class DashScopeAudioTranscription extends AudioTranscription {
+        @JsonProperty("text")
+        private String text;
+
+        private DashScopeAudioTranscriptionMetadata metadata;
+
+        public DashScopeAudioTranscription(String text) {
+            super(text);
         }
+
+        public DashScopeAudioTranscriptionMetadata withTranscriptionMetadata(DashScopeAudioTranscriptionMetadata metadata) {
+            return this.metadata = metadata;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public DashScopeAudioTranscriptionMetadata getMetadata() {
+            return metadata;
+        }
+
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record Transcription(
-            @JsonProperty("sentence_id") Integer sentenceId,
-            @JsonProperty("begin_time") Integer beginTime,
-            @JsonProperty("end_time") Integer endTime,
-            @JsonProperty("text") String text,
-            @JsonProperty("words") List<Word> words,
-            @JsonProperty("sentence_end") Boolean sentenceEnd,
-            @JsonProperty("channel_id") Integer channelId,
-            @JsonProperty("content_duration_in_milliseconds") Integer contentDurationInMilliseconds,
-            @JsonProperty("sentences") List<Sentence> sentences
-    ) {}
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record Sentence(
-            @JsonProperty("begin_time") Integer beginTime,
-            @JsonProperty("end_time") Integer endTime,
-            @JsonProperty("text") String text,
-            @JsonProperty("heartbeat") Boolean heartbeat,
-            @JsonProperty("sentence_end") Boolean sentenceEnd,
-            @JsonProperty("emo_tag") String emoTag,
-            @JsonProperty("emo_confidence") Double emoConfidence,
-            @JsonProperty("words") List<Word> words,
-            @JsonProperty("sentence_id") Integer sentenceId,
-            @JsonProperty("speaker_id") Integer speakerId
-            ) {}
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record Usage(
-            @JsonProperty("duration") Integer duration
-    ) {}
 }
 

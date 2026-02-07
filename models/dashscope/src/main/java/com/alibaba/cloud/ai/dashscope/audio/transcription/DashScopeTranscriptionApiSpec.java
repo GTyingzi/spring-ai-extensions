@@ -34,7 +34,7 @@ import java.util.List;
  * @since 2026/2/1
  */
 
-public class TranscriptionReqRes {
+public class DashScopeTranscriptionApiSpec {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class DashScopeAudioTranscriptionRequest {
