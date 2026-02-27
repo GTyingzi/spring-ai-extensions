@@ -195,6 +195,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
      * @param options the transcription options
      * @return Flux of AudioTranscriptionResponse with transcription results
      */
+    @Override
     public Flux<AudioTranscriptionResponse> stream(Flux<DataBuffer> audioFlux,
             DashScopeAudioTranscriptionOptions options) {
         // Merge with default options
