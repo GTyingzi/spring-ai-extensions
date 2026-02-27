@@ -83,6 +83,8 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 
     private Flux<ByteBuffer> streamingAudioData;
 
+    private Flux<String> streamingTextData;
+
     private Disposable streamingSubscription;
 
 	public DashScopeWebSocketClient(DashScopeWebSocketClientOptions options) {
@@ -183,6 +185,35 @@ public class DashScopeWebSocketClient extends WebSocketListener {
         }, FluxSink.OverflowStrategy.BUFFER);
     }
 
+    /**
+     * Stream text data using event-driven duplex flow for real-time TTS.
+     * This implements the CosyVoice protocol specification:
+     * 1. Send run-task (with empty text)
+     * 2. Wait for task-started event
+     * 3. Send continue-task message
+     * 4. Subscribe to text Flux and send chunks as they arrive
+     * 5. Send finish-task when Flux completes
+     * 6. Wait for task-finished event
+     *
+     * @param runTaskMessage the run-task JSON message
+     * @param textFlux the streaming text data as Flux&lt;String&gt;
+     * @param finishTaskMessage the finish-task JSON message
+     * @return the audio data flux
+     */
+    public Flux<ByteBuffer> streamingCommandText(String runTaskMessage, Flux<String> textFlux,
+            String finishTaskMessage) {
+        this.streamingTextData = textFlux;
+        this.finishTaskMessage = finishTaskMessage;
+
+        return Flux.<ByteBuffer>create(emitter -> {
+            this.binaryEmitter = emitter;
+
+            // Send run-task first
+            logger.info("Event-driven : Sending run-task message for streaming text");
+            sendText(runTaskMessage);
+        }, FluxSink.OverflowStrategy.BUFFER);
+    }
+
 	public void sendText(String text) {
         if (!isOpen.get()) {
             establishWebSocketClient();
@@ -233,6 +264,34 @@ public class DashScopeWebSocketClient extends WebSocketListener {
             })
             .doOnError(error -> {
                 logger.error("Audio stream error: {}", error.getMessage(), error);
+                emittersError("stream error", error);
+            })
+            .subscribe();
+    }
+
+    private void subscribeToStreamingText() {
+        logger.info("Subscribing to streaming text data");
+        this.streamingSubscription = this.streamingTextData
+            .doOnNext(chunk -> {
+                logger.debug("Sending text chunk: {}", chunk);
+                // Send text chunk as JSON with input.text field
+                try {
+                    String textChunkJson = String.format("{\"input\":{\"text\":\"%s\"}}",
+                        chunk.replace("\\", "\\\\").replace("\"", "\\\""));
+                    sendText(textChunkJson);
+                } catch (Exception e) {
+                    logger.error("Failed to send text chunk: {}", chunk, e);
+                    emittersError("text chunk error", e);
+                }
+            })
+            .doOnComplete(() -> {
+                logger.info("Text stream completed, sending finish-task");
+                if (this.finishTaskMessage != null) {
+                    sendText(this.finishTaskMessage);
+                }
+            })
+            .doOnError(error -> {
+                logger.error("Text stream error: {}", error.getMessage(), error);
                 emittersError("stream error", error);
             })
             .subscribe();
@@ -358,6 +417,9 @@ public class DashScopeWebSocketClient extends WebSocketListener {
                     }
                     if (this.streamingAudioData != null) {
                         subscribeToStreamingAudio();
+                    }
+                    if (this.streamingTextData != null) {
+                        subscribeToStreamingText();
                     }
 					break;
                 case RESULT_GENERATED:

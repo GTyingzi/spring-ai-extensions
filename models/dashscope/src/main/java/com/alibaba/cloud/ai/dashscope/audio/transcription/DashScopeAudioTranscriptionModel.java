@@ -49,46 +49,6 @@ import reactor.core.publisher.Flux;
 /**
  * Audio transcription: Input audio, output text.
  *
- * <p>This model supports two transcription modes:
- * <ul>
- *   <li>File-based transcription using {@link #stream(AudioTranscriptionPrompt)} - loads entire audio into memory</li>
- *   <li>Streaming transcription using {@link #stream(Flux, DashScopeAudioTranscriptionOptions)} - processes audio chunks in real-time</li>
- * </ul>
- *
- * <p><b>Streaming Audio Example:</b>
- * <pre>{@code
- * // Create a Flux of audio DataBuffers from a source (e.g., microphone, file chunking)
- * Flux<DataBuffer> audioStream = audioSource.getStream();
- *
- * // Configure transcription options
- * DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
- *     .model("paraformer-v2")
- *     .format("wav")
- *     .sampleRate(16000)
- *     .build();
- *
- * // Stream transcription
- * Flux<AudioTranscriptionResponse> responses = transcriptionModel.stream(audioStream, options);
- *
- * // Subscribe to process results
- * responses.subscribe(response -> {
- *     System.out.println("Transcription: " + response.getResult().getOutput());
- * });
- * }</pre>
- *
- * <p><b>Recommended Audio Chunk Sizes:</b>
- * For optimal streaming performance, send audio chunks representing 100-500ms of audio.
- * For 16kHz PCM audio, this is approximately 3,200 to 16,000 bytes per chunk.
- *
- * <p><b>Heartbeat Configuration for Long Streams:</b>
- * For long-running transcription sessions, configure the heartbeat interval in options:
- * <pre>{@code
- * DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
- *     .model("paraformer-v2")
- *     .heartbeat(3000) // Send heartbeat every 3 seconds
- *     .build();
- * }</pre>
- *
  * @author xuguan, yingzi
  */
 public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel {
