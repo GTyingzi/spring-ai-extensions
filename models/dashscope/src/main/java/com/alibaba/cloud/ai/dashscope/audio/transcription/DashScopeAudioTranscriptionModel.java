@@ -42,11 +42,52 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.util.JacksonUtils;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.retry.support.RetryTemplate;
 import reactor.core.publisher.Flux;
 
 /**
  * Audio transcription: Input audio, output text.
+ *
+ * <p>This model supports two transcription modes:
+ * <ul>
+ *   <li>File-based transcription using {@link #stream(AudioTranscriptionPrompt)} - loads entire audio into memory</li>
+ *   <li>Streaming transcription using {@link #stream(Flux, DashScopeAudioTranscriptionOptions)} - processes audio chunks in real-time</li>
+ * </ul>
+ *
+ * <p><b>Streaming Audio Example:</b>
+ * <pre>{@code
+ * // Create a Flux of audio DataBuffers from a source (e.g., microphone, file chunking)
+ * Flux<DataBuffer> audioStream = audioSource.getStream();
+ *
+ * // Configure transcription options
+ * DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+ *     .model("paraformer-v2")
+ *     .format("wav")
+ *     .sampleRate(16000)
+ *     .build();
+ *
+ * // Stream transcription
+ * Flux<AudioTranscriptionResponse> responses = transcriptionModel.stream(audioStream, options);
+ *
+ * // Subscribe to process results
+ * responses.subscribe(response -> {
+ *     System.out.println("Transcription: " + response.getResult().getOutput());
+ * });
+ * }</pre>
+ *
+ * <p><b>Recommended Audio Chunk Sizes:</b>
+ * For optimal streaming performance, send audio chunks representing 100-500ms of audio.
+ * For 16kHz PCM audio, this is approximately 3,200 to 16,000 bytes per chunk.
+ *
+ * <p><b>Heartbeat Configuration for Long Streams:</b>
+ * For long-running transcription sessions, configure the heartbeat interval in options:
+ * <pre>{@code
+ * DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
+ *     .model("paraformer-v2")
+ *     .heartbeat(3000) // Send heartbeat every 3 seconds
+ *     .build();
+ * }</pre>
  *
  * @author xuguan, yingzi
  */
@@ -175,6 +216,61 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
                             return new DashScopeTranscriptionResponse(sentence, usage);
                         } else {
                             throw new IllegalArgumentException("Model " + options.getModel() + " is not supported stream method.");
+                        }
+
+                    } catch (JsonProcessingException e) {
+                        logger.error("Failed to parse WebSocket response: {}", response, e);
+                        throw new RuntimeException(e);
+                    }
+                }
+        );
+    }
+
+    /**
+     * Stream audio transcription with real-time audio input.
+     * This method accepts a Flux of DataBuffer for streaming audio transcription,
+     * enabling lower latency and reduced memory footprint for real-time scenarios.
+     *
+     * @param audioFlux the streaming audio data as Flux&lt;DataBuffer&gt;
+     * @param options the transcription options
+     * @return Flux of AudioTranscriptionResponse with transcription results
+     */
+    public Flux<AudioTranscriptionResponse> stream(Flux<DataBuffer> audioFlux,
+            DashScopeAudioTranscriptionOptions options) {
+        // Merge with default options
+        DashScopeAudioTranscriptionOptions mergedOptions = ModelOptionsUtils.merge(
+                options, this.defaultOptions, DashScopeAudioTranscriptionOptions.class);
+
+        // Convert DataBuffer to ByteBuffer
+        Flux<ByteBuffer> byteBufferFlux = audioFlux.map(DataBuffer::asByteBuffer);
+
+        // Delegate to API layer
+        return audioTranscriptionApi.createStreamingWebSocketTask(byteBufferFlux, mergedOptions).map(
+                response -> {
+                    try {
+                        logger.debug("Raw WebSocket response: {}", response);
+                        JsonNode jsonNode = mapper.readTree(response).get("payload").get("output");
+                        if (DashScopeAudioApiConstants.QWEN3_LONG_SHORT_TRANSLATE_LIST.contains(mergedOptions.getModel())) {
+                            JsonNode translationsNode = jsonNode.get("translations");
+                            JsonNode transcriptionNode = jsonNode.get("transcription");
+                            logger.debug("translationsNode: {}", translationsNode);
+                            logger.debug("transcriptionNode: {}", transcriptionNode);
+
+                            List<Translation> translations = mapper.convertValue(translationsNode, new TypeReference<>() {});
+                            DashScopeAudioTranscription transcription = mapper.convertValue(transcriptionNode, new TypeReference<>() {});
+                            return new DashScopeTranscriptionResponse(translations, transcription);
+                        } else if (DashScopeAudioApiConstants.PARAFORMER_FUNAS_LIST.contains(mergedOptions.getModel())) {
+                            JsonNode sentenceNode = jsonNode.get("sentence");
+                            JsonNode usageNode = jsonNode.get("usage");
+
+                            logger.debug("sentenceNode: {}", sentenceNode);
+                            logger.debug("usageNode: {}", usageNode);
+
+                            Sentence sentence = mapper.convertValue(sentenceNode, new TypeReference<>() {});
+                            Usage usage = mapper.convertValue(usageNode, new TypeReference<>() {});
+                            return new DashScopeTranscriptionResponse(sentence, usage);
+                        } else {
+                            throw new IllegalArgumentException("Model " + mergedOptions.getModel() + " is not supported stream method.");
                         }
 
                     } catch (JsonProcessingException e) {
