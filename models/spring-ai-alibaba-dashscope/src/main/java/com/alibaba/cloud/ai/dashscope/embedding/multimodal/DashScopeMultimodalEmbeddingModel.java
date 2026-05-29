@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeMultimodalEmbeddingApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeModelOptionsUtils;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import io.micrometer.observation.ObservationRegistry;
@@ -44,7 +45,6 @@ import org.springframework.ai.embedding.observation.DefaultEmbeddingModelObserva
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationContext;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationConvention;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationDocumentation;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
@@ -131,7 +131,7 @@ public class DashScopeMultimodalEmbeddingModel implements DocumentEmbeddingModel
 					.fps(this.defaultOptions.getFps())
 					.instruct(this.defaultOptions.getInstruct())
 					.build();
-			mergedOptions = ModelOptionsUtils.merge(request.getOptions(), defaultOptionsCopy, DashScopeMultimodalEmbeddingOptions.class);
+			mergedOptions = DashScopeModelOptionsUtils.merge(request.getOptions(), defaultOptionsCopy, DashScopeMultimodalEmbeddingOptions.class);
 		}
 
 		List<Map<String, Object>> inputContents = new ArrayList<>();

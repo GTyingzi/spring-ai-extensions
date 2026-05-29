@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.embedding.text;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeModelOptionsUtils;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.EmbeddingModel;
@@ -43,7 +44,6 @@ import org.springframework.ai.embedding.observation.DefaultEmbeddingModelObserva
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationContext;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationConvention;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationDocumentation;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.Assert;
@@ -191,20 +191,20 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 		// Process runtime options
 		com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions runtimeOptions = null;
 		if (embeddingRequest.getOptions() != null) {
-			runtimeOptions = ModelOptionsUtils.copyToTarget(embeddingRequest.getOptions(), EmbeddingOptions.class,
+			runtimeOptions = DashScopeModelOptionsUtils.copyToTarget(embeddingRequest.getOptions(), EmbeddingOptions.class,
 					com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions.class);
 		}
 
 		com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions requestOptions = runtimeOptions == null ? this.defaultOptions
 				: com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions.builder()
 					// Handle portable embedding options
-					.model(ModelOptionsUtils.mergeOption(runtimeOptions.getModel(), this.defaultOptions.getModel()))
-					.dimensions(ModelOptionsUtils.mergeOption(runtimeOptions.getDimensions(),
+					.model(DashScopeModelOptionsUtils.mergeOption(runtimeOptions.getModel(), this.defaultOptions.getModel()))
+					.dimensions(DashScopeModelOptionsUtils.mergeOption(runtimeOptions.getDimensions(),
 							defaultOptions.getDimensions()))
 
 					// Handle dashscope specific embedding options
 					.textType(
-							ModelOptionsUtils.mergeOption(runtimeOptions.getTextType(), defaultOptions.getTextType()))
+							DashScopeModelOptionsUtils.mergeOption(runtimeOptions.getTextType(), defaultOptions.getTextType()))
 					.build();
 
 		return new EmbeddingRequest(embeddingRequest.getInstructions(), requestOptions);
@@ -260,11 +260,13 @@ public class DashScopeEmbeddingModel extends AbstractEmbeddingModel {
 	 * @return The embeddings
 	 */
 	@Override
-	public List<float[]> embed(List<Document> documents, EmbeddingOptions options, BatchingStrategy batchingStrategy) {
-		if (options.getModel() == null && options.getDimensions() == null && defaultOptions != null) {
-			options = defaultOptions;
+	public List<float[]> embed(List<Document> documents, @Nullable EmbeddingOptions options,
+			BatchingStrategy batchingStrategy) {
+		EmbeddingOptions optionsToUse = options;
+		if (optionsToUse == null || (optionsToUse.getModel() == null && optionsToUse.getDimensions() == null)) {
+			optionsToUse = defaultOptions;
 		}
-		return super.embed(documents, options, batchingStrategy);
+		return super.embed(documents, optionsToUse, batchingStrategy);
 	}
 
 	/**

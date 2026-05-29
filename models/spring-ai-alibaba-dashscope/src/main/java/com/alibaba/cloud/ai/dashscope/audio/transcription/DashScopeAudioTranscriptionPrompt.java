@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 
 import java.util.List;
 
@@ -30,18 +32,20 @@ import java.util.List;
 
 public class DashScopeAudioTranscriptionPrompt extends AudioTranscriptionPrompt {
 
+    private static final Resource EMPTY_RESOURCE = new ByteArrayResource(new byte[0]);
+
     private final @Nullable List<TranscriptionUserMessage> messages;
 
     private final @Nullable List<String> fileUrls;
 
     public DashScopeAudioTranscriptionPrompt(AudioTranscriptionOptions options, TranscriptionUserMessage  message) {
-        super(null, options);
+        super(EMPTY_RESOURCE, options);
         this.messages = List.of(message);
         this.fileUrls = null;
     }
 
     public DashScopeAudioTranscriptionPrompt(AudioTranscriptionOptions options, List<String> fileUrls) {
-        super(null, options);
+        super(EMPTY_RESOURCE, options);
         this.messages = null;
         this.fileUrls = fileUrls;
     }

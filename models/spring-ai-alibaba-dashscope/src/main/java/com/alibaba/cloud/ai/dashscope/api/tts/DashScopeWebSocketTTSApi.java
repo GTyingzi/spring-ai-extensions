@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.model.ApiKey;
-import org.springframework.ai.util.JacksonUtils;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 
@@ -65,7 +64,7 @@ public class DashScopeWebSocketTTSApi {
 				.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
 				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 				.serializationInclusion(JsonInclude.Include.NON_NULL)
-				.addModules(JacksonUtils.instantiateAvailableModules())
+				.findAndAddModules()
 				.build();
 	}
 

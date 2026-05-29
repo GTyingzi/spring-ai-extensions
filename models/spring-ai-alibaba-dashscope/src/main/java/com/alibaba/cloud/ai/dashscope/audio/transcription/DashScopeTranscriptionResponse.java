@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.transcription.AudioTranscription;
+import org.springframework.ai.audio.transcription.AudioTranscriptionMetadata;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 
 import java.util.List;
@@ -51,7 +52,7 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
     }
 
     public DashScopeTranscriptionResponse(Sentence sentence, Usage usage) {
-        super(null);
+        super(new DashScopeAudioTranscription(""));
         this.transcription = null;
         this.metadata = new DashScopeAudioTranscriptionResponseMetadata(sentence, usage);
     }
@@ -93,8 +94,8 @@ public class DashScopeTranscriptionResponse extends AudioTranscriptionResponse {
             return text;
         }
 
-        public @Nullable DashScopeAudioTranscriptionMetadata getMetadata() {
-            return metadata;
+        public AudioTranscriptionMetadata getMetadata() {
+            return this.metadata != null ? this.metadata : AudioTranscriptionMetadata.NULL;
         }
 
     }

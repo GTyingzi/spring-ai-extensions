@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.NullSerializer;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AbstractMessage;
@@ -101,7 +102,7 @@ public class MessageUtils {
 		String content = tablestoreMessage.getContent();
 		Map<String, Object> metadataMap = metadata.toMap();
 		try {
-			MessageType messageType = MessageType.fromValue(metadata.getString(MESSAGE_TYPE));
+			MessageType messageType = messageTypeFromValue(metadata.getString(MESSAGE_TYPE));
 			metadataMap.put(AbstractMessage.MESSAGE_TYPE, messageType);
 			switch (messageType) {
 				case USER: {
@@ -215,6 +216,15 @@ public class MessageUtils {
 			throw new RuntimeException("Error converting message", e);
 		}
 		return message;
+	}
+
+	private static MessageType messageTypeFromValue(@Nullable String value) {
+		for (MessageType messageType : MessageType.values()) {
+			if (messageType.getValue().equals(value) || messageType.name().equalsIgnoreCase(value)) {
+				return messageType;
+			}
+		}
+		throw new IllegalArgumentException("Unsupported message type: " + value);
 	}
 
 }

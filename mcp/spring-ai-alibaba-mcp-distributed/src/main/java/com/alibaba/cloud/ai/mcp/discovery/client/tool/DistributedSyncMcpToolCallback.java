@@ -19,7 +19,6 @@ package com.alibaba.cloud.ai.mcp.discovery.client.tool;
 import com.alibaba.cloud.ai.mcp.discovery.client.transport.DistributedSyncMcpClient;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.springframework.ai.mcp.McpToolUtils;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.util.Assert;
@@ -49,19 +48,19 @@ public class DistributedSyncMcpToolCallback implements ToolCallback {
         return ToolDefinition.builder()
                 .name(McpToolUtils.prefixedToolName(this.distributedSyncMcpClient.getServerName(), this.tool.name()))
                 .description(this.tool.description())
-                .inputSchema(ModelOptionsUtils.toJsonString(this.tool.inputSchema()))
+                .inputSchema(McpToolJsonUtils.toJsonString(this.tool.inputSchema()))
                 .build();    }
 
     @Override
     public String call(String toolInput) {
-        Map<String, Object> arguments = ModelOptionsUtils.jsonToMap(toolInput);
+        Map<String, Object> arguments = McpToolJsonUtils.jsonToMap(toolInput);
         McpSchema.CallToolResult response = this.distributedSyncMcpClient
                 .callTool(new McpSchema.CallToolRequest(this.tool.name(), arguments));
         if (response.isError() != null && response.isError()) {
             throw new IllegalStateException("Error calling tool: " + response.content());
         }
         else {
-            return ModelOptionsUtils.toJsonString(response.content());
+            return McpToolJsonUtils.toJsonString(response.content());
         }
     }
 }

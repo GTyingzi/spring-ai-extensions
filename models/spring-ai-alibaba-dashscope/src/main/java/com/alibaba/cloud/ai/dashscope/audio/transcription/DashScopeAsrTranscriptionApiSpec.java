@@ -332,17 +332,17 @@ public class DashScopeAsrTranscriptionApiSpec {
         private final List<TranscriptionResult> transcriptionResults;
 
         public DashScopeAudioAsrTranscriptionResponse() {
-            super(null);
+            super(new DashScopeAudioTranscription(""));
             this.transcriptionResults = List.of();
         }
 
         public DashScopeAudioAsrTranscriptionResponse(List<TranscriptionResult> transcriptionResults) {
-            super(null);
+            super(new DashScopeAudioTranscription(""));
             this.transcriptionResults = transcriptionResults != null ? transcriptionResults : List.of();
         }
 
         public DashScopeAudioAsrTranscriptionResponse(TranscriptionResult transcriptionResult) {
-            super(null);
+            super(new DashScopeAudioTranscription(""));
             this.transcriptionResults = transcriptionResult != null ? List.of(transcriptionResult) : List.of();
         }
 

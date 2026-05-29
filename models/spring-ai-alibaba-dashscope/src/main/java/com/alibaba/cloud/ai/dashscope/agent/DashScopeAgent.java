@@ -22,6 +22,7 @@ import java.util.Objects;
 
 import com.alibaba.cloud.ai.agent.Agent;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeModelOptionsUtils;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentRequest;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAgentApi.DashScopeAgentRequest.DashScopeAgentRequestInput.DashScopeAgentRequestMessage;
@@ -41,7 +42,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Flux;
 
@@ -106,10 +106,11 @@ public final class DashScopeAgent extends Agent {
         List<Message> messages = prompt.getInstructions();
         boolean onlyOneUserMessage = messages.size() == 1 && messages.get(0).getMessageType() == MessageType.USER;
         if (onlyOneUserMessage) {
-            requestPrompt = messages.get(0).getText();
+            requestPrompt = Objects.requireNonNullElse(messages.get(0).getText(), "");
         } else {
             requestMessages = messages.stream()
-                    .map(msg -> new DashScopeAgentRequestMessage(msg.getMessageType().getValue(), msg.getText()))
+                    .map(msg -> new DashScopeAgentRequestMessage(msg.getMessageType().getValue(),
+                            Objects.requireNonNullElse(msg.getText(), "")))
                     .toList();
         }
 
@@ -164,8 +165,8 @@ public final class DashScopeAgent extends Agent {
 
     private DashScopeAgentOptions mergeOptions(@Nullable ChatOptions chatOptions) {
         DashScopeAgentOptions agentOptions = chatOptions == null ? null
-                : ModelOptionsUtils.copyToTarget(chatOptions, ChatOptions.class, DashScopeAgentOptions.class);
-        return ModelOptionsUtils.merge(agentOptions, this.defaultOptions, DashScopeAgentOptions.class);
+                : DashScopeModelOptionsUtils.copyToTarget(chatOptions, ChatOptions.class, DashScopeAgentOptions.class);
+        return DashScopeModelOptionsUtils.merge(agentOptions, this.defaultOptions, DashScopeAgentOptions.class);
     }
 
     @Override

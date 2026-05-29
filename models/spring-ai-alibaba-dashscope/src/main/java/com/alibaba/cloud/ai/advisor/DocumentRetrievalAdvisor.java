@@ -17,7 +17,9 @@ package com.alibaba.cloud.ai.advisor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.AdvisorChain;
@@ -136,7 +138,8 @@ public class DocumentRetrievalAdvisor implements BaseAdvisor {
 
 		var context = request.context();
 		var userMessage = request.prompt().getUserMessage();
-		Query query = new Query(userMessage.getText(), request.prompt().getInstructions(), context);
+		String queryText = Objects.requireNonNullElse(userMessage.getText(), "");
+		Query query = new Query(queryText, request.prompt().getInstructions(), nonNullContext(context));
 		List<Document> documents = retriever.retrieve(query);
 		context.put(RETRIEVED_DOCUMENTS, documents);
 
@@ -145,7 +148,7 @@ public class DocumentRetrievalAdvisor implements BaseAdvisor {
 			.collect(Collectors.joining(System.lineSeparator()));
 
 		String augmentedUserText = this.promptTemplate
-			.render(Map.of("query", userMessage.getText(), "question_answer_context", documentContext));
+			.render(Map.of("query", queryText, "question_answer_context", documentContext));
 
 		// Update ChatClientRequest with augmented prompt.
 		return request.mutate().prompt(request.prompt().augmentUserMessage(augmentedUserText)).context(context).build();
@@ -160,11 +163,21 @@ public class DocumentRetrievalAdvisor implements BaseAdvisor {
 		else {
 			chatResponseBuilder = ChatResponse.builder().from(chatClientResponse.chatResponse());
 		}
-		chatResponseBuilder.metadata(RETRIEVED_DOCUMENTS, chatClientResponse.context().get(RETRIEVED_DOCUMENTS));
+		Object retrievedDocuments = chatClientResponse.context().get(RETRIEVED_DOCUMENTS);
+		if (retrievedDocuments != null) {
+			chatResponseBuilder.metadata(RETRIEVED_DOCUMENTS, retrievedDocuments);
+		}
 		return ChatClientResponse.builder()
 			.chatResponse(chatResponseBuilder.build())
 			.context(chatClientResponse.context())
 			.build();
+	}
+
+	private static Map<String, Object> nonNullContext(Map<String, @Nullable Object> context) {
+		return context.entrySet()
+			.stream()
+			.filter(entry -> entry.getValue() != null)
+			.collect(Collectors.toMap(Map.Entry::getKey, entry -> Objects.requireNonNull(entry.getValue())));
 	}
 
 }

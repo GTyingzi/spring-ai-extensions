@@ -205,8 +205,9 @@ public class DashScopeAgentOptions implements ChatOptions {
     }
 
     @Override
-    public ChatOptions copy() {
-        return Objects.requireNonNull(DashScopeAgentOptions.fromOptions(this), "Copied options must not be null");
+    @SuppressWarnings("unchecked")
+    public <T extends ChatOptions> T copy() {
+        return (T) Objects.requireNonNull(DashScopeAgentOptions.fromOptions(this), "Copied options must not be null");
     }
 
     public static @Nullable DashScopeAgentOptions fromOptions(@Nullable DashScopeAgentOptions options) {
@@ -245,7 +246,8 @@ public class DashScopeAgentOptions implements ChatOptions {
                 .build();
     }
 
-    public Builder mutate() {
+    @Override
+    public ChatOptions.Builder<?> mutate() {
         return new Builder(this);
     }
 
@@ -254,7 +256,7 @@ public class DashScopeAgentOptions implements ChatOptions {
         return new Builder();
     }
 
-    public static class Builder {
+    public static class Builder implements ChatOptions.Builder<Builder> {
 
         private DashScopeAgentOptions options = new DashScopeAgentOptions();
 
@@ -262,7 +264,54 @@ public class DashScopeAgentOptions implements ChatOptions {
         }
 
         private Builder(DashScopeAgentOptions options) {
-            this.options = options;
+            this.options = Objects.requireNonNull(DashScopeAgentOptions.fromOptions(options),
+                    "Copied options must not be null");
+        }
+
+        @Override
+        public Builder clone() {
+            return new Builder(this.options);
+        }
+
+        @Override
+        public Builder model(@Nullable String model) {
+            this.options.modelId = model;
+            return this;
+        }
+
+        @Override
+        public Builder frequencyPenalty(@Nullable Double frequencyPenalty) {
+            return this;
+        }
+
+        @Override
+        public Builder maxTokens(@Nullable Integer maxTokens) {
+            return this;
+        }
+
+        @Override
+        public Builder presencePenalty(@Nullable Double presencePenalty) {
+            return this;
+        }
+
+        @Override
+        public Builder stopSequences(@Nullable List<String> stopSequences) {
+            return this;
+        }
+
+        @Override
+        public Builder temperature(@Nullable Double temperature) {
+            return this;
+        }
+
+        @Override
+        public Builder topK(@Nullable Integer topK) {
+            return this;
+        }
+
+        @Override
+        public Builder topP(@Nullable Double topP) {
+            return this;
         }
 
         public Builder appId(@Nullable String appId) {
@@ -325,8 +374,22 @@ public class DashScopeAgentOptions implements ChatOptions {
             return this;
         }
 
+        @Override
         public DashScopeAgentOptions build() {
             return this.options;
+        }
+
+        @Override
+        public Builder combineWith(ChatOptions.Builder<?> other) {
+            ChatOptions otherOptions = other.build();
+            if (otherOptions.getModel() != null) {
+                this.options.modelId = otherOptions.getModel();
+            }
+            if (otherOptions instanceof DashScopeAgentOptions agentOptions) {
+                this.options = Objects.requireNonNull(DashScopeAgentOptions.fromOptions(agentOptions),
+                        "Copied options must not be null");
+            }
+            return this;
         }
     }
 

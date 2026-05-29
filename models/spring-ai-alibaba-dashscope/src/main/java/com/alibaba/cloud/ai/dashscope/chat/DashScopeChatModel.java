@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.chat;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeModelOptionsUtils;
 import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletion;
@@ -33,6 +34,7 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.FunctionTool;
 import com.alibaba.cloud.ai.dashscope.chat.observation.DashScopeChatModelObservationConvention;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import com.alibaba.cloud.ai.tool.observation.inner.ToolCallReactiveContextHolder;
 import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
 import com.alibaba.cloud.ai.tool.validator.ToolCallValidator;
@@ -61,7 +63,6 @@ import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.chat.observation.ChatModelObservationDocumentation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
@@ -88,6 +89,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link ChatModel} implementation for {@literal Alibaba DashScope} backed by
@@ -97,20 +99,31 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
  * @see ChatModel
  */
-public class DashScopeChatModel implements ChatModel {
+public final class DashScopeChatModel implements ChatModel {
 
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeChatModel.class);
 
-	public static final String DEFAULT_MODEL_NAME = DashScopeApi.DEFAULT_CHAT_MODEL;
+	public static final String DEFAULT_MODEL_NAME = DashScopeModel.ChatModel.QWEN_PLUS.getValue();
 
 	private static final ChatModelObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DashScopeChatModelObservationConvention();
 
-	/**
-	 * The default options used for the chat completion requests.
-	 */
+    private static final ToolCallingManager DEFAULT_TOOL_CALLING_MANAGER = ToolCallingManager.builder().build();
+
 	private DashScopeChatOptions defaultOptions;
 
-	/**
+    private final ObservationRegistry observationRegistry;
+
+    private final ToolCallingManager toolCallingManager;
+
+    @SuppressWarnings({ "deprecation", "removal" })
+    private final ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate;
+
+    private final AtomicBoolean internalToolExecutionWarned = new AtomicBoolean(false);
+
+    private ChatModelObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
+
+
+    /**
 	 * Low-level access to the DashScope API
 	 */
 	private final DashScopeApi dashscopeApi;
@@ -120,28 +133,11 @@ public class DashScopeChatModel implements ChatModel {
 	 */
 	public final RetryTemplate retryTemplate;
 
-	/**
-	 * Observation registry used for instrumentation.
-	 */
-	private final ObservationRegistry observationRegistry;
-
-	private final ToolCallingManager toolCallingManager;
-
     /**
      * The tool call validator used to filter out invalid tool calls.
      */
     private final ToolCallValidator toolCallingValidator;
 
-	/**
-	 * The tool execution eligibility predicate used to determine if a tool can be
-	 * executed.
-	 */
-	private final ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate;
-
-	/**
-	 * Conventions to use for generating observations.
-	 */
-	private ChatModelObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
 
 	public DashScopeChatModel(DashScopeApi dashscopeApi, DashScopeChatOptions defaultOptions,
 			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate,
@@ -151,14 +147,15 @@ public class DashScopeChatModel implements ChatModel {
 				new DefaultToolExecutionEligibilityPredicate(), new DefaultToolCallValidator());
 	}
 
-	public DashScopeChatModel(DashScopeApi dashscopeApi, DashScopeChatOptions defaultOptions,
+    @SuppressWarnings({ "deprecation", "removal" })
+    public DashScopeChatModel(DashScopeApi dashscopeApi, DashScopeChatOptions defaultOptions,
 			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
 			ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate) {
 
 		this(dashscopeApi, defaultOptions, toolCallingManager, retryTemplate, observationRegistry,
 				toolExecutionEligibilityPredicate, new DefaultToolCallValidator());
 	}
-
+    @SuppressWarnings({ "deprecation", "removal" })
 	public DashScopeChatModel(DashScopeApi dashscopeApi, DashScopeChatOptions defaultOptions,
 			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
 			ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, ToolCallValidator toolCallingValidator) {
@@ -193,7 +190,8 @@ public class DashScopeChatModel implements ChatModel {
 		return DashScopeChatOptions.fromOptions(this.defaultOptions);
 	}
 
-	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
+    @SuppressWarnings({ "deprecation", "removal" })
+    public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
 		ChatCompletionRequest request = createRequest(prompt, false);
 
 		ChatModelObservationContext observationContext = ChatModelObservationContext.builder()
@@ -217,7 +215,7 @@ public class DashScopeChatModel implements ChatModel {
 				return chatResponse;
 			});
 
-		if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
+		if (toolExecutionEligibilityPredicate.isToolExecutionRequired(resolvePromptOptions(prompt), response)) {
 			var toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
 			if (toolExecutionResult.returnDirect()) {
 				// Return tool execution result directly to the client.
@@ -294,7 +292,7 @@ public class DashScopeChatModel implements ChatModel {
             );
 
 			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
-					if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
+					if (toolExecutionEligibilityPredicate.isToolExecutionRequired(resolvePromptOptions(prompt), response)) {
 
 						return Flux.deferContextual((ctx) -> {
 
@@ -453,25 +451,33 @@ public class DashScopeChatModel implements ChatModel {
 
 	private ChatResponseMetadata from(ChatCompletion result, Usage usage) {
 		Assert.notNull(result, "DashScopeAi ChatCompletionResult must not be null");
-		return ChatResponseMetadata.builder().id(result.requestId()).usage(usage).model("").build();
+		return ChatResponseMetadata.builder()
+			.id(Objects.requireNonNullElse(result.requestId(), ""))
+			.usage(usage)
+			.model("")
+			.build();
 	}
 
-	Prompt buildRequestPrompt(Prompt prompt) {
+	private ChatOptions resolvePromptOptions(Prompt prompt) {
+		return prompt.getOptions() != null ? prompt.getOptions() : this.defaultOptions;
+	}
+
+	public Prompt buildRequestPrompt(Prompt prompt) {
 		// Process runtime options
 		DashScopeChatOptions runtimeOptions = null;
 		if (prompt.getOptions() != null) {
 			if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
-				runtimeOptions = ModelOptionsUtils.copyToTarget(toolCallingChatOptions, ToolCallingChatOptions.class,
+				runtimeOptions = DashScopeModelOptionsUtils.copyToTarget(toolCallingChatOptions, ToolCallingChatOptions.class,
 						DashScopeChatOptions.class);
 			}
 			else {
-				runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(), ChatOptions.class,
+				runtimeOptions = DashScopeModelOptionsUtils.copyToTarget(prompt.getOptions(), ChatOptions.class,
 						DashScopeChatOptions.class);
 			}
 		}
 
 		// Define request options by merging runtime options and default options
-		DashScopeChatOptions requestOptions = ModelOptionsUtils.merge(runtimeOptions, this.defaultOptions,
+		DashScopeChatOptions requestOptions = DashScopeModelOptionsUtils.merge(runtimeOptions, this.defaultOptions,
 				DashScopeChatOptions.class);
 
 		// copy http headers options.
@@ -486,7 +492,7 @@ public class DashScopeChatModel implements ChatModel {
 		// Jackson, used by ModelOptionsUtils.
 		if (runtimeOptions != null) {
 			requestOptions.setInternalToolExecutionEnabled(
-					ModelOptionsUtils.mergeOption(runtimeOptions.getInternalToolExecutionEnabled(),
+					DashScopeModelOptionsUtils.mergeOption(runtimeOptions.getInternalToolExecutionEnabled(),
 							this.defaultOptions.getInternalToolExecutionEnabled()));
 			requestOptions.setToolNames(ToolCallingChatOptions.mergeToolNames(runtimeOptions.getToolNames(),
 					this.defaultOptions.getToolNames()));
@@ -516,22 +522,23 @@ public class DashScopeChatModel implements ChatModel {
 
 		List<ChatCompletionMessage> chatCompletionMessages = prompt.getInstructions().stream().map(message -> {
 			if (message.getMessageType() == MessageType.USER || message.getMessageType() == MessageType.SYSTEM) {
-				Object content = message.getText();
+				String messageText = Objects.requireNonNullElse(message.getText(), "");
+				Object content = messageText;
 				Map<String, String> cacheControl = extractCacheControl(message);
 
 				if (message instanceof UserMessage userMessage) {
 					if (!CollectionUtils.isEmpty(userMessage.getMedia())) {
 						content = convertMediaContent(userMessage, cacheControl);
 					}
-					else if (cacheControl != null) {
-						// Convert text to MediaContent with cache_control
-						content = List.of(new MediaContent(message.getText(), cacheControl));
-					}
+				else if (cacheControl != null) {
+					// Convert text to MediaContent with cache_control
+					content = List.of(new MediaContent(messageText, cacheControl));
 				}
-				else if (message instanceof SystemMessage && cacheControl != null) {
-					// Convert system message text to MediaContent with cache_control
-					content = List.of(new MediaContent(message.getText(), cacheControl));
-				}
+			}
+			else if (message instanceof SystemMessage && cacheControl != null) {
+				// Convert system message text to MediaContent with cache_control
+				content = List.of(new MediaContent(messageText, cacheControl));
+			}
 
 				return List.of(new ChatCompletionMessage(content,
 						ChatCompletionMessage.Role.valueOf(message.getMessageType().name())));
@@ -644,6 +651,7 @@ public class DashScopeChatModel implements ChatModel {
 
 	private List<MediaContent> convertMediaContent(UserMessage message, @Nullable Map<String, String> cacheControl) {
 		MessageFormat format = MessageFormat.IMAGE;
+		String messageText = Objects.requireNonNullElse(message.getText(), "");
 		if (message.getMetadata().get(DashScopeApiConstants.MESSAGE_FORMAT) instanceof MessageFormat messageFormat) {
 			format = messageFormat;
 		}
@@ -658,7 +666,7 @@ public class DashScopeChatModel implements ChatModel {
 			contentList.add(new MediaContent("video", null, null, mediaList));
 
 			// Apply cache_control to the text content (last content part)
-			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
+			MediaContent mediaContent = new MediaContent(messageText, cacheControl);
 			contentList.add(mediaContent);
 		}
 		else if (format == MessageFormat.AUDIO) {
@@ -669,7 +677,7 @@ public class DashScopeChatModel implements ChatModel {
 				.toList());
 
 			// Apply cache_control to the text content (last content part)
-			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
+			MediaContent mediaContent = new MediaContent(messageText, cacheControl);
 			contentList.add(mediaContent);
 		}
 		else {
@@ -680,7 +688,7 @@ public class DashScopeChatModel implements ChatModel {
 				.toList());
 
 			// Apply cache_control to the text content (last content part)
-			MediaContent mediaContent = new MediaContent(message.getText(), cacheControl);
+			MediaContent mediaContent = new MediaContent(messageText, cacheControl);
 			contentList.add(mediaContent);
 		}
 

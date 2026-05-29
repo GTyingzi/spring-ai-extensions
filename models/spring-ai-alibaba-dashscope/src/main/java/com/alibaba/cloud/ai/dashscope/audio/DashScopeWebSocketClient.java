@@ -46,7 +46,6 @@ import okio.ByteString;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.util.JacksonUtils;
 import org.springframework.util.ObjectUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -116,7 +115,7 @@ public class DashScopeWebSocketClient extends WebSocketListener {
 			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 			.serializationInclusion(JsonInclude.Include.NON_NULL)
 			// Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
-			.addModules(JacksonUtils.instantiateAvailableModules())
+			.findAndAddModules()
 			.build();
 	}
 

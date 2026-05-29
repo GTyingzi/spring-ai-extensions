@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.audio.tts.Speech;
 import org.springframework.ai.audio.tts.TextToSpeechResponse;
+import org.springframework.ai.audio.tts.TextToSpeechResponseMetadata;
 
 import java.util.Base64;
 import java.util.List;
@@ -140,15 +141,15 @@ public class DashScopeTTSApiSpec {
         private @Nullable TTSUsage usage;
 
         @JsonCreator
-        public DashScopeAudioTTSResponse(
-                @JsonProperty("request_id") @Nullable String requestId,
-                @JsonProperty("output") @Nullable TTSOutput output,
-                @JsonProperty("usage") @Nullable TTSUsage usage) {
-            super(createSpeechList(output), null);
-            this.requestId = requestId;
-            this.output = output;
-            this.usage = usage;
-        }
+	        public DashScopeAudioTTSResponse(
+	                @JsonProperty("request_id") @Nullable String requestId,
+	                @JsonProperty("output") @Nullable TTSOutput output,
+	                @JsonProperty("usage") @Nullable TTSUsage usage) {
+	            super(createSpeechList(output), new TextToSpeechResponseMetadata());
+	            this.requestId = requestId;
+	            this.output = output;
+	            this.usage = usage;
+	        }
 
         public @Nullable String getRequestId() {
             return requestId;

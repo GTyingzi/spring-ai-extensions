@@ -29,6 +29,7 @@ import io.opentelemetry.api.trace.Span;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.jspecify.annotations.Nullable;
 import org.springframework.util.CollectionUtils;
@@ -75,7 +76,8 @@ public class ChatModelOutputObservationHandler implements ObservationHandler<Cha
 			return null;
 		}
 
-		if (!StringUtils.hasText(context.getResponse().getResult().getOutput().getText())) {
+		Generation result = context.getResponse().getResult();
+		if (result == null || !StringUtils.hasText(result.getOutput().getText())) {
 			return "";
 		}
 

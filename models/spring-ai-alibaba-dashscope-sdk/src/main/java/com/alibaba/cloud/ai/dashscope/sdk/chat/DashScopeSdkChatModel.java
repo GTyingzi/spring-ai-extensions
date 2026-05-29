@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.dashscope.sdk.chat;
 
 import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkModelOptionsUtils;
 import com.alibaba.cloud.ai.dashscope.sdk.metadata.DashScopeSdkUsage;
 import com.alibaba.dashscope.aigc.generation.GenerationOutput;
 import com.alibaba.dashscope.aigc.generation.GenerationParam;
@@ -54,7 +55,6 @@ import org.springframework.ai.chat.observation.ChatModelObservationDocumentation
 import org.springframework.ai.chat.observation.DefaultChatModelObservationConvention;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
@@ -172,7 +172,9 @@ public class DashScopeSdkChatModel implements ChatModel {
 				return chatResponse;
 			});
 
-		if (this.toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
+		ChatOptions promptOptions = java.util.Objects.requireNonNull(prompt.getOptions(),
+				"Prompt options cannot be null");
+		if (this.toolExecutionEligibilityPredicate.isToolExecutionRequired(promptOptions, response)) {
 			ToolExecutionResult toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
 			if (toolExecutionResult.returnDirect()) {
 				return ChatResponse.builder()
@@ -180,7 +182,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 					.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
 					.build();
 			}
-			return internalCall(new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions()), response);
+			return internalCall(new Prompt(toolExecutionResult.conversationHistory(), promptOptions), response);
 		}
 
 		return response;
@@ -208,8 +210,10 @@ public class DashScopeSdkChatModel implements ChatModel {
 			Flux<ChatResponse> chatResponse = flowableToFlux(generationResults)
 				.map(result -> toChatResponse(result, previousChatResponse, request.getModel()));
 
+			ChatOptions promptOptions = java.util.Objects.requireNonNull(prompt.getOptions(),
+					"Prompt options cannot be null");
 			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
-				if (this.toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
+				if (this.toolExecutionEligibilityPredicate.isToolExecutionRequired(promptOptions, response)) {
 					return Flux.defer(() -> {
 						ToolExecutionResult toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
 						if (toolExecutionResult.returnDirect()) {
@@ -218,8 +222,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 								.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
 								.build());
 						}
-						return internalStream(new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions()),
-								response);
+						return internalStream(new Prompt(toolExecutionResult.conversationHistory(), promptOptions), response);
 					}).subscribeOn(Schedulers.boundedElastic());
 				}
 				return Flux.just(response);
@@ -231,20 +234,20 @@ public class DashScopeSdkChatModel implements ChatModel {
 		});
 	}
 
-	Prompt buildRequestPrompt(Prompt prompt) {
+	public Prompt buildRequestPrompt(Prompt prompt) {
 		DashScopeSdkChatOptions runtimeOptions = null;
 		if (prompt.getOptions() != null) {
 			if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
-				runtimeOptions = ModelOptionsUtils.copyToTarget(toolCallingChatOptions, ToolCallingChatOptions.class,
-						DashScopeSdkChatOptions.class);
+				runtimeOptions = DashScopeSdkModelOptionsUtils.copyToTarget(toolCallingChatOptions,
+						ToolCallingChatOptions.class, DashScopeSdkChatOptions.class);
 			}
 			else {
-				runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(), ChatOptions.class,
+				runtimeOptions = DashScopeSdkModelOptionsUtils.copyToTarget(prompt.getOptions(), ChatOptions.class,
 						DashScopeSdkChatOptions.class);
 			}
 		}
 
-		DashScopeSdkChatOptions requestOptions = ModelOptionsUtils.merge(runtimeOptions, this.defaultOptions,
+		DashScopeSdkChatOptions requestOptions = DashScopeSdkModelOptionsUtils.merge(runtimeOptions, this.defaultOptions,
 				DashScopeSdkChatOptions.class);
 
 		if (runtimeOptions != null && !CollectionUtils.isEmpty(runtimeOptions.getHttpHeaders())) {
@@ -255,7 +258,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 		}
 
 		if (runtimeOptions != null) {
-			requestOptions.setInternalToolExecutionEnabled(ModelOptionsUtils.mergeOption(
+			requestOptions.setInternalToolExecutionEnabled(DashScopeSdkModelOptionsUtils.mergeOption(
 					runtimeOptions.getInternalToolExecutionEnabled(),
 					this.defaultOptions.getInternalToolExecutionEnabled()));
 			requestOptions.setToolNames(ToolCallingChatOptions.mergeToolNames(runtimeOptions.getToolNames(),

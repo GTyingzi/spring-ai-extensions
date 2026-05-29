@@ -89,7 +89,7 @@ public class HybridSearchAdvisor implements BaseAdvisor {
         Map<String, Object> context = new HashMap<>(chatClientRequest.context());
         // 1. Create a query from the user text, parameters, and conversation history.
         Query originalQuery = Query.builder()
-                .text(chatClientRequest.prompt().getUserMessage().getText())
+                .text(java.util.Objects.requireNonNullElse(chatClientRequest.prompt().getUserMessage().getText(), ""))
                 .history(chatClientRequest.prompt().getInstructions())
                 .context(context)
                 .build();
@@ -138,7 +138,8 @@ public class HybridSearchAdvisor implements BaseAdvisor {
         } else {
             chatResponseBuilder = ChatResponse.builder().from(chatClientResponse.chatResponse());
         }
-        chatResponseBuilder.metadata(DOCUMENT_CONTEXT, chatClientResponse.context().get(DOCUMENT_CONTEXT));
+        Object documentContext = chatClientResponse.context().get(DOCUMENT_CONTEXT);
+        chatResponseBuilder.metadata(DOCUMENT_CONTEXT, documentContext != null ? documentContext : List.of());
         return ChatClientResponse.builder()
                 .chatResponse(chatResponseBuilder.build())
                 .context(chatClientResponse.context())

@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.dashscope.rerank;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeModelOptionsUtils;
 import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.document.DocumentWithScore;
@@ -27,10 +28,10 @@ import com.alibaba.cloud.ai.model.RerankResponse;
 import com.alibaba.cloud.ai.model.RerankResponseMetadata;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.ResponseEntity;
@@ -123,7 +124,7 @@ public class DashScopeRerankModel implements RerankModel {
 	 */
 	private DashScopeRerankOptions mergeOptions(@Nullable RerankOptions runtimeOptions,
 			DashScopeRerankOptions defaultOptions) {
-		var runtimeOptionsForProvider = ModelOptionsUtils.copyToTarget(runtimeOptions, RerankOptions.class,
+		var runtimeOptionsForProvider = DashScopeModelOptionsUtils.copyToTarget(runtimeOptions, RerankOptions.class,
 				DashScopeRerankOptions.class);
 
 		if (runtimeOptionsForProvider == null) {
@@ -131,9 +132,9 @@ public class DashScopeRerankModel implements RerankModel {
 		}
 
 		return DashScopeRerankOptions.builder()
-			.model(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getModel(), defaultOptions.getModel()))
-			.topN(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getTopN(), defaultOptions.getTopN()))
-			.returnDocuments(ModelOptionsUtils.mergeOption(runtimeOptionsForProvider.getReturnDocuments(),
+			.model(Objects.requireNonNullElse(runtimeOptionsForProvider.getModel(), defaultOptions.getModel()))
+			.topN(Objects.requireNonNullElse(runtimeOptionsForProvider.getTopN(), defaultOptions.getTopN()))
+			.returnDocuments(Objects.requireNonNullElse(runtimeOptionsForProvider.getReturnDocuments(),
 					defaultOptions.getReturnDocuments()))
 			.build();
 	}

@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.dashscope.sdk.image;
 
 import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkModelOptionsUtils;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisParam;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisResult;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisUsage;
@@ -33,7 +34,6 @@ import org.springframework.ai.image.observation.DefaultImageModelObservationConv
 import org.springframework.ai.image.observation.ImageModelObservationContext;
 import org.springframework.ai.image.observation.ImageModelObservationConvention;
 import org.springframework.ai.image.observation.ImageModelObservationDocumentation;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.Assert;
@@ -118,17 +118,18 @@ public class DashScopeSdkImageModel implements ImageModel {
 			});
 	}
 
-	private DashScopeSdkImageOptions toImageOptions(ImageOptions runtimeOptions) {
+	private DashScopeSdkImageOptions toImageOptions(@Nullable ImageOptions runtimeOptions) {
 		DashScopeSdkImageOptions options = java.util.Objects.requireNonNull(
 				DashScopeSdkImageOptions.fromOptions(this.defaultOptions));
 		if (runtimeOptions == null) {
 			return options;
 		}
 
-		DashScopeSdkImageOptions runtime = ModelOptionsUtils.copyToTarget(runtimeOptions, ImageOptions.class,
+		DashScopeSdkImageOptions runtime = DashScopeSdkModelOptionsUtils.copyToTarget(runtimeOptions, ImageOptions.class,
 				DashScopeSdkImageOptions.class);
 
-		DashScopeSdkImageOptions merged = ModelOptionsUtils.merge(runtime, options, DashScopeSdkImageOptions.class);
+		DashScopeSdkImageOptions merged = DashScopeSdkModelOptionsUtils.merge(runtime, options,
+				DashScopeSdkImageOptions.class);
 		if (runtime != null && !CollectionUtils.isEmpty(runtime.getHttpHeaders())) {
 			merged.setHttpHeaders(runtime.getHttpHeaders());
 		}

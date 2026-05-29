@@ -130,15 +130,16 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 				|| request.context().containsKey(RUN_ID), "user_id, agent_id, and run_id cannot all be null");
 
 		UserMessage userMessage = request.prompt().getUserMessage();
-		String query = userMessage != null ? userMessage.getText() : "";
+		String query = Objects.requireNonNullElse(userMessage.getText(), "");
 
-		Map<String, Object> params = request.context();
+		Map<String, @Nullable Object> params = request.context();
 		@Nullable String userId = optionalString(params.get(USER_ID));
 		@Nullable String agentId = optionalString(params.get(AGENT_ID));
 		@Nullable String runId = optionalString(params.get(RUN_ID));
-		@Nullable Map<String, Object> filters = params.get(FILTERS) instanceof Map<?, ?> map
-				? map.entrySet().stream().filter(entry -> entry.getKey() instanceof String)
-						.collect(Collectors.toMap(entry -> (String) entry.getKey(), Map.Entry::getValue))
+		@Nullable Map<String, Object> filters = params.get(FILTERS) instanceof Map<?, ?> map ? map.entrySet()
+			.stream()
+			.filter(entry -> entry.getKey() instanceof String && entry.getValue() != null)
+			.collect(Collectors.toMap(entry -> (String) entry.getKey(), entry -> Objects.requireNonNull(entry.getValue())))
 				: null;
 		SearchRequest searchRequest = Mem0ServerRequest.SearchRequest.mem0Builder()
 				.query(query)
@@ -203,7 +204,10 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 					}
 					metadata.putAll(message.getMetadata());
 
-					return Document.builder().text(message.getText()).metadata(metadata).build();
+					return Document.builder()
+						.text(Objects.requireNonNullElse(message.getText(), ""))
+						.metadata(metadata)
+						.build();
 				})
 				.toList();
 		return docs;
@@ -213,7 +217,7 @@ public class Mem0ChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 		return value != null ? Objects.toString(value, null) : null;
 	}
 
-	private Mem0ServerRequest.SearchRequest getConversationId(Map<String, Object> context) {
+	private Mem0ServerRequest.SearchRequest buildConversationSearchRequest(Map<String, Object> context) {
 		Mem0ServerRequest.SearchRequest build = Mem0ServerRequest.SearchRequest.mem0Builder()
 				.userId(context.getOrDefault(USER_ID, "").toString())
 				.build();

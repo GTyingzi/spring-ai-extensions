@@ -21,6 +21,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
@@ -47,16 +48,18 @@ public class OpenSearchVectorStoreFilterExpressionConverter extends AbstractFilt
 	protected void doExpression(Expression expression, StringBuilder context) {
 		if (expression.type() == Filter.ExpressionType.IN || expression.type() == Filter.ExpressionType.NIN) {
 			context.append(getOperationSymbol(expression));
-			context.append("(");
-			this.convertOperand(expression.left(), context);
-			this.convertOperand(expression.right(), context);
-			context.append(")");
-		}
-		else {
-			this.convertOperand(expression.left(), context);
-			context.append(getOperationSymbol(expression));
-			this.convertOperand(expression.right(), context);
-		}
+				context.append("(");
+				this.convertOperand(expression.left(), context);
+				this.convertOperand(Objects.requireNonNull(expression.right(), "Expression right operand must not be null"),
+						context);
+				context.append(")");
+			}
+			else {
+				this.convertOperand(expression.left(), context);
+				context.append(getOperationSymbol(expression));
+				this.convertOperand(Objects.requireNonNull(expression.right(), "Expression right operand must not be null"),
+						context);
+			}
 	}
 
 	private String getOperationSymbol(Expression exp) {

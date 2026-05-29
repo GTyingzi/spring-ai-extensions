@@ -29,6 +29,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeModelOptionsUtils;
 import com.alibaba.cloud.ai.dashscope.common.ErrorCodeEnum;
 import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetrieverOptions;
 import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentTransformerOptions;
@@ -42,7 +43,6 @@ import okhttp3.Response;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.model.ApiKey;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.model.NoopApiKey;
 import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.retry.RetryUtils;
@@ -594,12 +594,12 @@ public class DashScopeApi {
 			.takeUntil(SSE_DONE_PREDICATE)
 			.filter(SSE_DONE_PREDICATE.negate())
 			.map(content -> {
-				DashScopeApiSpec.DashScopeErrorResponse error = ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.DashScopeErrorResponse.class);
+				DashScopeApiSpec.DashScopeErrorResponse error = DashScopeModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.DashScopeErrorResponse.class);
 				if (error != null && error.code() != null) {
 					throw new DashScopeException(String.format("[%s] %s (requestId: %s)",
 						error.code(), error.message(), error.requestId()));
 				}
-				DashScopeApiSpec.ChatCompletionChunk chunk = ModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.ChatCompletionChunk.class);
+				DashScopeApiSpec.ChatCompletionChunk chunk = DashScopeModelOptionsUtils.jsonToObject(content, DashScopeApiSpec.ChatCompletionChunk.class);
 				if (chunk == null) {
 					throw new DashScopeException("Failed to parse response content: " + content);
 				}

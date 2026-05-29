@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeModelOptionsUtils;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.image.observation.DashScopeImageModelObservationConvention;
 import com.alibaba.cloud.ai.dashscope.image.observation.DashScopeImagePromptContentObservationHandler;
@@ -47,7 +48,6 @@ import org.springframework.ai.image.observation.DefaultImageModelObservationConv
 import org.springframework.ai.image.observation.ImageModelObservationContext;
 import org.springframework.ai.image.observation.ImageModelObservationConvention;
 import org.springframework.ai.image.observation.ImageModelObservationDocumentation;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.core.retry.RetryTemplate;
@@ -324,16 +324,16 @@ public class DashScopeImageModel implements ImageModel {
     /**
      * Merge Image options. Notice: Programmatically set options parameters take precedence
      */
-    private DashScopeImageOptions toImageOptions(ImageOptions runtimeOptions) {
+    private DashScopeImageOptions toImageOptions(@Nullable ImageOptions runtimeOptions) {
 
         // set default image model
         var currentOptions = DashScopeImageOptions.builder().model(DEFAULT_MODEL).build();
 
         if (Objects.nonNull(runtimeOptions)) {
-            currentOptions = ModelOptionsUtils.copyToTarget(runtimeOptions, ImageOptions.class, DashScopeImageOptions.class);
+            currentOptions = DashScopeModelOptionsUtils.copyToTarget(runtimeOptions, ImageOptions.class, DashScopeImageOptions.class);
         }
 
-        currentOptions = ModelOptionsUtils.merge(currentOptions, this.defaultOptions, DashScopeImageOptions.class);
+        currentOptions = DashScopeModelOptionsUtils.merge(currentOptions, this.defaultOptions, DashScopeImageOptions.class);
 
         return currentOptions;
     }

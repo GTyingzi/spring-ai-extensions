@@ -19,7 +19,6 @@ import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerRequest;
 import com.alibaba.cloud.ai.memory.mem0.model.Mem0ServerResp;
 
 import org.springframework.ai.document.Document;
-import org.springframework.ai.util.JacksonUtils;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
@@ -58,7 +57,7 @@ public class Mem0MemoryStore implements InitializingBean, VectorStore {
 	protected Mem0MemoryStore(Mem0ServiceClient client) {
 		this.mem0Client = client;
 		this.mem0FilterExpressionConverter = new Mem0FilterExpressionConverter();
-		this.objectMapper = JsonMapper.builder().addModules(JacksonUtils.instantiateAvailableModules()).build();
+		this.objectMapper = JsonMapper.builder().findAndAddModules().build();
 	}
 
 	public static Mem0MemoryStoreBuilder builder(Mem0ServiceClient client) {

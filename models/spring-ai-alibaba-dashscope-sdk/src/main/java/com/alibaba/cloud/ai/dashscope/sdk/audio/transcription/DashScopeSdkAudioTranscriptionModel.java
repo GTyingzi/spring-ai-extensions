@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.dashscope.sdk.audio.transcription;
 
 import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkModelOptionsUtils;
 import com.alibaba.dashscope.audio.asr.transcription.TranscriptionParam;
 import com.alibaba.dashscope.audio.asr.transcription.TranscriptionQueryParam;
 import com.alibaba.dashscope.audio.asr.transcription.TranscriptionResult;
@@ -31,7 +32,6 @@ import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponseMetadata;
 import org.springframework.ai.audio.transcription.TranscriptionModel;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.CollectionUtils;
@@ -104,16 +104,16 @@ public class DashScopeSdkAudioTranscriptionModel implements TranscriptionModel {
 		return toAudioResponse(finalResult == null ? submitResult : finalResult);
 	}
 
-	private DashScopeSdkAudioTranscriptionOptions mergeOptions(AudioTranscriptionOptions runtimeOptions) {
+	private DashScopeSdkAudioTranscriptionOptions mergeOptions(@Nullable AudioTranscriptionOptions runtimeOptions) {
 		DashScopeSdkAudioTranscriptionOptions options = java.util.Objects.requireNonNull(
 				DashScopeSdkAudioTranscriptionOptions.fromOptions(this.defaultOptions));
 		if (runtimeOptions == null) {
 			return options;
 		}
 
-		DashScopeSdkAudioTranscriptionOptions runtime = ModelOptionsUtils.copyToTarget(runtimeOptions,
+		DashScopeSdkAudioTranscriptionOptions runtime = DashScopeSdkModelOptionsUtils.copyToTarget(runtimeOptions,
 				AudioTranscriptionOptions.class, DashScopeSdkAudioTranscriptionOptions.class);
-		DashScopeSdkAudioTranscriptionOptions merged = ModelOptionsUtils.merge(runtime, options,
+		DashScopeSdkAudioTranscriptionOptions merged = DashScopeSdkModelOptionsUtils.merge(runtime, options,
 				DashScopeSdkAudioTranscriptionOptions.class);
 		if (runtime != null && !CollectionUtils.isEmpty(runtime.getHttpHeaders())) {
 			merged.setHttpHeaders(runtime.getHttpHeaders());

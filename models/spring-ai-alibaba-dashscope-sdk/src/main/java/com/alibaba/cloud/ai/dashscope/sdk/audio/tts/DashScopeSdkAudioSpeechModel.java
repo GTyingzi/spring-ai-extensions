@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.dashscope.sdk.audio.tts;
 
 import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkModelOptionsUtils;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisAudioFormat;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisParam;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisResult;
@@ -30,7 +31,6 @@ import org.springframework.ai.audio.tts.TextToSpeechOptions;
 import org.springframework.ai.audio.tts.TextToSpeechPrompt;
 import org.springframework.ai.audio.tts.TextToSpeechResponse;
 import org.springframework.ai.audio.tts.TextToSpeechResponseMetadata;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.CollectionUtils;
@@ -151,15 +151,15 @@ public class DashScopeSdkAudioSpeechModel implements TextToSpeechModel {
 		return builder.build();
 	}
 
-	private DashScopeSdkAudioSpeechOptions mergeOptions(TextToSpeechOptions runtimeOptions) {
+	private DashScopeSdkAudioSpeechOptions mergeOptions(@Nullable TextToSpeechOptions runtimeOptions) {
 		DashScopeSdkAudioSpeechOptions options = java.util.Objects.requireNonNull(
 				DashScopeSdkAudioSpeechOptions.fromOptions(this.defaultOptions));
 		if (runtimeOptions == null) {
 			return options;
 		}
-		DashScopeSdkAudioSpeechOptions runtime = ModelOptionsUtils.copyToTarget(runtimeOptions, TextToSpeechOptions.class,
-				DashScopeSdkAudioSpeechOptions.class);
-		DashScopeSdkAudioSpeechOptions merged = ModelOptionsUtils.merge(runtime, options,
+		DashScopeSdkAudioSpeechOptions runtime = DashScopeSdkModelOptionsUtils.copyToTarget(runtimeOptions,
+				TextToSpeechOptions.class, DashScopeSdkAudioSpeechOptions.class);
+		DashScopeSdkAudioSpeechOptions merged = DashScopeSdkModelOptionsUtils.merge(runtime, options,
 				DashScopeSdkAudioSpeechOptions.class);
 		if (runtime != null && !CollectionUtils.isEmpty(runtime.getHttpHeaders())) {
 			merged.setHttpHeaders(runtime.getHttpHeaders());

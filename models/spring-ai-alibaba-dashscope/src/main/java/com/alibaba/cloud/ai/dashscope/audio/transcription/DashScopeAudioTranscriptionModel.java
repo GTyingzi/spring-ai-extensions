@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeAudioTranscriptionApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeModelOptionsUtils;
 import com.alibaba.cloud.ai.dashscope.audio.transcription.DashScopeTranscriptionResponse.DashScopeAudioTranscription;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeAudioApiConstants;
 import com.alibaba.cloud.ai.dashscope.metadata.audio.DashScopeAudioTranscriptionResponseMetadata.Sentence;
@@ -40,9 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.audio.transcription.AudioTranscriptionOptions;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
-import org.springframework.ai.util.JacksonUtils;
 import org.springframework.core.retry.RetryTemplate;
 import reactor.core.publisher.Flux;
 
@@ -83,7 +82,7 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .serializationInclusion(JsonInclude.Include.NON_NULL)
                 // Register standard Jackson modules (Jdk8, JavaTime, ParameterNames, Kotlin)
-                .addModules(JacksonUtils.instantiateAvailableModules())
+                .findAndAddModules()
                 .build();
 	}
 
@@ -239,18 +238,18 @@ public class DashScopeAudioTranscriptionModel implements AudioTranscriptionModel
 
 	private DashScopeAudioTranscriptionOptions mergeOptions(AudioTranscriptionPrompt prompt) {
         DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder().build();
-        DashScopeAudioTranscriptionOptions runtimeOptions = ModelOptionsUtils.copyToTarget(prompt.getOptions(), AudioTranscriptionOptions.class, DashScopeAudioTranscriptionOptions.class);
+        DashScopeAudioTranscriptionOptions runtimeOptions = DashScopeModelOptionsUtils.copyToTarget(prompt.getOptions(), AudioTranscriptionOptions.class, DashScopeAudioTranscriptionOptions.class);
 
-        options = ModelOptionsUtils.merge(runtimeOptions, options, DashScopeAudioTranscriptionOptions.class);
+        options = DashScopeModelOptionsUtils.merge(runtimeOptions, options, DashScopeAudioTranscriptionOptions.class);
 
-        return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioTranscriptionOptions.class);
+        return DashScopeModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioTranscriptionOptions.class);
 	}
 
 	private DashScopeAudioTranscriptionOptions mergeOptions(DashScopeAudioTranscriptionOptions options) {
 		if (options == null) {
 			return this.defaultOptions;
 		}
-		return ModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioTranscriptionOptions.class);
+		return DashScopeModelOptionsUtils.merge(options, this.defaultOptions, DashScopeAudioTranscriptionOptions.class);
 	}
 
 	// ==================== WebSocket Response Parsing ====================

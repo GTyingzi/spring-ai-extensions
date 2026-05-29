@@ -217,4 +217,9 @@ public class Mem0FilterExpressionConverter extends AbstractFilterExpressionConve
 		// Optional: Implement key-to-string conversion
 	}
 
+	@Override
+	protected void doSingleValue(Object value, StringBuilder context) {
+		emitJsonValue(value, context);
+	}
+
 }

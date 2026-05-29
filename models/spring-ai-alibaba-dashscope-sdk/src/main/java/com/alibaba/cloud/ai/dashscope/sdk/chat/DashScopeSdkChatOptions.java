@@ -261,8 +261,14 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 	}
 
 	@Override
-	public ChatOptions copy() {
-		return Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this));
+	@SuppressWarnings("unchecked")
+	public <T extends ChatOptions> T copy() {
+		return (T) Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this));
+	}
+
+	@Override
+	public ToolCallingChatOptions.Builder<?> mutate() {
+		return new DashScopeSdkChatOptionsBuilder(Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this)));
 	}
 
 	@Override
@@ -271,7 +277,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		return this.toolCallbacks;
 	}
 
-	@Override
 	@JsonIgnore
 	public void setToolCallbacks(List<ToolCallback> toolCallbacks) {
 		Assert.notNull(toolCallbacks, "toolCallbacks cannot be null");
@@ -285,7 +290,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		return this.toolNames;
 	}
 
-	@Override
 	@JsonIgnore
 	public void setToolNames(Set<String> toolNames) {
 		Assert.notNull(toolNames, "toolNames cannot be null");
@@ -300,7 +304,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		return this.internalToolExecutionEnabled;
 	}
 
-	@Override
 	@JsonIgnore
 	public void setInternalToolExecutionEnabled(@Nullable Boolean internalToolExecutionEnabled) {
 		this.internalToolExecutionEnabled = internalToolExecutionEnabled;
@@ -311,7 +314,6 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 		return this.toolContext;
 	}
 
-	@Override
 	public void setToolContext(Map<String, Object> toolContext) {
 		this.toolContext = toolContext;
 	}
@@ -359,16 +361,32 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 				+ ", toolNames=" + this.toolNames + ", extraBody=" + this.extraBody + '}';
 	}
 
-	public static class DashScopeSdkChatOptionsBuilder {
+	public static class DashScopeSdkChatOptionsBuilder
+			implements ToolCallingChatOptions.Builder<DashScopeSdkChatOptionsBuilder> {
 
-		private final DashScopeSdkChatOptions options;
+		private DashScopeSdkChatOptions options;
 
 		public DashScopeSdkChatOptionsBuilder() {
 			this.options = new DashScopeSdkChatOptions();
 		}
 
+		private DashScopeSdkChatOptionsBuilder(DashScopeSdkChatOptions options) {
+			this.options = options;
+		}
+
+		@Override
+		public DashScopeSdkChatOptionsBuilder clone() {
+			return new DashScopeSdkChatOptionsBuilder(Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(this.options)));
+		}
+
+		@Override
 		public DashScopeSdkChatOptionsBuilder model(@Nullable String model) {
 			this.options.model = model;
+			return this;
+		}
+
+		@Override
+		public DashScopeSdkChatOptionsBuilder frequencyPenalty(@Nullable Double frequencyPenalty) {
 			return this;
 		}
 
@@ -377,6 +395,7 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return this;
 		}
 
+		@Override
 		public DashScopeSdkChatOptionsBuilder temperature(@Nullable Double temperature) {
 			this.options.temperature = temperature;
 			return this;
@@ -387,11 +406,13 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return this;
 		}
 
+		@Override
 		public DashScopeSdkChatOptionsBuilder topP(@Nullable Double topP) {
 			this.options.topP = topP;
 			return this;
 		}
 
+		@Override
 		public DashScopeSdkChatOptionsBuilder topK(@Nullable Integer topK) {
 			this.options.topK = topK;
 			return this;
@@ -402,13 +423,25 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder enableSearch(Boolean enableSearch) {
-			this.options.enableSearch = enableSearch;
+		@Override
+		public DashScopeSdkChatOptionsBuilder maxTokens(@Nullable Integer maxTokens) {
+			this.options.maxTokens = maxTokens;
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder maxTokens(@Nullable Integer maxTokens) {
-			this.options.maxTokens = maxTokens;
+		@Override
+		public DashScopeSdkChatOptionsBuilder presencePenalty(@Nullable Double presencePenalty) {
+			return this;
+		}
+
+		@Override
+		public DashScopeSdkChatOptionsBuilder stopSequences(@Nullable List<String> stopSequences) {
+			this.options.stop = stopSequences == null ? null : new ArrayList<>(stopSequences);
+			return this;
+		}
+
+		public DashScopeSdkChatOptionsBuilder enableSearch(Boolean enableSearch) {
+			this.options.enableSearch = enableSearch;
 			return this;
 		}
 
@@ -432,24 +465,66 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder toolCallbacks(List<ToolCallback> toolCallbacks) {
-			this.options.setToolCallbacks(toolCallbacks);
+		@Override
+		public DashScopeSdkChatOptionsBuilder toolCallbacks(@Nullable List<ToolCallback> toolCallbacks) {
+			if (toolCallbacks == null) {
+				this.options.toolCallbacks = new ArrayList<>();
+				return this;
+			}
+			Assert.noNullElements(toolCallbacks, "toolCallbacks cannot contain null elements");
+			this.options.toolCallbacks = toolCallbacks;
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder toolNames(Set<String> toolNames) {
-			this.options.setToolNames(toolNames);
+		@Override
+		public DashScopeSdkChatOptionsBuilder toolCallbacks(ToolCallback... toolCallbacks) {
+			Assert.notNull(toolCallbacks, "toolCallbacks cannot be null");
+			Assert.noNullElements(toolCallbacks, "toolCallbacks cannot contain null elements");
+			this.options.toolCallbacks.addAll(List.of(toolCallbacks));
 			return this;
 		}
 
+		@Override
+		public DashScopeSdkChatOptionsBuilder toolNames(@Nullable Set<String> toolNames) {
+			if (toolNames == null) {
+				this.options.toolNames = new HashSet<>();
+				return this;
+			}
+			Assert.noNullElements(toolNames, "toolNames cannot contain null elements");
+			toolNames.forEach(tool -> Assert.hasText(tool, "toolNames cannot contain empty elements"));
+			this.options.toolNames = toolNames;
+			return this;
+		}
+
+		@Override
+		public DashScopeSdkChatOptionsBuilder toolNames(String... toolNames) {
+			Assert.notNull(toolNames, "toolNames cannot be null");
+			this.options.toolNames.addAll(Set.of(toolNames));
+			return this;
+		}
+
+		@Override
 		public DashScopeSdkChatOptionsBuilder internalToolExecutionEnabled(
 				@Nullable Boolean internalToolExecutionEnabled) {
 			this.options.internalToolExecutionEnabled = internalToolExecutionEnabled;
 			return this;
 		}
 
-		public DashScopeSdkChatOptionsBuilder toolContext(Map<String, Object> toolContext) {
+		@Override
+		public DashScopeSdkChatOptionsBuilder toolContext(@Nullable Map<String, Object> toolContext) {
+			if (toolContext == null) {
+				this.options.toolContext = new HashMap<>();
+				return this;
+			}
 			this.options.toolContext = toolContext;
+			return this;
+		}
+
+		@Override
+		public DashScopeSdkChatOptionsBuilder toolContext(String key, Object value) {
+			Assert.hasText(key, "key cannot be empty");
+			Assert.notNull(value, "value cannot be null");
+			this.options.toolContext.put(key, value);
 			return this;
 		}
 
@@ -458,8 +533,42 @@ public class DashScopeSdkChatOptions implements ToolCallingChatOptions {
 			return this;
 		}
 
+		@Override
 		public DashScopeSdkChatOptions build() {
 			return this.options;
+		}
+
+		@Override
+		public DashScopeSdkChatOptionsBuilder combineWith(ChatOptions.Builder<?> other) {
+			ChatOptions otherOptions = other.build();
+			if (otherOptions.getModel() != null) {
+				this.options.model = otherOptions.getModel();
+			}
+			if (otherOptions.getMaxTokens() != null) {
+				this.options.maxTokens = otherOptions.getMaxTokens();
+			}
+			if (otherOptions.getTemperature() != null) {
+				this.options.temperature = otherOptions.getTemperature();
+			}
+			if (otherOptions.getTopK() != null) {
+				this.options.topK = otherOptions.getTopK();
+			}
+			if (otherOptions.getTopP() != null) {
+				this.options.topP = otherOptions.getTopP();
+			}
+			if (otherOptions.getStopSequences() != null) {
+				this.options.stop = new ArrayList<>(otherOptions.getStopSequences());
+			}
+			if (otherOptions instanceof ToolCallingChatOptions toolCallingOptions) {
+				this.options.toolCallbacks = new ArrayList<>(toolCallingOptions.getToolCallbacks());
+				this.options.toolNames = new HashSet<>(toolCallingOptions.getToolNames());
+				this.options.toolContext = new HashMap<>(toolCallingOptions.getToolContext());
+				this.options.internalToolExecutionEnabled = toolCallingOptions.getInternalToolExecutionEnabled();
+			}
+			if (otherOptions instanceof DashScopeSdkChatOptions dashScopeOptions) {
+				this.options = Objects.requireNonNull(DashScopeSdkChatOptions.fromOptions(dashScopeOptions));
+			}
+			return this;
 		}
 
 	}

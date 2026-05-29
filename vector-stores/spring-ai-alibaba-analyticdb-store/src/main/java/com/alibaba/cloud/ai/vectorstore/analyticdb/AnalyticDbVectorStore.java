@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingOptions;
-import org.springframework.ai.util.JacksonUtils;
 import org.springframework.ai.vectorstore.AbstractVectorStoreBuilder;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.filter.Filter;
@@ -103,7 +102,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 		this.collectionName = builder.collectionName;
 		this.config = builder.config;
 		this.client = builder.client;
-		this.objectMapper = JsonMapper.builder().addModules(JacksonUtils.instantiateAvailableModules()).build();
+		this.objectMapper = JsonMapper.builder().findAndAddModules().build();
 		this.defaultSimilarityThreshold = builder.defaultSimilarityThreshold;
 		this.defaultTopK = builder.defaultTopK;
 		this.initializeSchema = builder.initializeSchema;
@@ -375,7 +374,7 @@ public class AnalyticDbVectorStore extends AbstractObservationVectorStore implem
 		return VectorStoreObservationContext.builder(DATA_BASE_SYSTEM, operationName)
 			.collectionName(this.collectionName)
 			.dimensions(this.embeddingModel.dimensions())
-			.namespace(this.config.getNamespace())
+			.namespace(Objects.requireNonNullElse(this.config.getNamespace(), ""))
 			.similarityMetric(this.config.getMetrics());
 	}
 

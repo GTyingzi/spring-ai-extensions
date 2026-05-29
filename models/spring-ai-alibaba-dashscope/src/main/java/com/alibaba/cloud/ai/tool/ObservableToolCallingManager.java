@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +74,8 @@ public class ObservableToolCallingManager implements ToolCallingManager {
       = DefaultToolExecutionExceptionProcessor.builder().build();
 
   private static final ArmsToolCallingObservationConvention DEFAULT_OBSERVATION_CONVENTION = new ArmsToolCallingObservationConvention();
+
+  private static final String TOOL_CALL_HISTORY = "TOOL_CALL_HISTORY";
 
   // @formatter:on
 
@@ -159,7 +162,7 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 				&& !CollectionUtils.isEmpty(toolCallingChatOptions.getToolContext())) {
 			toolContextMap = new HashMap<>(toolCallingChatOptions.getToolContext());
 
-			toolContextMap.put(ToolContext.TOOL_CALL_HISTORY,
+			toolContextMap.put(TOOL_CALL_HISTORY,
 					buildConversationHistoryBeforeToolExecution(prompt, assistantMessage));
 		}
 
@@ -260,11 +263,12 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 		while (iterator.hasNext()) {
 			ToolCall toolCallChunk = iterator.next();
 			if (StringUtils.hasText(toolCallChunk.id()) && StringUtils.hasText(toolCallChunk.name())) {
-				if (StringUtils.hasText(id) && StringUtils.hasText(name)) {
-					// save previous one
-					toolCalls.add(new AssistantMessage.ToolCall(id, type, name, argumentsContent.toString()));
-					argumentsContent.setLength(0);
-				}
+			if (StringUtils.hasText(id) && StringUtils.hasText(name)) {
+				// save previous one
+				toolCalls.add(new AssistantMessage.ToolCall(id, Objects.requireNonNullElse(type, "function"), name,
+						argumentsContent.toString()));
+				argumentsContent.setLength(0);
+			}
 				id = toolCallChunk.id();
 				type = toolCallChunk.type();
 				name = toolCallChunk.name();
@@ -276,7 +280,8 @@ public class ObservableToolCallingManager implements ToolCallingManager {
 
 		if (StringUtils.hasText(id) && StringUtils.hasText(name)) {
 			// save last one
-			toolCalls.add(new AssistantMessage.ToolCall(id, type, name, argumentsContent.toString()));
+			toolCalls.add(new AssistantMessage.ToolCall(id, Objects.requireNonNullElse(type, "function"), name,
+					argumentsContent.toString()));
 		}
 		return AssistantMessage.builder()
 			.content(assistantMessage.getText())

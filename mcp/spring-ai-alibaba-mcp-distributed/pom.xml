@@ -51,10 +51,6 @@
         <url>https://github.com/alibaba/spring-ai-alibaba</url>
     </scm>
 
-    <properties>
-        <mcp-spring.version>0.14.0</mcp-spring.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -78,9 +74,8 @@
         </dependency>
 
         <dependency>
-            <groupId>io.modelcontextprotocol.sdk</groupId>
+            <groupId>org.springframework.ai</groupId>
             <artifactId>mcp-spring-webflux</artifactId>
-            <version>${mcp-spring.version}</version>
         </dependency>
 
         <dependency>

@@ -75,7 +75,7 @@ public final class InputOutputUtils {
 		if (StringUtils.hasText(generation.getOutput().getText())) {
 			messageParts.add(new TextPart("text", generation.getOutput().getText()));
 		}
-		return new OutputMessage(role, messageParts, finishReason);
+		return new OutputMessage(role, messageParts, finishReason == null ? "" : finishReason);
 	}
 
 	private static String getRole(MessageType messageType) {

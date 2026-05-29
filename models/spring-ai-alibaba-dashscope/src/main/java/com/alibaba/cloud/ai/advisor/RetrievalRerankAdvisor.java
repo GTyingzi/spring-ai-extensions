@@ -19,6 +19,7 @@ package com.alibaba.cloud.ai.advisor;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.alibaba.cloud.ai.document.DocumentWithScore;
@@ -140,7 +141,8 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 			return documents;
 		}
 
-		var rerankRequest = new RerankRequest(request.prompt().getUserMessage().getText(), documents);
+		String queryText = Objects.requireNonNullElse(request.prompt().getUserMessage().getText(), "");
+		var rerankRequest = new RerankRequest(queryText, documents);
 
 		RerankResponse response = rerankModel.call(rerankRequest);
 		logger.debug("reranked documents: {}", response);
@@ -161,10 +163,11 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 
 		var context = request.context();
 		var userMessage = request.prompt().getUserMessage();
+		String queryText = Objects.requireNonNullElse(userMessage.getText(), "");
 
 		var searchRequestToUse = SearchRequest.from(this.searchRequest)
-			.query(userMessage.getText())
-			.filterExpression(doGetFilterExpression(context))
+			.query(queryText)
+			.filterExpression(doGetFilterExpression(nonNullContext(context)))
 			.build();
 
 		List<Document> documents = this.vectorStore.similaritySearch(searchRequestToUse);
@@ -177,7 +180,7 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 			.collect(Collectors.joining(System.lineSeparator()));
 
 		String augmentedUserText = this.promptTemplate
-			.render(Map.of("query", userMessage.getText(), "question_answer_context", documentContext));
+			.render(Map.of("query", queryText, "question_answer_context", documentContext));
 
 		// Update ChatClientRequest with augmented prompt.
 		return request.mutate().prompt(request.prompt().augmentUserMessage(augmentedUserText)).context(context).build();
@@ -192,11 +195,21 @@ public class RetrievalRerankAdvisor implements BaseAdvisor {
 		else {
 			chatResponseBuilder = ChatResponse.builder().from(chatClientResponse.chatResponse());
 		}
-		chatResponseBuilder.metadata(RETRIEVED_DOCUMENTS, chatClientResponse.context().get(RETRIEVED_DOCUMENTS));
+		Object retrievedDocuments = chatClientResponse.context().get(RETRIEVED_DOCUMENTS);
+		if (retrievedDocuments != null) {
+			chatResponseBuilder.metadata(RETRIEVED_DOCUMENTS, retrievedDocuments);
+		}
 		return ChatClientResponse.builder()
 			.chatResponse(chatResponseBuilder.build())
 			.context(chatClientResponse.context())
 			.build();
+	}
+
+	private static Map<String, Object> nonNullContext(Map<String, @Nullable Object> context) {
+		return context.entrySet()
+			.stream()
+			.filter(entry -> entry.getValue() != null)
+			.collect(Collectors.toMap(Map.Entry::getKey, entry -> Objects.requireNonNull(entry.getValue())));
 	}
 
 }

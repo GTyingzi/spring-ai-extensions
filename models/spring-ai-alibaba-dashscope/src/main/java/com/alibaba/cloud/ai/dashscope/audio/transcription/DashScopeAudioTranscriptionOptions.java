@@ -16,6 +16,7 @@
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
 import java.util.List;
+import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.AudioModel;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -143,8 +144,8 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
     private @Nullable AsrOptions asrOptions;
 
     @Override
-	public @Nullable String getModel() {
-		return model;
+	public String getModel() {
+		return Objects.requireNonNullElse(this.model, "");
 	}
 
     public void setModel(@Nullable String model) {

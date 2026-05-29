@@ -18,10 +18,11 @@ package com.alibaba.cloud.ai.tool.validator;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.ChatCompletionMessage.ToolCall;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.util.json.JsonParser;
 
 import java.util.List;
 
@@ -38,6 +39,7 @@ public class DefaultToolCallValidator implements ToolCallValidator {
 
 	private static final Logger logger = LoggerFactory.getLogger(DefaultToolCallValidator.class);
 
+	private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().findAndAddModules().build();
 
 	@Override
 	public List<ToolCall> validate(@Nullable List<ToolCall> toolCalls,
@@ -98,7 +100,7 @@ public class DefaultToolCallValidator implements ToolCallValidator {
 		}
 
 		try {
-			JsonParser.getObjectMapper().readTree(json);
+			OBJECT_MAPPER.readTree(json);
 			return true;
 		}
 		catch (JsonProcessingException e) {

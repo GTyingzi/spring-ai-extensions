@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
-import org.springframework.ai.util.JacksonUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -98,7 +97,7 @@ public class DashScopeQwenTTSApi {
 				.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
 				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 				.serializationInclusion(JsonInclude.Include.NON_NULL)
-				.addModules(JacksonUtils.instantiateAvailableModules())
+				.findAndAddModules()
 				.build();
 	}
 

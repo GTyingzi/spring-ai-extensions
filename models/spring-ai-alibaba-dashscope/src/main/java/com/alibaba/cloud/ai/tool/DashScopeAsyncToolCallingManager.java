@@ -74,6 +74,8 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
     private static final String POSSIBLE_LLM_TOOL_NAME_CHANGE_WARNING
             = "LLM may have adapted the tool name '{}', especially if the name was truncated due to length limits. If this is the case, you can customize the prefixing and processing logic using McpToolNamePrefixGenerator";
 
+    private static final String TOOL_CALL_HISTORY = "TOOL_CALL_HISTORY";
+
 
     // @formatter:on
 
@@ -162,7 +164,7 @@ public class DashScopeAsyncToolCallingManager implements ToolCallingManager {
                 && !CollectionUtils.isEmpty(toolCallingChatOptions.getToolContext())) {
             toolContextMap = new HashMap<>(toolCallingChatOptions.getToolContext());
 
-            toolContextMap.put(ToolContext.TOOL_CALL_HISTORY,
+            toolContextMap.put(TOOL_CALL_HISTORY,
                     buildConversationHistoryBeforeToolExecution(prompt, assistantMessage));
         }
 

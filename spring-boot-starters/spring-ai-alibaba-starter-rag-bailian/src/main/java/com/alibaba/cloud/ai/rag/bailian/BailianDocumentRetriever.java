@@ -76,12 +76,13 @@ public class BailianDocumentRetriever implements DocumentRetriever {
 			conversationHistory = new ArrayList<>();
 			for (Message message : query.history()) {
 				// Only convert USER and ASSISTANT messages, skip others
-				MessageType messageType = message.getMessageType();
-				if (messageType == MessageType.USER || messageType == MessageType.ASSISTANT) {
-					String role = messageType == MessageType.USER ? "user" : "assistant";
-					QueryHistoryEntry entry = new QueryHistoryEntry(role, message.getText());
-					conversationHistory.add(entry);
-				}
+					MessageType messageType = message.getMessageType();
+					if (messageType == MessageType.USER || messageType == MessageType.ASSISTANT) {
+						String role = messageType == MessageType.USER ? "user" : "assistant";
+						QueryHistoryEntry entry = new QueryHistoryEntry(role,
+								Objects.requireNonNullElse(message.getText(), ""));
+						conversationHistory.add(entry);
+					}
 			}
 		}
 

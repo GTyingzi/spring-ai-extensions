@@ -200,7 +200,7 @@ public class DashScopeTranscriptionApiSpec {
 
         // Default constructor for Jackson deserialization
         public DashScopeAudioTranscriptionResponse() {
-            super(null);
+            super(new AudioTranscription(""));
         }
 
         public DashScopeAudioTranscriptionResponse(AudioTranscription transcript) {

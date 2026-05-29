@@ -92,8 +92,8 @@ public class DashScopeSdkAudioTranscriptionOptions implements AudioTranscription
 	}
 
 	@Override
-	public @Nullable String getModel() {
-		return this.model;
+	public String getModel() {
+		return Objects.requireNonNullElse(this.model, "");
 	}
 
 	public void setModel(@Nullable String model) {

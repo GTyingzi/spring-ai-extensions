@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -131,7 +132,8 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 	public ChatClientRequest before(ChatClientRequest chatClientRequest, @Nullable AdvisorChain advisorChain) {
 		Map<String, Object> context = new HashMap<>(chatClientRequest.context());
 
-		Query originalQuery = Query.builder().text(chatClientRequest.prompt().getUserMessage().getText()).build();
+		String queryText = Objects.requireNonNullElse(chatClientRequest.prompt().getUserMessage().getText(), "");
+		Query originalQuery = Query.builder().text(queryText).build();
 
 		List<Document> documents = retriever.retrieve(originalQuery);
 
@@ -163,18 +165,19 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 		else {
 			chatResponseBuilder = ChatResponse.builder().from(response.chatResponse());
 			var result = response.chatResponse().getResult();
-			if (enableReference) {
+			if (enableReference && result != null) {
+				String finishReasonValue = result.getMetadata().getFinishReason();
 				ChatCompletionFinishReason finishReason = ChatCompletionFinishReason
-					.valueOf(result.getMetadata().getFinishReason());
+					.valueOf(Objects.requireNonNullElse(finishReasonValue, ChatCompletionFinishReason.NULL.name()));
 				if (finishReason == ChatCompletionFinishReason.NULL) {
 					String fullContent = context.getOrDefault("full_content", "").toString()
-							+ result.getOutput().getText();
+							+ Objects.requireNonNullElse(result.getOutput().getText(), "");
 					context.put("full_content", fullContent);
 				}
 				else {
 					String content = context.getOrDefault("full_content", "").toString();
 					if (!StringUtils.hasText(content)) {
-						content = result.getOutput().getText();
+						content = Objects.requireNonNullElse(result.getOutput().getText(), "");
 					}
 
 					Object retrievedDocuments = context.get(DashScopeApiConstants.RETRIEVED_DOCUMENTS);
@@ -202,8 +205,10 @@ public class DashScopeDocumentRetrievalAdvisor implements BaseAdvisor {
 				}
 			}
 		}
-		chatResponseBuilder.metadata(DashScopeApiConstants.RETRIEVED_DOCUMENTS,
-				response.context().get(DashScopeApiConstants.RETRIEVED_DOCUMENTS));
+		Object retrievedDocuments = response.context().get(DashScopeApiConstants.RETRIEVED_DOCUMENTS);
+		if (retrievedDocuments != null) {
+			chatResponseBuilder.metadata(DashScopeApiConstants.RETRIEVED_DOCUMENTS, retrievedDocuments);
+		}
 		return ChatClientResponse.builder().chatResponse(chatResponseBuilder.build()).context(context).build();
 	}
 

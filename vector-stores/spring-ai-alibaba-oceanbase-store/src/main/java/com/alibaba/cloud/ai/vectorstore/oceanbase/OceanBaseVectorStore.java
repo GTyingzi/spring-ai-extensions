@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingOptions;
-import org.springframework.ai.util.JacksonUtils;
 import org.springframework.ai.vectorstore.AbstractVectorStoreBuilder;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.filter.Filter;
@@ -103,9 +102,7 @@ public class OceanBaseVectorStore extends AbstractObservationVectorStore impleme
 		super(builder);
 		this.tableName = builder.tableName;
 		this.dataSource = builder.dataSource;
-		this.objectMapper = JsonMapper.builder()
-			.addModules(JacksonUtils.instantiateAvailableModules())
-			.build();
+		this.objectMapper = JsonMapper.builder().findAndAddModules().build();
 		this.defaultSimilarityThreshold = builder.defaultSimilarityThreshold;
 		this.defaultTopK = builder.defaultTopK;
 		this.dimension = builder.dimension;

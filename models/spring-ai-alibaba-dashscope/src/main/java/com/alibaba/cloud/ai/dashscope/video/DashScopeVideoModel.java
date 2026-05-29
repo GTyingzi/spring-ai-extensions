@@ -19,13 +19,13 @@ package com.alibaba.cloud.ai.dashscope.video;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeVideoApi;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeModelOptionsUtils;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeVideoApiConstants;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoRequest;
 import com.alibaba.cloud.ai.dashscope.video.model.DashScopeVideoResponse;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.core.retry.RetryTemplate;
@@ -166,10 +166,10 @@ public class DashScopeVideoModel implements VideoModel {
         var currentOptions = DashScopeVideoOptions.builder().build();
 
         if (Objects.nonNull(runtimeOptions)) {
-            currentOptions = ModelOptionsUtils.copyToTarget(runtimeOptions, VideoOptions.class, DashScopeVideoOptions.class);
+            currentOptions = DashScopeModelOptionsUtils.copyToTarget(runtimeOptions, VideoOptions.class, DashScopeVideoOptions.class);
         }
 
-        currentOptions = ModelOptionsUtils.merge(currentOptions, this.defaultOptions, DashScopeVideoOptions.class);
+        currentOptions = DashScopeModelOptionsUtils.merge(currentOptions, this.defaultOptions, DashScopeVideoOptions.class);
 
         return currentOptions;
     }

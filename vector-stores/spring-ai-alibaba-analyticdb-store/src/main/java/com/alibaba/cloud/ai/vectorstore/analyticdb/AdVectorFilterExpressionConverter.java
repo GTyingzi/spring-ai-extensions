@@ -21,6 +21,7 @@ import org.springframework.ai.vectorstore.filter.Filter.Group;
 import org.springframework.ai.vectorstore.filter.Filter.Key;
 import org.springframework.ai.vectorstore.filter.converter.AbstractFilterExpressionConverter;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author HeYQ
@@ -38,7 +39,8 @@ public class AdVectorFilterExpressionConverter extends AbstractFilterExpressionC
 		else {
 			this.convertOperand(expression.left(), context);
 			context.append(getOperationSymbol(expression));
-			this.convertOperand(expression.right(), context);
+			this.convertOperand(Objects.requireNonNull(expression.right(), "Expression right operand must not be null"),
+					context);
 		}
 	}
 
@@ -49,7 +51,8 @@ public class AdVectorFilterExpressionConverter extends AbstractFilterExpressionC
 	}
 
 	private void convertToConditions(Expression expression, StringBuilder context) {
-		Filter.Value right = (Filter.Value) expression.right();
+		Filter.Value right = (Filter.Value) Objects.requireNonNull(expression.right(),
+				"Expression right operand must not be null");
 		Object value = right.value();
 		if (!(value instanceof List)) {
 			throw new IllegalArgumentException("Expected a List, but got: " + value.getClass().getSimpleName());
@@ -101,6 +104,11 @@ public class AdVectorFilterExpressionConverter extends AbstractFilterExpressionC
 	@Override
 	protected void doKey(Key key, StringBuilder context) {
 		context.append("$." + key.key());
+	}
+
+	@Override
+	protected void doSingleValue(Object value, StringBuilder context) {
+		emitJsonValue(value, context);
 	}
 
 	@Override

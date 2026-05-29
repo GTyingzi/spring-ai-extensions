@@ -24,6 +24,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStoreOptions;
+import org.springframework.ai.vectorstore.elasticsearch.SimilarityFunction;
 import org.springframework.ai.vectorstore.elasticsearch.autoconfigure.ElasticsearchVectorStoreProperties;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -54,10 +55,22 @@ public class RagElasticSearchAutoConfiguration {
         Assert.notNull(elasticsearchClient, "elasticsearchClient must not be null");
         Assert.notNull(embeddingModel, "embeddingModel must not be null");
         ElasticsearchVectorStoreOptions elasticsearchVectorStoreOptions = new ElasticsearchVectorStoreOptions();
-        elasticsearchVectorStoreOptions.setIndexName(vectorStoreProperties.getIndexName());
-        elasticsearchVectorStoreOptions.setDimensions(vectorStoreProperties.getDimensions());
-        elasticsearchVectorStoreOptions.setSimilarity(vectorStoreProperties.getSimilarity());
-        elasticsearchVectorStoreOptions.setEmbeddingFieldName(vectorStoreProperties.getEmbeddingFieldName());
+        String indexName = vectorStoreProperties.getIndexName();
+        if (indexName != null) {
+            elasticsearchVectorStoreOptions.setIndexName(indexName);
+        }
+        Integer dimensions = vectorStoreProperties.getDimensions();
+        if (dimensions != null) {
+            elasticsearchVectorStoreOptions.setDimensions(dimensions);
+        }
+        SimilarityFunction similarity = vectorStoreProperties.getSimilarity();
+        if (similarity != null) {
+            elasticsearchVectorStoreOptions.setSimilarity(similarity);
+        }
+        String embeddingFieldName = vectorStoreProperties.getEmbeddingFieldName();
+        if (embeddingFieldName != null) {
+            elasticsearchVectorStoreOptions.setEmbeddingFieldName(embeddingFieldName);
+        }
         return HybridElasticsearchRetriever.builder()
                 .vectorStoreOptions(elasticsearchVectorStoreOptions)
                 .elasticsearchClient(elasticsearchClient)

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeModelOptionsUtils;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -32,7 +33,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.springframework.ai.chat.metadata.Usage;
-import org.springframework.ai.model.ModelOptionsUtils;
 /**
  * @author yuluo, yingzi
  */
@@ -78,13 +78,13 @@ public class DashScopeApiSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record EmbeddingUsage(@JsonProperty("total_tokens") Long totalTokens) implements Usage {
         @Override
-        public @Nullable Integer getPromptTokens() {
-            return null;
+        public Integer getPromptTokens() {
+            return 0;
         }
 
         @Override
-        public @Nullable Integer getCompletionTokens() {
-            return null;
+        public Integer getCompletionTokens() {
+            return 0;
         }
 
         @Override
@@ -93,8 +93,8 @@ public class DashScopeApiSpec {
         }
 
         @Override
-        public @Nullable Integer getTotalTokens() {
-            return totalTokens != null ? totalTokens.intValue() : null;
+        public Integer getTotalTokens() {
+            return totalTokens != null ? totalTokens.intValue() : 0;
         }
     }
 
@@ -497,7 +497,7 @@ public class DashScopeApiSpec {
              * @param jsonSchema tool function schema as json.
              */
             public Function(String description, String name, String jsonSchema) {
-                this(description, name, ModelOptionsUtils.jsonToMap(jsonSchema));
+                this(description, name, DashScopeModelOptionsUtils.jsonToMap(jsonSchema));
             }
         }
     }

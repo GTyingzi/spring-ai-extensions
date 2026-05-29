@@ -2,16 +2,20 @@
 
 This project builds upon Spring AI, providing extended implementations of core concepts such as `ChatModel`, `ImageModel`, `AudioModel`, `MCP`, `DocumentParser`, `ChatMemory`, `ToolCallback`, `VectorStore`, etc. It helps developers quickly integrate with Alibaba Cloud Bailian model services, vector database services, chat memory components, tool calling, and other features.
 
-Based on these components, developers can use Spring AI [ChatClient](https://java2ai.com/docs/1.0.0.2/tutorials/basics/chat-client/), or [Spring AI Alibaba Agent Framework](https://github.com/alibaba/spring-ai-alibaba) to quickly build their own AI agent applications. Please choose according to your specific use case.
+This branch targets the Spring AI 2.0 generation. The current development baseline is managed in the root `pom.xml` and aligns the extensions with Spring AI 2.0.x, Spring Boot 4.x, and the MCP Java SDK 2.x line.
+
+Based on these components, developers can use Spring AI [ChatClient](https://docs.spring.io/spring-ai/reference/2.0/api/chatclient.html), or [Spring AI Alibaba Agent Framework](https://github.com/alibaba/spring-ai-alibaba) to quickly build their own AI agent applications. Please choose according to your specific use case.
 
 **English** | [📖 中文版](README-zh.md)
 
 ## Get Started
 
-### Prerequsites
+### Prerequisites
 
 1. Requires JDK 17+.
-2. If there are any `spring-ai` dependency issue, please lean how to configure the `spring-milestones` Maven repository on [FAQ page](https://java2ai.com/docs/1.0.0.2/faq).
+2. The current branch is built for Spring AI 2.0.x and Spring Boot 4.x. Check the root `pom.xml` for the exact `spring-ai.version`, `spring-boot.version`, and `mcp.sdk.version` values.
+3. Spring AI 2.0 snapshots require access to `spring-snapshots` and `central-portal-snapshots`; milestones require access to `spring-milestones`. These repositories are declared in this project's `pom.xml`.
+4. If your Maven `settings.xml` configures a mirror with `mirrorOf=*`, exclude `spring-snapshots`, `central-portal-snapshots`, and `spring-milestones` from that mirror. Keep personal Maven settings and local repository paths outside this Git repository.
 
 ### Use `ChatClient` to Develop a Chatbot
 
@@ -23,8 +27,8 @@ To quickly get started with Spring AI Alibaba, add 'spring-ai-alibaba-starter-da
   <dependencies>
     <dependency>
       <groupId>com.alibaba.cloud.ai</groupId>
-      <artifactId>spring-ai-extensions-bom</artifactId>
-      <version>1.1.2.0</version>
+      <artifactId>spring-ai-alibaba-extensions-bom</artifactId>
+      <version>2.0.0-M8.1</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -81,7 +85,7 @@ public class HelloworldController {
 }
 ```
 
-Please check [Quick Start](https://java2ai.com/docs/1.0.0.2/get-started/chatbot) on our official website to learn more details.
+Please check the [Spring AI 2.0 Getting Started](https://docs.spring.io/spring-ai/reference/2.0/getting-started.html) guide and the Spring AI Alibaba documentation to learn more details. Use the published 2.0.x extension version when consuming released artifacts.
 
 ### Use Agent Framework to Develop an Agent
 
@@ -169,7 +173,7 @@ MCP provides a standardized protocol for managing and routing AI model contexts.
 - **MCP Registry**: Service registry for discovering and managing MCP services
 - **MCP Router**: Intelligent routing capabilities for distributing requests across multiple model contexts
 
-**MCP SDK Version**: 0.14.0
+**MCP SDK Version**: 2.x line; check the root `pom.xml` for the exact `mcp.sdk.version` used by this branch.
 
 **Available Starters:**
 - `spring-ai-alibaba-starter-mcp-registry`

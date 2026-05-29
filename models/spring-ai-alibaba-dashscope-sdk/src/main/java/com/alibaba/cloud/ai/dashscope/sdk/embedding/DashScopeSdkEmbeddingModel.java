@@ -17,6 +17,7 @@
 package com.alibaba.cloud.ai.dashscope.sdk.embedding;
 
 import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkException;
+import com.alibaba.cloud.ai.dashscope.sdk.common.DashScopeSdkModelOptionsUtils;
 import com.alibaba.dashscope.embeddings.TextEmbeddingParam;
 import com.alibaba.dashscope.embeddings.TextEmbeddingResult;
 import com.alibaba.dashscope.embeddings.TextEmbeddingResultItem;
@@ -40,7 +41,6 @@ import org.springframework.ai.embedding.observation.DefaultEmbeddingModelObserva
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationContext;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationConvention;
 import org.springframework.ai.embedding.observation.EmbeddingModelObservationDocumentation;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.util.Assert;
@@ -139,16 +139,18 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 	private EmbeddingRequest buildEmbeddingRequest(EmbeddingRequest embeddingRequest) {
 		DashScopeSdkEmbeddingOptions runtimeOptions = null;
 		if (embeddingRequest.getOptions() != null) {
-			runtimeOptions = ModelOptionsUtils.copyToTarget(embeddingRequest.getOptions(), EmbeddingOptions.class,
-					DashScopeSdkEmbeddingOptions.class);
+			runtimeOptions = DashScopeSdkModelOptionsUtils.copyToTarget(embeddingRequest.getOptions(),
+					EmbeddingOptions.class, DashScopeSdkEmbeddingOptions.class);
 		}
 
 		DashScopeSdkEmbeddingOptions requestOptions = runtimeOptions == null ? DashScopeSdkEmbeddingOptions
 			.fromOptions(this.defaultOptions)
 			: DashScopeSdkEmbeddingOptions.builder()
-				.model(ModelOptionsUtils.mergeOption(runtimeOptions.getModel(), this.defaultOptions.getModel()))
-				.dimensions(ModelOptionsUtils.mergeOption(runtimeOptions.getDimensions(), this.defaultOptions.getDimensions()))
-				.textType(ModelOptionsUtils.mergeOption(runtimeOptions.getTextType(), this.defaultOptions.getTextType()))
+				.model(DashScopeSdkModelOptionsUtils.mergeOption(runtimeOptions.getModel(), this.defaultOptions.getModel()))
+				.dimensions(DashScopeSdkModelOptionsUtils.mergeOption(runtimeOptions.getDimensions(),
+						this.defaultOptions.getDimensions()))
+				.textType(DashScopeSdkModelOptionsUtils.mergeOption(runtimeOptions.getTextType(),
+						this.defaultOptions.getTextType()))
 				.build();
 		requestOptions = java.util.Objects.requireNonNull(requestOptions);
 
@@ -264,8 +266,10 @@ public class DashScopeSdkEmbeddingModel extends AbstractEmbeddingModel {
 	}
 
 	@Override
-	public List<float[]> embed(List<Document> documents, EmbeddingOptions options, BatchingStrategy batchingStrategy) {
-		if (options.getModel() == null && options.getDimensions() == null && this.defaultOptions != null) {
+	public List<float[]> embed(List<Document> documents, @Nullable EmbeddingOptions options,
+			BatchingStrategy batchingStrategy) {
+		if ((options == null || (options.getModel() == null && options.getDimensions() == null))
+				&& this.defaultOptions != null) {
 			options = this.defaultOptions;
 		}
 		return super.embed(documents, options, batchingStrategy);
