@@ -308,14 +308,10 @@ class DashScopeAudioTranscriptionIT {
 	@org.junit.jupiter.api.Test
 	void testLiveTranslate_Call_RealApi() {
 		// Arrange - 构造 Options
-		DashScopeAudioTranscriptionOptions.Audio audio = new DashScopeAudioTranscriptionOptions.Audio();
-		audio.setVoice("Cherry");
-		audio.setFormat("wav");
+		DashScopeAudioTranscriptionOptions.Audio audio = new DashScopeAudioTranscriptionOptions.Audio("Cherry", "wav");
 
 		DashScopeAudioTranscriptionOptions.TranslationOptions translationOptions =
-				new DashScopeAudioTranscriptionOptions.TranslationOptions();
-		translationOptions.setSourceLang("zh");
-		translationOptions.setTargetLang("en");
+				new DashScopeAudioTranscriptionOptions.TranslationOptions("zh", "en");
 
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
 				.model(AudioModel.QWEN3_LIVETRANSLATE_FLASH.getValue())
@@ -394,18 +390,13 @@ class DashScopeAudioTranscriptionIT {
 	@org.junit.jupiter.api.Test
 	void testLiveTranslate_Stream_RealApi() {
 		// Arrange - 构造 Options (stream: true)
-		DashScopeAudioTranscriptionOptions.Audio audio = new DashScopeAudioTranscriptionOptions.Audio();
-		audio.setVoice("Cherry");
-		audio.setFormat("wav");
+		DashScopeAudioTranscriptionOptions.Audio audio = new DashScopeAudioTranscriptionOptions.Audio("Cherry", "wav");
 
 		DashScopeAudioTranscriptionOptions.StreamOptions streamOptions =
-				new DashScopeAudioTranscriptionOptions.StreamOptions();
-		streamOptions.setIncludeUsage(true);
+				new DashScopeAudioTranscriptionOptions.StreamOptions(true);
 
 		DashScopeAudioTranscriptionOptions.TranslationOptions translationOptions =
-				new DashScopeAudioTranscriptionOptions.TranslationOptions();
-		translationOptions.setSourceLang("zh");
-		translationOptions.setTargetLang("en");
+				new DashScopeAudioTranscriptionOptions.TranslationOptions("zh", "en");
 
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
 				.model(AudioModel.QWEN3_LIVETRANSLATE_FLASH.getValue())
@@ -875,9 +866,7 @@ class DashScopeAudioTranscriptionIT {
 	void testAsr_QwenAsr_Call_RealApi() {
 		// Arrange - 构造 Options
 		DashScopeAudioTranscriptionOptions.AsrOptions asrOptions =
-				new DashScopeAudioTranscriptionOptions.AsrOptions();
-		asrOptions.setLanguage("zh");
-		asrOptions.setEnableItn(false);
+				new DashScopeAudioTranscriptionOptions.AsrOptions("zh", false);
 
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
 				.model(AudioModel.QWEN3_ASR_FLASH.getValue())
@@ -965,13 +954,10 @@ class DashScopeAudioTranscriptionIT {
 	void testAsr_QwenAsr_Stream_RealApi() {
 		// Arrange - 构造 Options
 		DashScopeAudioTranscriptionOptions.AsrOptions asrOptions =
-				new DashScopeAudioTranscriptionOptions.AsrOptions();
-		asrOptions.setLanguage("zh");
-		asrOptions.setEnableItn(false);
+				new DashScopeAudioTranscriptionOptions.AsrOptions("zh", false);
 
 		DashScopeAudioTranscriptionOptions.StreamOptions streamOptions =
-				new DashScopeAudioTranscriptionOptions.StreamOptions();
-		streamOptions.setIncludeUsage(true);
+				new DashScopeAudioTranscriptionOptions.StreamOptions(true);
 
 		DashScopeAudioTranscriptionOptions options = DashScopeAudioTranscriptionOptions.builder()
 				.model(AudioModel.QWEN3_ASR_FLASH.getValue())

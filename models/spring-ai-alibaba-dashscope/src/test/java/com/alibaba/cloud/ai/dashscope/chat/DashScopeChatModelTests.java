@@ -526,7 +526,7 @@ class DashScopeChatModelTests {
                 .properties(Map.of("partial", true))
                 .build());
 
-        Prompt prompt = new Prompt(messages, DashScopeChatOptions.builder().build());
+        Prompt prompt = new Prompt(messages, defaultOptions);
         ChatCompletionRequest request = chatModel.createRequest(prompt, false);
 
         List<ChatCompletionMessage> requestMessages = request.input().messages();
@@ -552,7 +552,7 @@ class DashScopeChatModelTests {
 
         List<Message> messages = List.of(new UserMessage("Please complete this function."), assistantMessage);
 
-        Prompt prompt = new Prompt(messages, DashScopeChatOptions.builder().build());
+        Prompt prompt = new Prompt(messages, defaultOptions);
         ChatCompletionRequest request = chatModel.createRequest(prompt, false);
 
         List<ChatCompletionMessage> requestMessages = request.input().messages();
@@ -569,7 +569,7 @@ class DashScopeChatModelTests {
 
         List<Message> messages = List.of(new UserMessage("Hello"), assistantMessage);
 
-        Prompt prompt = new Prompt(messages, DashScopeChatOptions.builder().build());
+        Prompt prompt = new Prompt(messages, defaultOptions);
         ChatCompletionRequest request = chatModel.createRequest(prompt, false);
 
         List<ChatCompletionMessage> requestMessages = request.input().messages();
@@ -622,7 +622,7 @@ class DashScopeChatModelTests {
 
     @Test
     void testStreamWithoutIncrementalOutput() {
-        defaultOptions.setIncrementalOutput(false);
+        defaultOptions = defaultOptions.mutate().incrementalOutput(false).build();
         var message = UserMessage.builder().text(TEST_PROMPT).build();
         var prompt = Prompt.builder().messages(message).chatOptions(defaultOptions).build();
         var responseMessage = new ChatCompletionMessage(TEST_RESPONSE, ChatCompletionMessage.Role.ASSISTANT);
@@ -1159,6 +1159,7 @@ class DashScopeChatModelTests {
     void testCreateRequestWithEnableCodeInterpreter() {
         Message message = new UserMessage(TEST_PROMPT);
         DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model(TEST_MODEL)
                 .enableCodeInterpreter(true)
                 .build();
         Prompt prompt = new Prompt(List.of(message), options);
