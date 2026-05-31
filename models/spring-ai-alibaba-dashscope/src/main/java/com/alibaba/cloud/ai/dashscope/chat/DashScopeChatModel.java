@@ -215,6 +215,7 @@ public class DashScopeChatModel implements ChatModel {
 				return chatResponse;
 			});
 
+        Assert.state(prompt.getOptions() != null, "options must not be null");
 		if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
 			var toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
 			if (toolExecutionResult.returnDirect()) {
@@ -292,6 +293,7 @@ public class DashScopeChatModel implements ChatModel {
             );
 
 			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
+                Assert.state(prompt.getOptions() != null, "options must not be null");
 					if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
 
 						return Flux.deferContextual((ctx) -> {
@@ -451,7 +453,7 @@ public class DashScopeChatModel implements ChatModel {
 
 	private ChatResponseMetadata from(ChatCompletion result, Usage usage) {
 		Assert.notNull(result, "DashScopeAi ChatCompletionResult must not be null");
-		return ChatResponseMetadata.builder().id(result.requestId()).usage(usage).model("").build();
+		return ChatResponseMetadata.builder().id(Objects.requireNonNullElse(result.requestId(), "")).usage(usage).model("").build();
 	}
 
 	/**
