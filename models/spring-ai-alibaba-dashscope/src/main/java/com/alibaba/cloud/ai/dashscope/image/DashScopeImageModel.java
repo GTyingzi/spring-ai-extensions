@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.image.Image;
 import org.springframework.ai.image.ImageGeneration;
 import org.springframework.ai.image.ImageModel;
-import org.springframework.ai.image.ImageOptions;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
 import org.springframework.ai.image.ImageResponseMetadata;
@@ -47,7 +46,6 @@ import org.springframework.ai.image.observation.DefaultImageModelObservationConv
 import org.springframework.ai.image.observation.ImageModelObservationContext;
 import org.springframework.ai.image.observation.ImageModelObservationConvention;
 import org.springframework.ai.image.observation.ImageModelObservationDocumentation;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.core.retry.RetryTemplate;
@@ -263,8 +261,11 @@ public class DashScopeImageModel implements ImageModel {
     }
 
     public @Nullable String submitImageGenTask(ImagePrompt request) {
-
-        DashScopeImageOptions imageOptions = toImageOptions(request.getOptions());
+        // Merge request options with default options
+        DashScopeImageOptions imageOptions = DashScopeImageOptions.builder()
+                .from(this.defaultOptions)
+                .merge(request.getOptions())
+                .build();
         logger.debug("Image options: {}", imageOptions);
 
         DashScopeApiSpec.DashScopeImageRequest dashScopeImageRequest = constructImageRequest(request, imageOptions);
@@ -319,23 +320,6 @@ public class DashScopeImageModel implements ImageModel {
                 "qwen-mt-image".equals(model) ||
                 "wanx-v1".equals(model) ||
                 "wanx2.1-imageedit".equals(model);
-    }
-
-    /**
-     * Merge Image options. Notice: Programmatically set options parameters take precedence
-     */
-    private DashScopeImageOptions toImageOptions(ImageOptions runtimeOptions) {
-
-        // set default image model
-        var currentOptions = DashScopeImageOptions.builder().model(DEFAULT_MODEL).build();
-
-        if (Objects.nonNull(runtimeOptions)) {
-            currentOptions = ModelOptionsUtils.copyToTarget(runtimeOptions, ImageOptions.class, DashScopeImageOptions.class);
-        }
-
-        currentOptions = ModelOptionsUtils.merge(currentOptions, this.defaultOptions, DashScopeImageOptions.class);
-
-        return currentOptions;
     }
 
     public DashScopeApiSpec.@Nullable DashScopeImageAsyncResponse getImageGenTask(String taskId) {
