@@ -21,7 +21,7 @@ import org.springframework.ai.image.ImageOptions;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Test cases for DashScopeImageOptions. Tests cover builder pattern, getters/setters, size
+ * Test cases for DashScopeImageOptions. Tests cover builder pattern, getters, size
  * calculations, and various edge cases.
  *
  * @author yuluo
@@ -83,38 +83,9 @@ class DashScopeImageOptionsTests {
   }
 
   @Test
-  void testSettersAndGetters() {
-    // Test setters and getters
-    DashScopeImageOptions options = new DashScopeImageOptions();
-
-    options.setModel(TEST_MODEL);
-    options.setN(TEST_N);
-    options.setWidth(TEST_WIDTH);
-    options.setHeight(TEST_HEIGHT);
-    options.setStyle(TEST_STYLE);
-    options.setSeed(TEST_SEED);
-    options.setRefImg(TEST_REF_IMG);
-    options.setRefStrength(TEST_REF_STRENGTH);
-    options.setRefMode(TEST_REF_MODE);
-    options.setNegativePrompt(TEST_NEGATIVE_PROMPT);
-
-    // Verify all fields are set correctly
-    assertThat(options.getModel()).isEqualTo(TEST_MODEL);
-    assertThat(options.getN()).isEqualTo(TEST_N);
-    assertThat(options.getWidth()).isEqualTo(TEST_WIDTH);
-    assertThat(options.getHeight()).isEqualTo(TEST_HEIGHT);
-    assertThat(options.getStyle()).isEqualTo(TEST_STYLE);
-    assertThat(options.getSeed()).isEqualTo(TEST_SEED);
-    assertThat(options.getRefImg()).isEqualTo(TEST_REF_IMG);
-    assertThat(options.getRefStrength()).isEqualTo(TEST_REF_STRENGTH);
-    assertThat(options.getRefMode()).isEqualTo(TEST_REF_MODE);
-    assertThat(options.getNegativePrompt()).isEqualTo(TEST_NEGATIVE_PROMPT);
-  }
-
-  @Test
   void testDefaultValues() {
     // Test default values when creating a new instance
-    DashScopeImageOptions options = new DashScopeImageOptions();
+    DashScopeImageOptions options = DashScopeImageOptions.builder().build();
 
     // Verify default values are null
     assertThat(options.getModel()).isNull();
@@ -141,10 +112,10 @@ class DashScopeImageOptionsTests {
 
   @Test
   void testSizeWithDirectSetting() {
-    // Test setting size directly
-    DashScopeImageOptions options = new DashScopeImageOptions();
+    // Test setting size directly via builder
     String size = "1280*720";
-    options.setSize(size);
+    DashScopeImageOptions options =
+        DashScopeImageOptions.builder().size(size).build();
 
     // Verify size is set correctly
     assertThat(options.getSize()).isEqualTo(size);
@@ -153,7 +124,7 @@ class DashScopeImageOptionsTests {
   @Test
   void testSizeWithNullDimensions() {
     // Test size calculation with null dimensions
-    DashScopeImageOptions options = new DashScopeImageOptions();
+    DashScopeImageOptions options = DashScopeImageOptions.builder().build();
 
     // Verify size is null when dimensions are null
     assertThat(options.getSize()).isNull();
@@ -162,7 +133,7 @@ class DashScopeImageOptionsTests {
   @Test
   void testImplementsImageOptions() {
     // Test that DashScopeImageOptions implements ImageOptions interface
-    DashScopeImageOptions options = new DashScopeImageOptions();
+    DashScopeImageOptions options = DashScopeImageOptions.builder().build();
 
     assertThat(options).isInstanceOf(ImageOptions.class);
   }

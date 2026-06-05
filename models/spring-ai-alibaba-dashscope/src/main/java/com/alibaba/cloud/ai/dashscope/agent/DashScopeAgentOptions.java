@@ -89,9 +89,9 @@ public class DashScopeAgentOptions implements ChatOptions {
         this.incrementalOutput = incrementalOutput;
         this.hasThoughts = hasThoughts;
         this.enableThinking = enableThinking;
-        this.images = images;
-        this.files = files;
-        this.bizParams = bizParams;
+        this.images = images != null ? new ArrayList<>(images) : null;
+        this.files = files != null ? new ArrayList<>(files) : null;
+        this.bizParams = bizParams != null ? bizParams.deepCopy() : null;
         this.ragOptions = ragOptions;
         this.flowStreamMode = flowStreamMode;
     }
@@ -198,9 +198,9 @@ public class DashScopeAgentOptions implements ChatOptions {
                 .incrementalOutput(this.incrementalOutput)
                 .hasThoughts(this.hasThoughts)
                 .enableThinking(this.enableThinking)
-                .images(this.images != null ? new ArrayList<>(this.images) : null)
-                .files(this.files != null ? new ArrayList<>(this.files) : null)
-                .bizParams(this.bizParams != null ? this.bizParams.deepCopy() : null)
+                .images(this.images)
+                .files(this.files)
+                .bizParams(this.bizParams)
                 .ragOptions(this.ragOptions)
                 .flowStreamMode(this.flowStreamMode);
     }
@@ -331,12 +331,12 @@ public class DashScopeAgentOptions implements ChatOptions {
         }
 
         public B images(@Nullable List<String> images) {
-            this.images = images != null ? new ArrayList<>(images) : null;
+            this.images = images;
             return self();
         }
 
         public B files(@Nullable List<String> files) {
-            this.files = files != null ? new ArrayList<>(files) : null;
+            this.files = files;
             return self();
         }
 
@@ -381,10 +381,10 @@ public class DashScopeAgentOptions implements ChatOptions {
                     this.enableThinking = that.enableThinking;
                 }
                 if (that.images != null) {
-                    this.images = new ArrayList<>(that.images);
+                    this.images = that.images;
                 }
                 if (that.files != null) {
-                    this.files = new ArrayList<>(that.files);
+                    this.files = that.files;
                 }
                 if (that.bizParams != null) {
                     this.bizParams = that.bizParams;

@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * {@link ImageModel} implementation backed by DashScope Java SDK.
@@ -121,7 +122,7 @@ public class DashScopeSdkImageModel implements ImageModel {
 	}
 
 	private ImageSynthesisParam createRequest(ImagePrompt request, DashScopeSdkImageOptions options) {
-		String model = java.util.Objects.requireNonNull(options.getModel(),
+		String model = Objects.requireNonNull(options.getModel(),
 				"DashScopeSdkImageOptions model cannot be null");
 		ImageSynthesisParam.ImageSynthesisParamBuilder<?, ?> builder = ImageSynthesisParam.builder()
 			.model(model)
@@ -251,7 +252,7 @@ public class DashScopeSdkImageModel implements ImageModel {
 	}
 
 	public DashScopeSdkImageOptions getDefaultOptions() {
-		return java.util.Objects.requireNonNull(DashScopeSdkImageOptions.fromOptions(this.defaultOptions));
+		return Objects.requireNonNull(DashScopeSdkImageOptions.fromOptions(this.defaultOptions));
 	}
 
 	public void setObservationConvention(ImageModelObservationConvention observationConvention) {
