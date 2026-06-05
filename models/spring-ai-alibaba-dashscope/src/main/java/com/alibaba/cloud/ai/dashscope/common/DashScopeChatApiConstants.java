@@ -1,0 +1,40 @@
+package com.alibaba.cloud.ai.dashscope.common;
+
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ChatModel;
+
+import java.util.List;
+
+/**
+ * @author yingzi
+ * @since 2026/6/1
+ */
+public class DashScopeChatApiConstants {
+
+    public static final String TEXT_GENERATION = "/api/v1/services/aigc/text-generation/generation";
+
+    public static final String MULTIMODAL_GENERATION = "/api/v1/services/aigc/multimodal-generation/generation";
+
+    // Chat部分模型
+    public static List<String> CHAT_MODEL_LIST = List.of(
+            ChatModel.QWEN_PLUS.getValue(),
+            ChatModel.QWEN37_MAX.getValue(),
+            ChatModel.QWEN36_PLUS.getValue(),
+            ChatModel.QWEN36_FLASH.getValue(),
+            ChatModel.DEEPSEEK_V4_PRO.getValue(),
+            ChatModel.DEEPSEEK_V4_FLASH.getValue(),
+            ChatModel.GLM_51.getValue(),
+            ChatModel.KIMI_K26.getValue(),
+            ChatModel.MINIMAX_M25.getValue(),
+            ChatModel.MIMO_V25_PRO.getValue(),
+            ChatModel.QWEN_DOC_TURBO.getValue()
+    );
+
+    // 多模态部分模型
+    public static List<String> MULTIMODAL_MODEL_LIST = List.of(
+            ChatModel.QWEN_VL_PLUS.getValue(),
+            ChatModel.QWEN3_VL_PLUS.getValue(),
+            ChatModel.QWEN_VL_MAX.getValue(),
+            ChatModel.QWEN_AUDIO_TURBO.getValue()
+    );
+
+}

@@ -16,14 +16,15 @@
 package com.alibaba.cloud.ai.dashscope.chat;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.Function;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.ResponseFormat;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.ResponseFormat.Type;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.Tool;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.ai.tool.ToolCallback;
@@ -54,8 +55,6 @@ class DashScopeChatOptionsTests {
 
     private static final Integer TEST_THINKING_BUDGET = 1000;
 
-    private static final Map<String, Object> TEST_EXTRA_BODY = Map.of("customKey", "customValue");
-
     @Test
     void testBuilderAndGetters() {
         // Test building DashScopeChatOptions using builder pattern and verify getters
@@ -74,7 +73,6 @@ class DashScopeChatOptionsTests {
                 .enableThinking(true)
                 .thinkingBudget(TEST_THINKING_BUDGET)
                 .multiModel(true)
-                .extraBody(TEST_EXTRA_BODY)
                 .build();
 
         // Verify all fields are set correctly
@@ -92,7 +90,6 @@ class DashScopeChatOptionsTests {
         assertThat(options.getEnableThinking()).isTrue();
         assertThat(options.getThinkingBudget()).isEqualTo(TEST_THINKING_BUDGET);
         assertThat(options.getMultiModel()).isTrue();
-        assertThat(options.getExtraBody()).isEqualTo(TEST_EXTRA_BODY);
     }
 
     @Test
@@ -116,9 +113,9 @@ class DashScopeChatOptionsTests {
     @Test
     void testToolsAndToolChoice() {
         // Test tools and tool choice related methods
-        DashScopeApiSpec.FunctionTool.Function function = new DashScopeApiSpec.FunctionTool.Function("Test function", "test", "{}");
-        DashScopeApiSpec.FunctionTool tool = new DashScopeApiSpec.FunctionTool(function);
-        List<DashScopeApiSpec.FunctionTool> tools = Collections.singletonList(tool);
+        Function function = new Function("test", "Test function", Map.of());
+        Tool tool = new Tool("function", function);
+        List<Tool> tools = List.of(tool);
         Map<String, String> toolChoice = Map.of("type", "function", "name", "test");
 
         DashScopeChatOptions options = DashScopeChatOptions.builder().tools(tools).toolChoice(toolChoice).build();
@@ -130,14 +127,14 @@ class DashScopeChatOptionsTests {
     @Test
     void testResponseFormat() {
         // Test response format related methods
-        DashScopeResponseFormat responseFormat = DashScopeResponseFormat.builder()
-                .type(DashScopeResponseFormat.Type.JSON_OBJECT)
+        ResponseFormat responseFormat = ResponseFormat.builder()
+                .type(Type.JSON_OBJECT)
                 .build();
 
         DashScopeChatOptions options = DashScopeChatOptions.builder().responseFormat(responseFormat).build();
 
         assertThat(options.getResponseFormat()).isEqualTo(responseFormat);
-        assertThat(options.getResponseFormat().getType()).isEqualTo(DashScopeResponseFormat.Type.JSON_OBJECT);
+        assertThat(options.getResponseFormat().getType()).isEqualTo(Type.JSON_OBJECT);
     }
 
     @Test
@@ -163,21 +160,18 @@ class DashScopeChatOptionsTests {
         DashScopeChatOptions options1 = DashScopeChatOptions.builder()
                 .model(TEST_MODEL)
                 .temperature(TEST_TEMPERATURE)
-                .extraBody(TEST_EXTRA_BODY)
                 .enableCodeInterpreter(true)
                 .build();
 
         DashScopeChatOptions options2 = DashScopeChatOptions.builder()
                 .model(TEST_MODEL)
                 .temperature(TEST_TEMPERATURE)
-                .extraBody(TEST_EXTRA_BODY)
                 .enableCodeInterpreter(true)
                 .build();
 
         DashScopeChatOptions options3 = DashScopeChatOptions.builder()
                 .model("different-model")
                 .temperature(0.5)
-                .extraBody(Map.of())
                 .enableCodeInterpreter(false)
                 .build();
 
@@ -200,7 +194,7 @@ class DashScopeChatOptionsTests {
 
         assertThat(toString).contains("DashScopeChatOptions")
                 .contains(TEST_MODEL)
-                .contains("enable_code_interpreter")
+                .contains("enableCodeInterpreter")
                 .contains(TEST_TEMPERATURE.toString());
     }
 }
