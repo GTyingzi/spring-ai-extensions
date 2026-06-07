@@ -38,7 +38,6 @@ import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.CacheCreation;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.MediaContent;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.PromptTokenDetailed;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.Role;
-import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
 import tools.jackson.databind.json.JsonMapper;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -1005,7 +1004,6 @@ class DashScopeChatModelTests {
                 .toolCallingManager(ToolCallingManager.builder().build())
                 .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
                 .observationRegistry(ObservationRegistry.NOOP)
-                .toolCallValidator(new DefaultToolCallValidator())
                 .build();
 
         DashScopeChatModel clone1 = model1.clone();

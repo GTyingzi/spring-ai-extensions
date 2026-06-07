@@ -637,25 +637,19 @@ public class DashScopeChatModel implements ChatModel {
 			return this;
 		}
 
-		public Builder retryTemplate(RetryTemplate retryTemplate) {
-			this.retryTemplate = retryTemplate;
-			return this;
-		}
+        public Builder toolCallingManager(ToolCallingManager toolCallingManager) {
+            this.toolCallingManager = toolCallingManager;
+            return this;
+        }
 
-        @Deprecated(since = "2.0.0", forRemoval = true)
-		public Builder toolCallingManager(ToolCallingManager toolCallingManager) {
-			this.toolCallingManager = toolCallingManager;
+
+        public Builder retryTemplate(RetryTemplate retryTemplate) {
+			this.retryTemplate = retryTemplate;
 			return this;
 		}
 
 		public Builder observationRegistry(ObservationRegistry observationRegistry) {
 			this.observationRegistry = observationRegistry;
-			return this;
-		}
-
-        @Deprecated(since = "2.0.0", forRemoval = true)
-        public Builder toolCallValidator(ToolCallValidator toolCallValidator) {
-			this.toolCallValidator = toolCallValidator;
 			return this;
 		}
 
