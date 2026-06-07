@@ -15,8 +15,7 @@
  */
 package com.alibaba.cloud.ai.dashscope.metadata;
 
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec;
-import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.TokenUsage;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.TokenUsage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.util.Assert;
 
@@ -43,19 +42,7 @@ public class DashScopeAiUsage implements Usage {
 		this.totalTokens = usage.totalTokens();
 	}
 
-	protected DashScopeAiUsage(DashScopeChatApiSpec.TokenUsage usage) {
-		Assert.notNull(usage, "DashScope Usage must not be null");
-		this.usage = usage;
-		this.inputTokens = usage.inputTokens();
-		this.outputTokens = usage.outputTokens();
-		this.totalTokens = usage.totalTokens();
-	}
-
 	public static DashScopeAiUsage from(TokenUsage usage) {
-		return new DashScopeAiUsage(usage);
-	}
-
-	public static DashScopeAiUsage from(DashScopeChatApiSpec.TokenUsage usage) {
 		return new DashScopeAiUsage(usage);
 	}
 

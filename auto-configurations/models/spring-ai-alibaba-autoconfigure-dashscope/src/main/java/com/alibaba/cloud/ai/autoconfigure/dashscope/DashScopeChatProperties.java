@@ -17,6 +17,9 @@ package com.alibaba.cloud.ai.autoconfigure.dashscope;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeChatApiConstants;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel.ChatModel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -37,7 +40,7 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
 	/**
 	 * Default DashScope Chat model.
 	 */
-	public static final String DEFAULT_DEPLOYMENT_NAME = "qwen-plus";
+	public static final String DEFAULT_CHAT_MODEL = ChatModel.QWEN_PLUS.getValue();
 
 	/**
 	 * Enable DashScope ai chat client.
@@ -47,11 +50,11 @@ public class DashScopeChatProperties extends DashScopeParentProperties {
     /**
 	 * DashScope Chat completions path.
 	 */
-	private String completionsPath = DashScopeApiConstants.TEXT_GENERATION_RESTFUL_URL;
+	private String completionsPath = DashScopeChatApiConstants.TEXT_GENERATION;
 
 	@NestedConfigurationProperty
 	private DashScopeChatOptions options = DashScopeChatOptions.builder()
-		.model(DEFAULT_DEPLOYMENT_NAME)
+		.model(DEFAULT_CHAT_MODEL)
 		.build();
 
 	public DashScopeChatOptions getOptions() {

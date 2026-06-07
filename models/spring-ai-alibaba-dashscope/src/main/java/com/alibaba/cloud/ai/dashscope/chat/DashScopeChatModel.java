@@ -45,6 +45,7 @@ import com.alibaba.cloud.ai.dashscope.chat.observation.DashScopeChatModelObserva
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
 import com.alibaba.cloud.ai.dashscope.metadata.DashScopeAiUsage;
+import com.alibaba.cloud.ai.dashscope.spec.DashScopeModel;
 import com.alibaba.cloud.ai.tool.observation.inner.ToolCallReactiveContextHolder;
 import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
 import com.alibaba.cloud.ai.tool.validator.ToolCallValidator;
@@ -106,7 +107,7 @@ public class DashScopeChatModel implements ChatModel {
 
 	private static final Logger logger = LoggerFactory.getLogger(DashScopeChatModel.class);
 
-	public static final String DEFAULT_MODEL_NAME = DashScopeApi.DEFAULT_CHAT_MODEL;
+	public static final String DEFAULT_MODEL_NAME = DashScopeModel.ChatModel.QWEN_PLUS.getValue();
 
 	private static final ChatModelObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DashScopeChatModelObservationConvention();
 
@@ -703,6 +704,7 @@ public class DashScopeChatModel implements ChatModel {
 			return this;
 		}
 
+        @Deprecated(since = "2.0.0", forRemoval = true)
 		public Builder toolCallingManager(ToolCallingManager toolCallingManager) {
 			this.toolCallingManager = toolCallingManager;
 			return this;
@@ -713,7 +715,8 @@ public class DashScopeChatModel implements ChatModel {
 			return this;
 		}
 
-		public Builder toolCallValidator(ToolCallValidator toolCallValidator) {
+        @Deprecated(since = "2.0.0", forRemoval = true)
+        public Builder toolCallValidator(ToolCallValidator toolCallValidator) {
 			this.toolCallValidator = toolCallValidator;
 			return this;
 		}

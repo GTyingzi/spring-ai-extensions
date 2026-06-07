@@ -34,6 +34,7 @@ public class DashScopeModel {
     public enum ChatModel implements ChatModelDescription {
 
         QWEN_PLUS("qwen-plus"),
+        QWEN_MAX("qwen-max"),
         QWEN37_MAX("qwen3.7-max"),
         QWEN36_PLUS("qwen3.6-plus"),
         QWEN36_FLASH("qwen3.6-flash"),

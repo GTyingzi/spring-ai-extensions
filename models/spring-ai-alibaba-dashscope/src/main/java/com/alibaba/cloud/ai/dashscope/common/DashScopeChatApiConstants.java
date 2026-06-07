@@ -32,6 +32,7 @@ public class DashScopeChatApiConstants {
     // Chat部分模型
     public static List<String> CHAT_MODEL_LIST = List.of(
             ChatModel.QWEN_PLUS.getValue(),
+            ChatModel.QWEN_MAX.getValue(),
             ChatModel.QWEN37_MAX.getValue(),
             ChatModel.QWEN36_PLUS.getValue(),
             ChatModel.QWEN36_FLASH.getValue(),
