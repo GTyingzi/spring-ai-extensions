@@ -53,9 +53,8 @@ import org.springframework.ai.chat.observation.ChatModelObservationDocumentation
 import org.springframework.ai.chat.observation.DefaultChatModelObservationConvention;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
 import org.springframework.ai.model.tool.ToolCallingManager;
-import org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate;
+import org.springframework.ai.model.tool.ToolExecutionEligibilityChecker;
 import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
@@ -96,7 +95,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	private final ToolCallingManager toolCallingManager;
 
-	private final ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate;
+	private final ToolExecutionEligibilityChecker toolExecutionEligibilityChecker;
 
 	private final @Nullable String apiKey;
 
@@ -108,7 +107,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	public DashScopeSdkChatModel(DashScopeSdkGenerationClient generationClient, DashScopeSdkChatOptions defaultOptions,
                                  ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
-                                 ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, @Nullable String apiKey,
+                                 ToolExecutionEligibilityChecker toolExecutionEligibilityChecker, @Nullable String apiKey,
                                  @Nullable String workspaceId,
                                  Map<String, String> connectionHeaders) {
 
@@ -117,7 +116,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 		Assert.notNull(toolCallingManager, "toolCallingManager cannot be null");
 		Assert.notNull(retryTemplate, "retryTemplate cannot be null");
 		Assert.notNull(observationRegistry, "observationRegistry cannot be null");
-		Assert.notNull(toolExecutionEligibilityPredicate, "toolExecutionEligibilityPredicate cannot be null");
+		Assert.notNull(toolExecutionEligibilityChecker, "toolExecutionEligibilityChecker cannot be null");
 		Assert.notNull(connectionHeaders, "connectionHeaders cannot be null");
 
 		this.generationClient = generationClient;
@@ -125,7 +124,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 		this.toolCallingManager = toolCallingManager;
 		this.retryTemplate = retryTemplate;
 		this.observationRegistry = observationRegistry;
-		this.toolExecutionEligibilityPredicate = toolExecutionEligibilityPredicate;
+		this.toolExecutionEligibilityChecker = toolExecutionEligibilityChecker;
 		this.apiKey = apiKey;
 		this.workspaceId = workspaceId;
 		this.connectionHeaders = connectionHeaders;
@@ -170,8 +169,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 				return chatResponse;
 			});
 
-        Assert.state(prompt.getOptions() != null, "options must not be null");
-		if (this.toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
+		if (this.toolExecutionEligibilityChecker.isToolCallResponse(response)) {
 			ToolExecutionResult toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
 			if (toolExecutionResult.returnDirect()) {
 				return ChatResponse.builder()
@@ -208,8 +206,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 				.map(result -> toChatResponse(result, previousChatResponse, request.getModel()));
 
 			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
-                        Assert.state(prompt.getOptions() != null, "options must not be null");
-				if (this.toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
+				if (this.toolExecutionEligibilityChecker.isToolCallResponse(response)) {
 					return Flux.defer(() -> {
 						ToolExecutionResult toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
 						if (toolExecutionResult.returnDirect()) {
@@ -554,8 +551,8 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 		private ToolCallingManager toolCallingManager = ToolCallingManager.builder().build();
 
-		private ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate =
-				new DefaultToolExecutionEligibilityPredicate();
+		private ToolExecutionEligibilityChecker toolExecutionEligibilityChecker =
+				chatResponse -> chatResponse != null && chatResponse.hasToolCalls();
 
 		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
@@ -573,7 +570,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 			this.defaultOptions = dashScopeSdkChatModel.defaultOptions;
 			this.retryTemplate = dashScopeSdkChatModel.retryTemplate;
 			this.toolCallingManager = dashScopeSdkChatModel.toolCallingManager;
-			this.toolExecutionEligibilityPredicate = dashScopeSdkChatModel.toolExecutionEligibilityPredicate;
+			this.toolExecutionEligibilityChecker = dashScopeSdkChatModel.toolExecutionEligibilityChecker;
 			this.observationRegistry = dashScopeSdkChatModel.observationRegistry;
 			this.apiKey = dashScopeSdkChatModel.apiKey;
 			this.workspaceId = dashScopeSdkChatModel.workspaceId;
@@ -600,9 +597,9 @@ public class DashScopeSdkChatModel implements ChatModel {
 			return this;
 		}
 
-		public Builder toolExecutionEligibilityPredicate(
-				ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate) {
-			this.toolExecutionEligibilityPredicate = toolExecutionEligibilityPredicate;
+		public Builder toolExecutionEligibilityChecker(
+				ToolExecutionEligibilityChecker toolExecutionEligibilityChecker) {
+			this.toolExecutionEligibilityChecker = toolExecutionEligibilityChecker;
 			return this;
 		}
 
@@ -628,7 +625,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 		public DashScopeSdkChatModel build() {
 			return new DashScopeSdkChatModel(this.generationClient, this.defaultOptions, this.toolCallingManager,
-					this.retryTemplate, this.observationRegistry, this.toolExecutionEligibilityPredicate, this.apiKey,
+					this.retryTemplate, this.observationRegistry, this.toolExecutionEligibilityChecker, this.apiKey,
 					this.workspaceId, this.connectionHeaders);
 		}
 

@@ -17,11 +17,9 @@ package com.alibaba.cloud.ai.dashscope.chat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
@@ -230,18 +228,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
     private final List<ToolCallback> toolCallbacks;
 
     /**
-     * Collection of tool names to be resolved at runtime and used for tool calling in the chat completion request.
-     */
-    @JsonIgnore
-    private final Set<String> toolNames;
-
-    /**
-     * Whether to enable the tool execution lifecycle internally in ChatModel.
-     */
-    @JsonIgnore
-    private final @Nullable Boolean internalToolExecutionEnabled;
-
-    /**
      * Indicates whether the request involves multiple models.
      */
     @JsonProperty("multi_model")
@@ -371,8 +357,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
             @Nullable Integer thinkingBudget,
             @Nullable Boolean enableCodeInterpreter,
             @Nullable List<ToolCallback> toolCallbacks,
-            @Nullable Set<String> toolNames,
-            @Nullable Boolean internalToolExecutionEnabled,
             @Nullable Boolean multiModel,
             @Nullable Boolean vlEnableImageHwOutput,
             @Nullable Object audio,
@@ -409,8 +393,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         this.thinkingBudget = thinkingBudget;
         this.enableCodeInterpreter = enableCodeInterpreter;
         this.toolCallbacks = toolCallbacks != null ? new ArrayList<>(toolCallbacks) : new ArrayList<>();
-        this.toolNames = toolNames != null ? new HashSet<>(toolNames) : new HashSet<>();
-        this.internalToolExecutionEnabled = internalToolExecutionEnabled;
         this.multiModel = multiModel;
         this.vlEnableImageHwOutput = vlEnableImageHwOutput != null ? vlEnableImageHwOutput : false;
         this.audio = audio;
@@ -537,18 +519,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         return this.toolCallbacks;
     }
 
-    @Override
-    @JsonIgnore
-    public Set<String> getToolNames() {
-        return this.toolNames;
-    }
-
-    @Override
-    @JsonIgnore
-    public @Nullable Boolean getInternalToolExecutionEnabled() {
-        return this.internalToolExecutionEnabled;
-    }
-
     public @Nullable Boolean getMultiModel() {
         return this.multiModel;
     }
@@ -606,7 +576,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         return this.extraBody;
     }
 
-    @Override
     public DashScopeChatOptions copy() {
         return mutate().build();
     }
@@ -643,8 +612,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 .thinkingBudget(this.thinkingBudget)
                 .enableCodeInterpreter(this.enableCodeInterpreter)
                 .toolCallbacks(this.toolCallbacks)
-                .toolNames(this.toolNames)
-                .internalToolExecutionEnabled(this.internalToolExecutionEnabled)
                 .multiModel(this.multiModel)
                 .vlEnableImageHwOutput(this.vlEnableImageHwOutput)
                 .audio(this.audio)
@@ -687,8 +654,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 && Objects.equals(this.thinkingBudget, that.thinkingBudget)
                 && Objects.equals(this.enableCodeInterpreter, that.enableCodeInterpreter)
                 && Objects.equals(this.toolCallbacks, that.toolCallbacks)
-                && Objects.equals(this.toolNames, that.toolNames)
-                && Objects.equals(this.internalToolExecutionEnabled, that.internalToolExecutionEnabled)
                 && Objects.equals(this.multiModel, that.multiModel)
                 && Objects.equals(this.vlEnableImageHwOutput, that.vlEnableImageHwOutput)
                 && Objects.equals(this.audio, that.audio) && Objects.equals(this.streamOptions, that.streamOptions)
@@ -708,7 +673,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 this.enableSearch, this.responseFormat, this.maxTokens, this.incrementalOutput, this.repetitionPenalty,
                 this.tools, this.toolChoice, this.searchOptions, this.parallelToolCalls, this.httpHeaders,
                 this.vlHighResolutionImages, this.enableThinking, this.thinkingBudget, this.enableCodeInterpreter,
-                this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled, this.multiModel,
+                this.toolCallbacks, this.multiModel,
                 this.vlEnableImageHwOutput, this.audio, this.streamOptions, this.asrOptions, this.maxInputTokens,
                 this.modalities, this.ocrOptions, this.topLogProbs, this.logprobs, this.translationOptions,
                 this.outputFormat, this.toolContext, this.extraBody);
@@ -731,8 +696,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                 + ", modalities=" + this.modalities + ", ocrOptions=" + this.ocrOptions + ", topLogProbs="
                 + this.topLogProbs + ", logprobs=" + this.logprobs + ", translationOptions=" + this.translationOptions
                 + ", outputFormat=" + this.outputFormat + ", extraBody=" + this.extraBody + ", httpHeaders="
-                + this.httpHeaders + ", toolCallbacks=" + this.toolCallbacks + ", toolNames=" + this.toolNames
-                + ", internalToolExecutionEnabled=" + this.internalToolExecutionEnabled + ", toolContext="
+                + this.httpHeaders + ", toolCallbacks=" + this.toolCallbacks + ", toolContext="
                 + this.toolContext + '}';
     }
 
@@ -977,27 +941,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
         }
 
         @Override
-        public B toolNames(@Nullable Set<String> toolNames) {
-            this.toolNames = toolNames;
-            return self();
-        }
-
-        @Override
-        public B toolNames(String... toolNames) {
-            if (this.toolNames == null) {
-                this.toolNames = new HashSet<>();
-            }
-            this.toolNames.addAll(Set.of(toolNames));
-            return self();
-        }
-
-        @Override
-        public B internalToolExecutionEnabled(@Nullable Boolean internalToolExecutionEnabled) {
-            this.internalToolExecutionEnabled = internalToolExecutionEnabled;
-            return self();
-        }
-
-        @Override
         public B toolContext(@Nullable Map<String, Object> context) {
             if (context != null) {
                 if (this.toolContext == null) {
@@ -1127,7 +1070,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
                     this.stop, this.enableSearch, this.responseFormat, this.maxTokens, this.incrementalOutput,
                     this.repetitionPenalty, this.tools, this.searchOptions, this.parallelToolCalls, this.httpHeaders,
                     this.toolChoice, this.vlHighResolutionImages, this.enableThinking, this.thinkingBudget,
-                    this.enableCodeInterpreter, this.toolCallbacks, this.toolNames, this.internalToolExecutionEnabled,
+                    this.enableCodeInterpreter, this.toolCallbacks,
                     this.multiModel, this.vlEnableImageHwOutput, this.audio, this.streamOptions, this.asrOptions,
                     this.maxInputTokens, this.modalities, this.ocrOptions, this.topLogProbs, this.logprobs,
                     this.translationOptions, this.outputFormat, this.toolContext, this.extraBody);

@@ -33,7 +33,6 @@ import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec.FunctionTool;
 import com.alibaba.cloud.ai.dashscope.chat.observation.DashScopeChatModelObservationConvention;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import com.alibaba.cloud.ai.dashscope.common.DashScopeException;
-import com.alibaba.cloud.ai.tool.observation.inner.ToolCallReactiveContextHolder;
 import com.alibaba.cloud.ai.tool.validator.DefaultToolCallValidator;
 import com.alibaba.cloud.ai.tool.validator.ToolCallValidator;
 import io.micrometer.observation.Observation;
@@ -61,10 +60,8 @@ import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.chat.observation.ChatModelObservationDocumentation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
+import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
-import org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate;
-import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
 import org.springframework.ai.tool.definition.ToolDefinition;
@@ -77,7 +74,6 @@ import org.springframework.util.MimeType;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -131,12 +127,6 @@ public class DashScopeChatModel implements ChatModel {
     private final ToolCallValidator toolCallingValidator;
 
 	/**
-	 * The tool execution eligibility predicate used to determine if a tool can be
-	 * executed.
-	 */
-	private final ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate;
-
-	/**
 	 * Conventions to use for generating observations.
 	 */
 	private ChatModelObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
@@ -145,28 +135,17 @@ public class DashScopeChatModel implements ChatModel {
 			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate,
 			ObservationRegistry observationRegistry) {
 
-		this(dashscopeApi, defaultOptions, toolCallingManager, retryTemplate, observationRegistry,
-				new DefaultToolExecutionEligibilityPredicate(), new DefaultToolCallValidator());
+		this(dashscopeApi, defaultOptions, toolCallingManager, retryTemplate, observationRegistry, new DefaultToolCallValidator());
 	}
 
 	public DashScopeChatModel(DashScopeApi dashscopeApi, DashScopeChatOptions defaultOptions,
-			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
-			ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate) {
-
-		this(dashscopeApi, defaultOptions, toolCallingManager, retryTemplate, observationRegistry,
-				toolExecutionEligibilityPredicate, new DefaultToolCallValidator());
-	}
-
-	public DashScopeChatModel(DashScopeApi dashscopeApi, DashScopeChatOptions defaultOptions,
-			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
-			ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate, ToolCallValidator toolCallingValidator) {
+			ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry, ToolCallValidator toolCallingValidator) {
 
 		Assert.notNull(dashscopeApi, "dashscopeApi cannot be null");
 		Assert.notNull(defaultOptions, "defaultOptions cannot be null");
 		Assert.notNull(toolCallingManager, "toolCallingManager cannot be null");
 		Assert.notNull(retryTemplate, "retryTemplate cannot be null");
 		Assert.notNull(observationRegistry, "observationRegistry cannot be null");
-		Assert.notNull(toolExecutionEligibilityPredicate, "toolExecutionEligibilityPredicate cannot be null");
 		Assert.notNull(toolCallingValidator, "toolCallingValidator cannot be null");
 
 		this.dashscopeApi = dashscopeApi;
@@ -174,7 +153,6 @@ public class DashScopeChatModel implements ChatModel {
 		this.toolCallingManager = toolCallingManager;
 		this.retryTemplate = retryTemplate;
 		this.observationRegistry = observationRegistry;
-		this.toolExecutionEligibilityPredicate = toolExecutionEligibilityPredicate;
 		this.toolCallingValidator = toolCallingValidator;
 	}
 
@@ -184,11 +162,6 @@ public class DashScopeChatModel implements ChatModel {
 		Assert.isTrue(!CollectionUtils.isEmpty(prompt.getInstructions()), "Prompt messages must not be empty");
 		Prompt requestPrompt = buildRequestPrompt(prompt);
 		return internalCall(requestPrompt, null);
-	}
-
-	@Override
-	public ChatOptions getDefaultOptions() {
-		return this.defaultOptions.copy();
 	}
 
 	public ChatResponse internalCall(Prompt prompt, @Nullable ChatResponse previousChatResponse) {
@@ -215,24 +188,24 @@ public class DashScopeChatModel implements ChatModel {
 				return chatResponse;
 			});
 
-        Assert.state(prompt.getOptions() != null, "options must not be null");
-		if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
-			var toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
-			if (toolExecutionResult.returnDirect()) {
-				// Return tool execution result directly to the client.
-				return ChatResponse.builder()
-					.from(response)
-					.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
-					.build();
-			}
-			else {
-				// Send the tool execution result back to the model.
-				return this.internalCall(new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions()),
-						response);
-			}
-		}
-
 		return response;
+	}
+
+	@Override
+	public ChatOptions getOptions() {
+		return this.defaultOptions.copy();
+	}
+
+	@Override
+	public Prompt buildRequestPrompt(Prompt prompt) {
+		DashScopeChatOptions.Builder requestOptionsBuilder = this.defaultOptions.mutate();
+		ChatOptions runtimeOptions = prompt.getOptions();
+		if (runtimeOptions != null && runtimeOptions != this.defaultOptions) {
+			requestOptionsBuilder.combineWith(runtimeOptions.mutate());
+		}
+		DashScopeChatOptions requestOptions = requestOptionsBuilder.build();
+		ToolCallingChatOptions.validateToolCallbacks(requestOptions.getToolCallbacks());
+		return new Prompt(prompt.getInstructions(), requestOptions);
 	}
 
 	@Override
@@ -292,42 +265,7 @@ public class DashScopeChatModel implements ChatModel {
                             ))
             );
 
-			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
-                Assert.state(prompt.getOptions() != null, "options must not be null");
-					if (toolExecutionEligibilityPredicate.isToolExecutionRequired(prompt.getOptions(), response)) {
-
-						return Flux.deferContextual((ctx) -> {
-
-							ToolExecutionResult toolExecutionResult;
-
-							try {
-								ToolCallReactiveContextHolder.setContext(ctx);
-								toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
-							} finally {
-								ToolCallReactiveContextHolder.clearContext();
-							}
-
-							if (toolExecutionResult.returnDirect()) {
-
-								// Return tool execution result directly to the client.
-								return Flux.just(ChatResponse.builder().from(response)
-										.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
-										.build());
-							} else {
-								// Send the tool execution result back to the model.
-								return this.internalStream(
-                                        new Prompt(
-                                                toolExecutionResult.conversationHistory(),
-                                                prompt.getOptions()
-                                        ),
-										response
-                                );
-							}
-						}).subscribeOn(Schedulers.boundedElastic());
-					} else {
-						return Flux.just(response);
-					}
-				}).doOnError(observation::error)
+            Flux<ChatResponse> flux = chatResponse.doOnError(observation::error)
 				.doFinally(s -> observation.stop())
 				.contextWrite(ctx -> ctx.put(ObservationThreadLocalAccessor.KEY, observation));
 
@@ -760,7 +698,6 @@ public class DashScopeChatModel implements ChatModel {
 			this.toolCallingManager = dashScopeChatModel.toolCallingManager;
 			this.retryTemplate = dashScopeChatModel.retryTemplate;
 			this.observationRegistry = dashScopeChatModel.observationRegistry;
-			this.toolExecutionEligibilityPredicate = dashScopeChatModel.toolExecutionEligibilityPredicate;
 			this.toolCallValidator = dashScopeChatModel.toolCallingValidator;
 		}
 
@@ -774,8 +711,6 @@ public class DashScopeChatModel implements ChatModel {
 
 		private ToolCallingManager toolCallingManager = ToolCallingManager.builder().build();
 
-		private ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate = new DefaultToolExecutionEligibilityPredicate();
-
 		private ToolCallValidator toolCallValidator = new DefaultToolCallValidator();
 
 		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
@@ -787,12 +722,6 @@ public class DashScopeChatModel implements ChatModel {
 
 		public Builder defaultOptions(DashScopeChatOptions defaultOptions) {
 			this.defaultOptions = defaultOptions;
-			return this;
-		}
-
-		public Builder toolExecutionEligibilityPredicate(
-				ToolExecutionEligibilityPredicate toolExecutionEligibilityPredicate) {
-			this.toolExecutionEligibilityPredicate = toolExecutionEligibilityPredicate;
 			return this;
 		}
 
@@ -821,8 +750,7 @@ public class DashScopeChatModel implements ChatModel {
 			Assert.notNull(dashScopeApi, "dashScopeApi cannot be null");
 
             return new DashScopeChatModel(dashScopeApi, this.defaultOptions, this.toolCallingManager,
-                    this.retryTemplate, this.observationRegistry, this.toolExecutionEligibilityPredicate,
-                    this.toolCallValidator);
+                    this.retryTemplate, this.observationRegistry, this.toolCallValidator);
 
         }
 

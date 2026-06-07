@@ -17,10 +17,8 @@ package com.alibaba.cloud.ai.dashscope.chat;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeResponseFormat;
 import com.alibaba.cloud.ai.dashscope.spec.DashScopeApiSpec;
@@ -102,15 +100,12 @@ class DashScopeChatOptionsTests {
         ToolCallback callback2 = Mockito.mock(ToolCallback.class);
 
         List<ToolCallback> callbacks = Arrays.asList(callback1, callback2);
-        Set<String> functions = new HashSet<>(Arrays.asList("test1", "test2"));
 
         DashScopeChatOptions options = DashScopeChatOptions.builder()
                 .toolCallbacks(callbacks)
-                .toolNames(functions)
                 .build();
 
         assertThat(options.getToolCallbacks()).containsExactlyElementsOf(callbacks);
-        assertThat(options.getToolNames()).containsExactlyInAnyOrderElementsOf(functions);
     }
 
     @Test

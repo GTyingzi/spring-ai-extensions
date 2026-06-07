@@ -59,7 +59,7 @@ class DashScopeSdkChatModelTests {
 			.apiKey("test-key")
 			.workspaceId("workspace-id")
 			.connectionHeaders(Map.of("x-test", "v"))
-			.toolExecutionEligibilityPredicate((options, response) -> false)
+			.toolExecutionEligibilityChecker(response -> false)
 			.build();
 	}
 

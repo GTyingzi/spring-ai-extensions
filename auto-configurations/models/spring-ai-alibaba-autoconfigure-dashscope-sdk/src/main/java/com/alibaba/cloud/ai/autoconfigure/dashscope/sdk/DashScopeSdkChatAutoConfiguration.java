@@ -21,9 +21,8 @@ import com.alibaba.dashscope.aigc.generation.Generation;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.model.SpringAIModelProperties;
-import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
 import org.springframework.ai.model.tool.ToolCallingManager;
-import org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate;
+import org.springframework.ai.model.tool.ToolExecutionEligibilityChecker;
 import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration;
@@ -57,7 +56,7 @@ public class DashScopeSdkChatAutoConfiguration {
 			DashScopeSdkChatProperties chatProperties,
 			ObjectProvider<ObservationRegistry> observationRegistry,
 			ObjectProvider<ChatModelObservationConvention> observationConvention,
-			ObjectProvider<ToolExecutionEligibilityPredicate> toolExecutionEligibilityPredicate) {
+			ObjectProvider<ToolExecutionEligibilityChecker> toolExecutionEligibilityChecker) {
 
 		ResolvedConnectionProperties resolved = resolveConnectionProperties(commonProperties, chatProperties);
 
@@ -69,8 +68,8 @@ public class DashScopeSdkChatAutoConfiguration {
 			.retryTemplate(retryTemplate.getIfUnique(() -> RetryUtils.DEFAULT_RETRY_TEMPLATE))
 			.toolCallingManager(toolCallingManager)
 			.observationRegistry(observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP))
-			.toolExecutionEligibilityPredicate(toolExecutionEligibilityPredicate
-				.getIfUnique(DefaultToolExecutionEligibilityPredicate::new))
+			.toolExecutionEligibilityChecker(toolExecutionEligibilityChecker
+				.getIfUnique(() -> chatResponse -> chatResponse != null && chatResponse.hasToolCalls()))
 			.build();
 
 		observationConvention.ifAvailable(model::setObservationConvention);
