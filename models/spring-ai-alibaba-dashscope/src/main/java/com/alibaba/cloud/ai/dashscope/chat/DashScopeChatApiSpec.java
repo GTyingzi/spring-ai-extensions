@@ -309,9 +309,6 @@ public class DashScopeChatApiSpec {
 			@JsonProperty("search_options")
 			private SearchOptions searchOptions;
 
-			@JsonProperty("X-DashScope-DataInspection")
-			private String dataInspection;
-
 			@JsonProperty("skill")
 			private List<Skill> skill;
 
@@ -426,10 +423,6 @@ public class DashScopeChatApiSpec {
 				return this.searchOptions;
 			}
 
-			public String dataInspection() {
-				return this.dataInspection;
-			}
-
 			public List<Skill> skill() {
 				return this.skill;
 			}
@@ -495,8 +488,6 @@ public class DashScopeChatApiSpec {
 				private Boolean enableSearch;
 
 				private SearchOptions searchOptions;
-
-				private String dataInspection;
 
 				private List<Skill> skill;
 
@@ -638,11 +629,6 @@ public class DashScopeChatApiSpec {
 					return this;
 				}
 
-				public Builder dataInspection(String dataInspection) {
-					this.dataInspection = dataInspection;
-					return this;
-				}
-
 				public Builder skill(List<Skill> skill) {
 					this.skill = skill;
 					return this;
@@ -677,7 +663,6 @@ public class DashScopeChatApiSpec {
 					parameters.parallelToolCalls = this.parallelToolCalls;
 					parameters.enableSearch = this.enableSearch;
 					parameters.searchOptions = this.searchOptions;
-					parameters.dataInspection = this.dataInspection;
 					parameters.skill = this.skill;
 					return parameters;
 				}

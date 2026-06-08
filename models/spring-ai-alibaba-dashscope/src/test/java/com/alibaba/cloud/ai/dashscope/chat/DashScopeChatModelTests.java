@@ -38,6 +38,7 @@ import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.CacheCreation;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.MediaContent;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.PromptTokenDetailed;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.Role;
+import com.alibaba.cloud.ai.dashscope.common.DashScopeApiConstants;
 import tools.jackson.databind.json.JsonMapper;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +56,7 @@ import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -119,6 +121,66 @@ class DashScopeChatModelTests {
         ChatCompletionRequest request = chatModel.createRequest(requestPrompt);
 
         assertThat(request.parameters().resultFormat()).isEqualTo("message");
+    }
+
+    @Test
+    void callSendsDataInspectionAsHeaderOnly() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model("qwen-plus")
+                .dataInspection(DashScopeApiConstants.ENABLED)
+                .build();
+        Prompt prompt = new Prompt(List.of(new UserMessage(TEST_PROMPT)), options);
+
+        ChatCompletionMessage responseMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, responseMessage, null, 0);
+        ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+        ChatCompletion chatCompletion = new ChatCompletion(TEST_REQUEST_ID, output, null);
+
+        when(dashScopeApi.chatCompletionEntity(any(ChatCompletionRequest.class), any(), eq(false)))
+                .thenReturn(ResponseEntity.ok(chatCompletion));
+
+        chatModel.call(prompt);
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        ArgumentCaptor<HttpHeaders> headersCaptor = ArgumentCaptor.forClass(HttpHeaders.class);
+        verify(dashScopeApi).chatCompletionEntity(requestCaptor.capture(), headersCaptor.capture(), eq(false));
+
+        assertThat(headersCaptor.getValue().getFirst(DashScopeApiConstants.HEADER_DATAINSPECTION))
+                .isEqualTo(DashScopeApiConstants.ENABLED);
+        String jsonRequest = JsonMapper.builder().build().writeValueAsString(requestCaptor.getValue());
+        assertThat(jsonRequest).doesNotContain(DashScopeApiConstants.HEADER_DATAINSPECTION);
+        assertThat(jsonRequest).doesNotContain("dataInspection");
+    }
+
+    @Test
+    void streamSendsDataInspectionAsHeaderOnly() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model("qwen-plus")
+                .dataInspection(DashScopeApiConstants.ENABLED)
+                .build();
+        Prompt prompt = new Prompt(List.of(new UserMessage(TEST_PROMPT)), options);
+
+        ChatCompletionMessage chunkMessage = new ChatCompletionMessage(TEST_RESPONSE, Role.ASSISTANT);
+        Choice choice = new Choice(ChatCompletionFinishReason.STOP, chunkMessage, null, 0);
+        ChatCompletionOutput output = new ChatCompletionOutput(TEST_RESPONSE, List.of(choice), null);
+        ChatCompletionChunk chunk = new ChatCompletionChunk(TEST_REQUEST_ID, output, null, null);
+
+        when(dashScopeApi.chatCompletionStream(any(ChatCompletionRequest.class), any(), eq(false)))
+                .thenReturn(Flux.just(chunk));
+
+        StepVerifier.create(chatModel.stream(prompt))
+                .assertNext(response -> assertThat(response.getResult().getOutput().getText()).isEqualTo(TEST_RESPONSE))
+                .verifyComplete();
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        ArgumentCaptor<HttpHeaders> headersCaptor = ArgumentCaptor.forClass(HttpHeaders.class);
+        verify(dashScopeApi).chatCompletionStream(requestCaptor.capture(), headersCaptor.capture(), eq(false));
+
+        assertThat(headersCaptor.getValue().getFirst(DashScopeApiConstants.HEADER_DATAINSPECTION))
+                .isEqualTo(DashScopeApiConstants.ENABLED);
+        String jsonRequest = JsonMapper.builder().build().writeValueAsString(requestCaptor.getValue());
+        assertThat(jsonRequest).doesNotContain(DashScopeApiConstants.HEADER_DATAINSPECTION);
+        assertThat(jsonRequest).doesNotContain("dataInspection");
     }
 
     @Test

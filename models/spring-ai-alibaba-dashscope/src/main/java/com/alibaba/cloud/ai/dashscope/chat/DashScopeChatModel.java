@@ -452,6 +452,9 @@ public class DashScopeChatModel implements ChatModel {
 		Map<String, String> headers = new HashMap<>(this.defaultOptions.getHttpHeaders());
 		if (prompt.getOptions() instanceof DashScopeChatOptions chatOptions) {
 			headers.putAll(chatOptions.getHttpHeaders());
+			if (StringUtils.hasText(chatOptions.getDataInspection())) {
+				headers.put(DashScopeApiConstants.HEADER_DATAINSPECTION, chatOptions.getDataInspection());
+			}
 		}
 		HttpHeaders httpHeaders = new HttpHeaders();
 		headers.forEach(httpHeaders::add);
@@ -559,7 +562,6 @@ public class DashScopeChatModel implements ChatModel {
 			.parallelToolCalls(options.getParallelToolCalls())
 			.enableSearch(options.getEnableSearch())
 			.searchOptions(options.getSearchOptions())
-			.dataInspection(options.getDataInspection())
 			.skill(options.getSkill())
 			.build();
 	}
