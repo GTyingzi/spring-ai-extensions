@@ -17,6 +17,9 @@ package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -121,6 +124,27 @@ class DashScopeAudioTranscriptionOptionsTests {
                 new DashScopeAudioTranscriptionOptions.TranslationOptions("en", "zh");
         assertThat(translationOptions.getSourceLang()).isEqualTo("en");
         assertThat(translationOptions.getTargetLang()).isEqualTo("zh");
+    }
+
+    @Test
+    void testBuilderUsesLocalAbstractBuilder() {
+        Class<?> builderClass = DashScopeAudioTranscriptionOptions.Builder.class;
+
+        assertThat(Modifier.isFinal(builderClass.getModifiers())).isTrue();
+        assertThat(builderClass.getSuperclass().getSimpleName()).isEqualTo("AbstractBuilder");
+        assertThat(builderClass.getGenericSuperclass()).isInstanceOf(ParameterizedType.class);
+
+        Type[] typeArguments = ((ParameterizedType) builderClass.getGenericSuperclass()).getActualTypeArguments();
+        assertThat(typeArguments).containsExactly(DashScopeAudioTranscriptionOptions.class, builderClass);
+    }
+
+    @Test
+    void testBuilderGenericChainingKeepsDashScopeSpecificSetters() {
+        DashScopeAudioTranscriptionOptions.Builder builder = DashScopeAudioTranscriptionOptions.builder()
+                .model("gummy-realtime-v1")
+                .vocabularyId("vocab-1");
+
+        assertThat(builder.build().getVocabularyId()).isEqualTo("vocab-1");
     }
 
     @Test

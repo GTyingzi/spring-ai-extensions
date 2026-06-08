@@ -18,6 +18,9 @@ package com.alibaba.cloud.ai.dashscope.audio.tts;
 import com.alibaba.cloud.ai.dashscope.audio.AudioCommonType.TextType;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -123,6 +126,27 @@ class DashScopeAudioSpeechOptionsTests {
     @Test
     void testBuilderImplementsSpringAiTextToSpeechOptionsBuilder() {
         assertThat(DashScopeAudioSpeechOptions.builder()).isInstanceOf(TextToSpeechOptions.Builder.class);
+    }
+
+    @Test
+    void testBuilderUsesLocalAbstractBuilder() {
+        Class<?> builderClass = DashScopeAudioSpeechOptions.Builder.class;
+
+        assertThat(Modifier.isFinal(builderClass.getModifiers())).isTrue();
+        assertThat(builderClass.getSuperclass().getSimpleName()).isEqualTo("AbstractBuilder");
+        assertThat(builderClass.getGenericSuperclass()).isInstanceOf(ParameterizedType.class);
+
+        Type[] typeArguments = ((ParameterizedType) builderClass.getGenericSuperclass()).getActualTypeArguments();
+        assertThat(typeArguments).containsExactly(DashScopeAudioSpeechOptions.class, builderClass);
+    }
+
+    @Test
+    void testBuilderGenericChainingKeepsDashScopeSpecificSetters() {
+        DashScopeAudioSpeechOptions.Builder builder = DashScopeAudioSpeechOptions.builder()
+                .model("sambert-zhichu-v1")
+                .sampleRate(24000);
+
+        assertThat(builder.build().getSampleRate()).isEqualTo(24000);
     }
 
     @Test

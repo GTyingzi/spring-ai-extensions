@@ -462,7 +462,31 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 				+ ", asrOptions=" + this.asrOptions + '}';
 	}
 
-	public static class Builder {
+	public static final class Builder extends AbstractBuilder<DashScopeAudioTranscriptionOptions, Builder> {
+
+		@Override
+		protected Builder self() {
+			return this;
+		}
+
+        // @formatter:off
+		public DashScopeAudioTranscriptionOptions build() {
+			return new DashScopeAudioTranscriptionOptions(this.model, this.vocabularyId, this.sampleRate, this.format,
+					this.sourceLanguage, this.transcriptionEnabled, this.translationEnabled,
+					this.translationTargetLanguages, this.maxEndSilence, this.modalities, this.audio, this.stream,
+					this.streamOptions, this.maxTokens, this.seed, this.temperature, this.topP,
+					this.presencePenalty, this.topK, this.repetitionPenalty, this.translationOptions,
+					this.disfluencyRemovalEnabled, this.languageHints, this.semanticPunctuationEnabled,
+					this.maxSentenceSilence, this.multiThresholdModeEnabled, this.punctuationPredictionEnabled,
+					this.heartbeat, this.inverseTextNormalizationEnabled, this.resources,
+					this.timestampAlignmentEnabled, this.specialWordFilter, this.diarizationEnabled,
+					this.speakerCount, this.channelId, this.asrOptions);
+		}
+        // @formatter:on
+
+	}
+
+	protected abstract static class AbstractBuilder<O extends DashScopeAudioTranscriptionOptions, B extends AbstractBuilder<O, B>> {
 
 		protected @Nullable String model;
 
@@ -536,190 +560,192 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 
 		protected @Nullable AsrOptions asrOptions;
 
-		public Builder() {
+		protected AbstractBuilder() {
 		}
 
-		public Builder model(@Nullable String model) {
+		protected abstract B self();
+
+		public B model(@Nullable String model) {
 			this.model = model;
-			return this;
+			return self();
 		}
 
-		public Builder vocabularyId(@Nullable String vocabularyId) {
+		public B vocabularyId(@Nullable String vocabularyId) {
 			this.vocabularyId = vocabularyId;
-			return this;
+			return self();
 		}
 
-		public Builder sampleRate(@Nullable Integer sampleRate) {
+		public B sampleRate(@Nullable Integer sampleRate) {
 			this.sampleRate = sampleRate;
-			return this;
+			return self();
 		}
 
-		public Builder format(@Nullable String format) {
+		public B format(@Nullable String format) {
 			this.format = format;
-			return this;
+			return self();
 		}
 
-		public Builder sourceLanguage(@Nullable String sourceLanguage) {
+		public B sourceLanguage(@Nullable String sourceLanguage) {
 			this.sourceLanguage = sourceLanguage;
-			return this;
+			return self();
 		}
 
-		public Builder transcriptionEnabled(@Nullable Boolean transcriptionEnabled) {
+		public B transcriptionEnabled(@Nullable Boolean transcriptionEnabled) {
 			this.transcriptionEnabled = transcriptionEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder translationEnabled(@Nullable Boolean translationEnabled) {
+		public B translationEnabled(@Nullable Boolean translationEnabled) {
 			this.translationEnabled = translationEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder translationTargetLanguages(@Nullable List<String> translationTargetLanguages) {
+		public B translationTargetLanguages(@Nullable List<String> translationTargetLanguages) {
 			this.translationTargetLanguages = translationTargetLanguages;
-			return this;
+			return self();
 		}
 
-		public Builder maxEndSilence(@Nullable Integer maxEndSilence) {
+		public B maxEndSilence(@Nullable Integer maxEndSilence) {
 			this.maxEndSilence = maxEndSilence;
-			return this;
+			return self();
 		}
 
-		public Builder modalities(@Nullable List<String> modalities) {
+		public B modalities(@Nullable List<String> modalities) {
 			this.modalities = modalities;
-			return this;
+			return self();
 		}
 
-		public Builder audio(@Nullable Audio audio) {
+		public B audio(@Nullable Audio audio) {
 			this.audio = audio;
-			return this;
+			return self();
 		}
 
-		public Builder stream(@Nullable Boolean stream) {
+		public B stream(@Nullable Boolean stream) {
 			this.stream = stream;
-			return this;
+			return self();
 		}
 
-		public Builder streamOptions(@Nullable StreamOptions streamOptions) {
+		public B streamOptions(@Nullable StreamOptions streamOptions) {
 			this.streamOptions = streamOptions;
-			return this;
+			return self();
 		}
 
-		public Builder maxTokens(@Nullable Integer maxTokens) {
+		public B maxTokens(@Nullable Integer maxTokens) {
 			this.maxTokens = maxTokens;
-			return this;
+			return self();
 		}
 
-		public Builder seed(@Nullable Integer seed) {
+		public B seed(@Nullable Integer seed) {
 			this.seed = seed;
-			return this;
+			return self();
 		}
 
-		public Builder temperature(@Nullable Float temperature) {
+		public B temperature(@Nullable Float temperature) {
 			this.temperature = temperature;
-			return this;
+			return self();
 		}
 
-		public Builder topP(@Nullable Float topP) {
+		public B topP(@Nullable Float topP) {
 			this.topP = topP;
-			return this;
+			return self();
 		}
 
-		public Builder presencePenalty(@Nullable Float presencePenalty) {
+		public B presencePenalty(@Nullable Float presencePenalty) {
 			this.presencePenalty = presencePenalty;
-			return this;
+			return self();
 		}
 
-		public Builder topK(@Nullable Integer topK) {
+		public B topK(@Nullable Integer topK) {
 			this.topK = topK;
-			return this;
+			return self();
 		}
 
-		public Builder repetitionPenalty(@Nullable Float repetitionPenalty) {
+		public B repetitionPenalty(@Nullable Float repetitionPenalty) {
 			this.repetitionPenalty = repetitionPenalty;
-			return this;
+			return self();
 		}
 
-		public Builder translationOptions(@Nullable TranslationOptions translationOptions) {
+		public B translationOptions(@Nullable TranslationOptions translationOptions) {
 			this.translationOptions = translationOptions;
-			return this;
+			return self();
 		}
 
-		public Builder disfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
+		public B disfluencyRemovalEnabled(@Nullable Boolean disfluencyRemovalEnabled) {
 			this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder languageHints(@Nullable List<String> languageHints) {
+		public B languageHints(@Nullable List<String> languageHints) {
 			this.languageHints = languageHints;
-			return this;
+			return self();
 		}
 
-		public Builder semanticPunctuationEnabled(@Nullable Boolean semanticPunctuationEnabled) {
+		public B semanticPunctuationEnabled(@Nullable Boolean semanticPunctuationEnabled) {
 			this.semanticPunctuationEnabled = semanticPunctuationEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder maxSentenceSilence(@Nullable Integer maxSentenceSilence) {
+		public B maxSentenceSilence(@Nullable Integer maxSentenceSilence) {
 			this.maxSentenceSilence = maxSentenceSilence;
-			return this;
+			return self();
 		}
 
-		public Builder multiThresholdModeEnabled(@Nullable Boolean multiThresholdModeEnabled) {
+		public B multiThresholdModeEnabled(@Nullable Boolean multiThresholdModeEnabled) {
 			this.multiThresholdModeEnabled = multiThresholdModeEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder punctuationPredictionEnabled(@Nullable Boolean punctuationPredictionEnabled) {
+		public B punctuationPredictionEnabled(@Nullable Boolean punctuationPredictionEnabled) {
 			this.punctuationPredictionEnabled = punctuationPredictionEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder heartbeat(@Nullable Boolean heartbeat) {
+		public B heartbeat(@Nullable Boolean heartbeat) {
 			this.heartbeat = heartbeat;
-			return this;
+			return self();
 		}
 
-		public Builder inverseTextNormalizationEnabled(@Nullable Boolean inverseTextNormalizationEnabled) {
+		public B inverseTextNormalizationEnabled(@Nullable Boolean inverseTextNormalizationEnabled) {
 			this.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder resources(@Nullable List<Resource> resources) {
+		public B resources(@Nullable List<Resource> resources) {
 			this.resources = resources;
-			return this;
+			return self();
 		}
 
-		public Builder timestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
+		public B timestampAlignmentEnabled(@Nullable Boolean timestampAlignmentEnabled) {
 			this.timestampAlignmentEnabled = timestampAlignmentEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder specialWordFilter(@Nullable String specialWordFilter) {
+		public B specialWordFilter(@Nullable String specialWordFilter) {
 			this.specialWordFilter = specialWordFilter;
-			return this;
+			return self();
 		}
 
-		public Builder diarizationEnabled(@Nullable Boolean diarizationEnabled) {
+		public B diarizationEnabled(@Nullable Boolean diarizationEnabled) {
 			this.diarizationEnabled = diarizationEnabled;
-			return this;
+			return self();
 		}
 
-		public Builder speakerCount(@Nullable Integer speakerCount) {
+		public B speakerCount(@Nullable Integer speakerCount) {
 			this.speakerCount = speakerCount;
-			return this;
+			return self();
 		}
 
-		public Builder channelId(@Nullable List<Integer> channelId) {
+		public B channelId(@Nullable List<Integer> channelId) {
 			this.channelId = channelId;
-			return this;
+			return self();
 		}
 
-		public Builder asrOptions(@Nullable AsrOptions asrOptions) {
+		public B asrOptions(@Nullable AsrOptions asrOptions) {
 			this.asrOptions = asrOptions;
-			return this;
+			return self();
 		}
 
-		public Builder from(DashScopeAudioTranscriptionOptions fromOptions) {
+		public B from(DashScopeAudioTranscriptionOptions fromOptions) {
 			this.model = fromOptions.getModel();
 			this.vocabularyId = fromOptions.getVocabularyId();
 			this.sampleRate = fromOptions.getSampleRate();
@@ -756,12 +782,12 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			this.speakerCount = fromOptions.getSpeakerCount();
 			this.channelId = fromOptions.getChannelId();
 			this.asrOptions = fromOptions.getAsrOptions();
-			return this;
+			return self();
 		}
 
-		public Builder merge(@Nullable AudioTranscriptionOptions from) {
+		public B merge(@Nullable AudioTranscriptionOptions from) {
 			if (from == null) {
-				return this;
+				return self();
 			}
 			this.model = from.getModel();
 			if (from instanceof DashScopeAudioTranscriptionOptions castFrom) {
@@ -871,23 +897,8 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 					this.asrOptions = castFrom.getAsrOptions();
 				}
 			}
-			return this;
+			return self();
 		}
-
-        // @formatter:off
-		public DashScopeAudioTranscriptionOptions build() {
-			return new DashScopeAudioTranscriptionOptions(this.model, this.vocabularyId, this.sampleRate, this.format,
-					this.sourceLanguage, this.transcriptionEnabled, this.translationEnabled,
-					this.translationTargetLanguages, this.maxEndSilence, this.modalities, this.audio, this.stream,
-					this.streamOptions, this.maxTokens, this.seed, this.temperature, this.topP,
-					this.presencePenalty, this.topK, this.repetitionPenalty, this.translationOptions,
-					this.disfluencyRemovalEnabled, this.languageHints, this.semanticPunctuationEnabled,
-					this.maxSentenceSilence, this.multiThresholdModeEnabled, this.punctuationPredictionEnabled,
-					this.heartbeat, this.inverseTextNormalizationEnabled, this.resources,
-					this.timestampAlignmentEnabled, this.specialWordFilter, this.diarizationEnabled,
-					this.speakerCount, this.channelId, this.asrOptions);
-		}
-        // @formatter:on
 
 	}
 
