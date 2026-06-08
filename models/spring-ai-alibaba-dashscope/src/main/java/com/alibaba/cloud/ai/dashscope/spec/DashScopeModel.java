@@ -485,7 +485,7 @@ public class DashScopeModel {
         VIDUG3_PRO_IMG2VIDEO("vidu/viduq3-pro_img2video"),
         VIDUG3_TURBO_START_END2VIDEO("vidu/viduq3-turbo_start-end2video"),
         VIDUG3_MIX_REFERENCE2VIDEO("vidu/viduq3-mix_reference2video"),
-        VIDUG3_PRO_REFERENCE2VIDEO("vidu/viduq2-pro_reference2video"),
+        VIDUQ2_PRO_REFERENCE2VIDEO("vidu/viduq2-pro_reference2video"),
 
         WANX21_KF2V_PLUS("wanx2.1-kf2v-plus"),
         WAN22_KF2V_FLASH("wan2.2-kf2v-flash"),

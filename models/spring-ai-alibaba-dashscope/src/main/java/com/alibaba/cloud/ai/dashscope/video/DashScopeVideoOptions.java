@@ -701,6 +701,9 @@ public class DashScopeVideoOptions implements VideoOptions {
 			@JsonProperty("keep_original_sound")
 			private @Nullable String keepOriginalSound;
 
+			@JsonProperty("ref_name")
+			private @Nullable String refName;
+
 			public Media() {
 			}
 
@@ -727,6 +730,14 @@ public class DashScopeVideoOptions implements VideoOptions {
 			public void setKeepOriginalSound(@Nullable String keepOriginalSound) {
 				validateKeepOriginalSound(keepOriginalSound);
 				this.keepOriginalSound = keepOriginalSound;
+			}
+
+			public @Nullable String getRefName() {
+				return refName;
+			}
+
+			public void setRefName(@Nullable String refName) {
+				this.refName = refName;
 			}
 
 			public static Builder builder() {
@@ -760,6 +771,11 @@ public class DashScopeVideoOptions implements VideoOptions {
 
 				public Builder keepOriginalSound(@Nullable String keepOriginalSound) {
 					this.media.setKeepOriginalSound(keepOriginalSound);
+					return this;
+				}
+
+				public Builder refName(@Nullable String refName) {
+					this.media.setRefName(refName);
 					return this;
 				}
 
@@ -903,6 +919,9 @@ public class DashScopeVideoOptions implements VideoOptions {
 		@JsonProperty("audio")
 		private @Nullable Boolean audio;
 
+		@JsonProperty("audio_setting")
+		private @Nullable String audioSetting;
+
 		@JsonProperty("aspect_ratio")
 		private @Nullable String aspectRatio;
 
@@ -1026,6 +1045,14 @@ public class DashScopeVideoOptions implements VideoOptions {
 
 		public void setAudio(@Nullable Boolean audio) {
 			this.audio = audio;
+		}
+
+		public @Nullable String getAudioSetting() {
+			return audioSetting;
+		}
+
+		public void setAudioSetting(@Nullable String audioSetting) {
+			this.audioSetting = audioSetting;
 		}
 
 		public @Nullable String getAspectRatio() {
@@ -1251,6 +1278,11 @@ public class DashScopeVideoOptions implements VideoOptions {
 				return this;
 			}
 
+			public Builder audioSetting(@Nullable String audioSetting) {
+				this.options.setAudioSetting(audioSetting);
+				return this;
+			}
+
 			public Builder aspectRatio(@Nullable String aspectRatio) {
 				this.options.setAspectRatio(aspectRatio);
 				return this;
@@ -1369,6 +1401,7 @@ public class DashScopeVideoOptions implements VideoOptions {
 				this.options.setDuration(fromOptions.getDuration());
 				this.options.setWatermark(fromOptions.getWatermark());
 				this.options.setAudio(fromOptions.getAudio());
+				this.options.setAudioSetting(fromOptions.getAudioSetting());
 				this.options.setAspectRatio(fromOptions.getAspectRatio());
 				this.options.setShotType(fromOptions.getShotType());
 				this.options.setObjOrBg(fromOptions.getObjOrBg());
@@ -1418,6 +1451,9 @@ public class DashScopeVideoOptions implements VideoOptions {
 				}
 				if (from.getAudio() != null) {
 					this.options.setAudio(from.getAudio());
+				}
+				if (from.getAudioSetting() != null) {
+					this.options.setAudioSetting(from.getAudioSetting());
 				}
 				if (from.getAspectRatio() != null) {
 					this.options.setAspectRatio(from.getAspectRatio());
