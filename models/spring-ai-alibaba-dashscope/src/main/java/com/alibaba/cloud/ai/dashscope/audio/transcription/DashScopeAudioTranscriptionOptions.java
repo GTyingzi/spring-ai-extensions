@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.transcription;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -166,9 +165,9 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 		this.sourceLanguage = sourceLanguage;
 		this.transcriptionEnabled = transcriptionEnabled;
 		this.translationEnabled = translationEnabled;
-		this.translationTargetLanguages = translationTargetLanguages != null ? new ArrayList<>(translationTargetLanguages) : null;
+		this.translationTargetLanguages = translationTargetLanguages != null ? List.copyOf(translationTargetLanguages) : null;
 		this.maxEndSilence = maxEndSilence;
-		this.modalities = modalities != null ? new ArrayList<>(modalities) : null;
+		this.modalities = modalities != null ? List.copyOf(modalities) : null;
 		this.audio = audio;
 		this.stream = stream;
 		this.streamOptions = streamOptions;
@@ -181,19 +180,19 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 		this.repetitionPenalty = repetitionPenalty;
 		this.translationOptions = translationOptions;
 		this.disfluencyRemovalEnabled = disfluencyRemovalEnabled;
-		this.languageHints = languageHints != null ? new ArrayList<>(languageHints) : null;
+		this.languageHints = languageHints != null ? List.copyOf(languageHints) : null;
 		this.semanticPunctuationEnabled = semanticPunctuationEnabled;
 		this.maxSentenceSilence = maxSentenceSilence;
 		this.multiThresholdModeEnabled = multiThresholdModeEnabled;
 		this.punctuationPredictionEnabled = punctuationPredictionEnabled;
 		this.heartbeat = heartbeat;
 		this.inverseTextNormalizationEnabled = inverseTextNormalizationEnabled;
-		this.resources = resources != null ? new ArrayList<>(resources) : null;
+		this.resources = resources != null ? List.copyOf(resources) : null;
 		this.timestampAlignmentEnabled = timestampAlignmentEnabled;
 		this.specialWordFilter = specialWordFilter;
 		this.diarizationEnabled = diarizationEnabled;
 		this.speakerCount = speakerCount;
-		this.channelId = channelId != null ? new ArrayList<>(channelId) : null;
+		this.channelId = channelId != null ? List.copyOf(channelId) : null;
 		this.asrOptions = asrOptions;
 	}
 
@@ -344,10 +343,6 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 
 	public static Builder builder() {
 		return new Builder();
-	}
-
-	public static DashScopeAudioTranscriptionOptions fromOptions(DashScopeAudioTranscriptionOptions options) {
-		return options.mutate().build();
 	}
 
 	public Builder mutate() {
@@ -768,9 +763,7 @@ public class DashScopeAudioTranscriptionOptions implements AudioTranscriptionOpt
 			if (from == null) {
 				return this;
 			}
-			if (from.getModel() != null) {
-				this.model = from.getModel();
-			}
+			this.model = from.getModel();
 			if (from instanceof DashScopeAudioTranscriptionOptions castFrom) {
 				if (castFrom.getVocabularyId() != null) {
 					this.vocabularyId = castFrom.getVocabularyId();

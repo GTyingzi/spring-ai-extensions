@@ -15,7 +15,6 @@
  */
 package com.alibaba.cloud.ai.dashscope.audio.tts;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -120,7 +119,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 		this.seed = seed;
 		this.wordTimestampEnabled = wordTimestampEnabled;
 		this.phonemeTimestampEnabled = phonemeTimestampEnabled;
-		this.languageHints = languageHints != null ? new ArrayList<>(languageHints) : null;
+		this.languageHints = languageHints != null ? List.copyOf(languageHints) : null;
 		this.instruction = instruction;
 		this.optimizeInstructions = optimizeInstructions;
 		this.enableAigcTag = enableAigcTag;
@@ -247,10 +246,6 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
                 .languageType(this.languageType);
     }
 
-    public static DashScopeAudioSpeechOptions fromOptions(DashScopeAudioSpeechOptions options) {
-        return options.mutate().build();
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -308,7 +303,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 	/**
 	 * Builder for DashScopeAudioSpeechOptions.
 	 */
-	public static class Builder {
+	public static class Builder implements TextToSpeechOptions.Builder {
 
 		protected @Nullable String model;
 
@@ -355,6 +350,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 		public Builder() {
 		}
 
+		@Override
 		public Builder model(@Nullable String model) {
 			this.model = model;
 			return this;
@@ -365,11 +361,13 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 			return this;
 		}
 
+		@Override
 		public Builder voice(@Nullable String voice) {
 			this.voice = voice;
 			return this;
 		}
 
+		@Override
 		public Builder format(@Nullable String format) {
 			this.format = format;
 			return this;
@@ -405,6 +403,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 			return this;
 		}
 
+		@Override
 		public Builder speed(@Nullable Double speed) {
 			this.speed = speed;
 			return this;
@@ -560,6 +559,7 @@ public class DashScopeAudioSpeechOptions implements TextToSpeechOptions {
 		}
 
         // @formatter:off
+		@Override
 		public DashScopeAudioSpeechOptions build() {
 			return new DashScopeAudioSpeechOptions(this.model, this.textType, this.voice, this.format, this.sampleRate,
 					this.volume, this.rate, this.pitch, this.enableSsml, this.bitRate, this.speed, this.seed,
