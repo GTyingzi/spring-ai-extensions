@@ -293,7 +293,7 @@ public class DashScopeChatModel implements ChatModel {
 					choiceMessage != null && StringUtils.hasText(choiceMessage.reasoningContent())
 							? choiceMessage.reasoningContent() : "",
 					"search_info", Objects.isNull(output.searchInfo()) ? "" : output.searchInfo());
-			return buildGeneration(choice, metadata, request);
+			return buildGeneration(choice, metadata);
 		}).toList();
 
 		return new ChatResponse(generations, from(chatCompletion, currentChatResponseUsage));
@@ -303,11 +303,18 @@ public class DashScopeChatModel implements ChatModel {
 		this.defaultOptions = options;
 	}
 
-	private Generation buildGeneration(Choice choice, Map<String, Object> metadata, ChatCompletionRequest request) {
+	private Generation buildGeneration(Choice choice, Map<String, Object> metadata) {
 		ChatCompletionMessage choiceMessage = choice.message();
 
-		List<ToolCall> validatedToolCalls = validateToolCalls(choiceMessage != null ? choiceMessage.toolCalls() : null,
-				choice.finishReason());
+		List<ToolCall> validatedToolCalls = List.of();
+		if (choiceMessage != null && choice.finishReason() == ChatCompletionFinishReason.TOOL_CALLS
+				&& !CollectionUtils.isEmpty(choiceMessage.toolCalls())) {
+			validatedToolCalls = choiceMessage.toolCalls()
+				.stream()
+				.filter(toolCall -> toolCall != null && toolCall.function() != null
+						&& StringUtils.hasText(toolCall.function().name()))
+				.toList();
+		}
 		List<AssistantMessage.ToolCall> toolCalls = validatedToolCalls.stream()
 			.map(toolCall -> new AssistantMessage.ToolCall(toolCall.id(), "function", toolCall.function().name(),
 					toolCall.function().arguments()))
@@ -323,20 +330,6 @@ public class DashScopeChatModel implements ChatModel {
 			.build();
 
 		return new Generation(assistantMessage, generationMetadata);
-	}
-
-	private List<ToolCall> validateToolCalls(@Nullable List<ToolCall> toolCalls,
-			@Nullable ChatCompletionFinishReason finishReason) {
-		if (CollectionUtils.isEmpty(toolCalls)) {
-			return List.of();
-		}
-		if (finishReason != ChatCompletionFinishReason.TOOL_CALLS) {
-			return List.of();
-		}
-		return toolCalls.stream()
-			.filter(toolCall -> toolCall != null && toolCall.function() != null
-					&& StringUtils.hasText(toolCall.function().name()))
-			.toList();
 	}
 
 	private ChatCompletion chunkToChatCompletion(ChatCompletionChunk chunk) {
