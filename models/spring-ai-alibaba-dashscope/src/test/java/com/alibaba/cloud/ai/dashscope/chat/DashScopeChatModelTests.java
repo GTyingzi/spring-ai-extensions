@@ -592,7 +592,7 @@ class DashScopeChatModelTests {
                 	if n <= 1:
                 		return n
                 	else:
-                """).properties(Map.of("partial", true)).build();
+                """).properties(Map.of("partial", "true")).build();
 
         List<Message> messages = List.of(new UserMessage("Please complete this function."), assistantMessage);
 
@@ -604,6 +604,25 @@ class DashScopeChatModelTests {
 
         assertThat(lastMessage.partial()).isNotNull();
         assertThat(lastMessage.partial()).isTrue();
+    }
+
+    @Test
+    void testPartialModeWithFalseStringValue() {
+        AssistantMessage assistantMessage = AssistantMessage.builder()
+                .content("The function is already complete.")
+                .properties(Map.of("partial", "false"))
+                .build();
+
+        List<Message> messages = List.of(new UserMessage("Please complete this function."), assistantMessage);
+
+        Prompt prompt = new Prompt(messages, DashScopeChatOptions.builder().build());
+        ChatCompletionRequest request = chatModel.createRequest(prompt);
+
+        var requestMessages = request.input().messages();
+        var lastMessage = requestMessages.get(requestMessages.size() - 1);
+
+        assertThat(lastMessage.partial()).isNotNull();
+        assertThat(lastMessage.partial()).isFalse();
     }
 
     @Test

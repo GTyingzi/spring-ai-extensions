@@ -421,9 +421,9 @@ public class DashScopeChatModel implements ChatModel {
 					return new ToolCall(toolCall.id(), toolCall.type(), function, null);
 				}).toList();
 			}
-            Boolean partial = (Boolean) assistantMessage.getMetadata().get("partial");
+			Boolean partial = parsePartial(assistantMessage.getMetadata().get("partial"));
 
-            return List.of(Input.ChatCompletionMessage.builder()
+			return List.of(Input.ChatCompletionMessage.builder()
 				.content(assistantMessage.getText())
 				.role(Role.ASSISTANT)
 				.toolCalls(toolCalls)
@@ -431,6 +431,19 @@ public class DashScopeChatModel implements ChatModel {
 				.build());
 		}
 		throw new IllegalArgumentException("Unsupported message type: " + message.getMessageType());
+	}
+
+	private static @Nullable Boolean parsePartial(@Nullable Object partial) {
+		if (partial == null) {
+			return null;
+		}
+		if (partial instanceof Boolean value) {
+			return value;
+		}
+		if (partial instanceof String value) {
+			return Boolean.valueOf(value);
+		}
+		throw new IllegalArgumentException("Unsupported partial metadata type: " + partial.getClass().getName());
 	}
 
 	private HttpHeaders getAdditionalHttpHeaders(Prompt prompt) {

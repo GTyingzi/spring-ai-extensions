@@ -74,8 +74,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 	private final @Nullable Boolean vlEnableImageHwOutput;
 
-	private final @Nullable Integer maxTokens;
-
 	private final @Nullable Integer maxCompletionTokens;
 
 	private final @Nullable Integer seed;
@@ -125,8 +123,8 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 			@Nullable Boolean preserveThinking, @Nullable Integer thinkingBudget, @Nullable String reasoningEffort,
 			@Nullable Boolean toolStream, @Nullable Boolean enableCodeInterpreter, @Nullable Double repetitionPenalty,
 			@Nullable Double presencePenalty, @Nullable Boolean vlHighResolutionImages,
-			@Nullable Boolean vlEnableImageHwOutput, @Nullable Integer maxTokens,
-			@Nullable Integer maxCompletionTokens, @Nullable Integer seed, @Nullable Boolean incrementalOutput,
+			@Nullable Boolean vlEnableImageHwOutput, @Nullable Integer maxCompletionTokens, @Nullable Integer seed,
+			@Nullable Boolean incrementalOutput,
 			@Nullable ResponseFormat responseFormat, @Nullable String resultFormat, @Nullable Boolean logprobs,
 			@Nullable Integer topLogprobs, @Nullable Integer n, @Nullable Object stop, @Nullable List<Tool> tools,
 			@Nullable Object toolChoice, @Nullable Boolean parallelToolCalls, @Nullable Boolean enableSearch,
@@ -149,7 +147,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		this.presencePenalty = presencePenalty;
 		this.vlHighResolutionImages = vlHighResolutionImages;
 		this.vlEnableImageHwOutput = vlEnableImageHwOutput;
-		this.maxTokens = maxTokens;
 		this.maxCompletionTokens = maxCompletionTokens;
 		this.seed = seed;
 		this.incrementalOutput = incrementalOutput != null ? incrementalOutput : Boolean.TRUE;
@@ -247,7 +244,7 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 	@Override
 	public @Nullable Integer getMaxTokens() {
-		return this.maxTokens;
+		return this.maxCompletionTokens;
 	}
 
 	public @Nullable Integer getMaxCompletionTokens() {
@@ -378,7 +375,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 			.presencePenalty(this.presencePenalty)
 			.vlHighResolutionImages(this.vlHighResolutionImages)
 			.vlEnableImageHwOutput(this.vlEnableImageHwOutput)
-			.maxTokens(this.maxTokens)
 			.maxCompletionTokens(this.maxCompletionTokens)
 			.seed(this.seed)
 			.incrementalOutput(this.incrementalOutput)
@@ -422,7 +418,6 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 				&& Objects.equals(this.presencePenalty, that.presencePenalty)
 				&& Objects.equals(this.vlHighResolutionImages, that.vlHighResolutionImages)
 				&& Objects.equals(this.vlEnableImageHwOutput, that.vlEnableImageHwOutput)
-				&& Objects.equals(this.maxTokens, that.maxTokens)
 				&& Objects.equals(this.maxCompletionTokens, that.maxCompletionTokens)
 				&& Objects.equals(this.seed, that.seed)
 				&& Objects.equals(this.incrementalOutput, that.incrementalOutput)
@@ -446,10 +441,10 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		return Objects.hash(this.model, this.stream, this.temperature, this.topP, this.topK, this.enableThinking,
 				this.preserveThinking, this.thinkingBudget, this.reasoningEffort, this.toolStream,
 				this.enableCodeInterpreter, this.repetitionPenalty, this.presencePenalty,
-				this.vlHighResolutionImages, this.vlEnableImageHwOutput, this.maxTokens, this.maxCompletionTokens,
-				this.seed, this.incrementalOutput, this.responseFormat, this.resultFormat, this.logprobs,
-				this.topLogprobs, this.n, this.stop, this.tools, this.toolChoice, this.parallelToolCalls,
-				this.enableSearch, this.searchOptions, this.dataInspection, this.skill, this.httpHeaders,
+				this.vlHighResolutionImages, this.vlEnableImageHwOutput, this.maxCompletionTokens, this.seed,
+				this.incrementalOutput, this.responseFormat, this.resultFormat, this.logprobs, this.topLogprobs,
+				this.n, this.stop, this.tools, this.toolChoice, this.parallelToolCalls, this.enableSearch,
+				this.searchOptions, this.dataInspection, this.skill, this.httpHeaders,
 				this.toolCallbacks, this.multiModel, this.toolContext);
 	}
 
@@ -462,8 +457,8 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 				+ ", toolStream=" + this.toolStream + ", enableCodeInterpreter=" + this.enableCodeInterpreter
 				+ ", repetitionPenalty=" + this.repetitionPenalty + ", presencePenalty=" + this.presencePenalty
 				+ ", vlHighResolutionImages=" + this.vlHighResolutionImages + ", vlEnableImageHwOutput="
-				+ this.vlEnableImageHwOutput + ", maxTokens=" + this.maxTokens + ", maxCompletionTokens="
-				+ this.maxCompletionTokens + ", seed=" + this.seed + ", incrementalOutput="
+				+ this.vlEnableImageHwOutput + ", maxCompletionTokens=" + this.maxCompletionTokens + ", seed="
+				+ this.seed + ", incrementalOutput="
 				+ this.incrementalOutput + ", responseFormat=" + this.responseFormat + ", resultFormat='"
 				+ this.resultFormat + '\'' + ", logprobs=" + this.logprobs + ", topLogprobs="
 				+ this.topLogprobs + ", n=" + this.n + ", stop=" + this.stop + ", tools=" + this.tools
@@ -593,6 +588,12 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 
 		public B vlEnableImageHwOutput(@Nullable Boolean vlEnableImageHwOutput) {
 			this.vlEnableImageHwOutput = vlEnableImageHwOutput;
+			return self();
+		}
+
+		@Override
+		public B maxTokens(@Nullable Integer maxTokens) {
+			this.maxCompletionTokens = maxTokens;
 			return self();
 		}
 
@@ -732,6 +733,10 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 		@Override
 		public B combineWith(ChatOptions.Builder<?> other) {
 			super.combineWith(other);
+			if (this.maxTokens != null) {
+				this.maxCompletionTokens = this.maxTokens;
+				this.maxTokens = null;
+			}
 			if (other instanceof AbstractBuilder<?> that) {
 				if (that.stream != null) {
 					this.stream = that.stream;
@@ -826,12 +831,11 @@ public class DashScopeChatOptions implements ToolCallingChatOptions {
 			return new DashScopeChatOptions(this.model, this.stream, this.temperature, this.topP, this.topK,
 					this.enableThinking, this.preserveThinking, this.thinkingBudget, this.reasoningEffort,
 					this.toolStream, this.enableCodeInterpreter, this.repetitionPenalty, this.presencePenalty,
-					this.vlHighResolutionImages, this.vlEnableImageHwOutput, this.maxTokens,
-					this.maxCompletionTokens, this.seed, this.incrementalOutput, this.responseFormat,
-					this.resultFormat, this.logprobs, this.topLogprobs, this.n, this.stop, this.tools,
-					this.toolChoice, this.parallelToolCalls, this.enableSearch, this.searchOptions,
-					this.dataInspection, this.skill, this.httpHeaders, this.toolCallbacks, this.multiModel,
-					this.toolContext);
+					this.vlHighResolutionImages, this.vlEnableImageHwOutput, this.maxCompletionTokens, this.seed,
+					this.incrementalOutput, this.responseFormat, this.resultFormat, this.logprobs, this.topLogprobs,
+					this.n, this.stop, this.tools, this.toolChoice, this.parallelToolCalls, this.enableSearch,
+					this.searchOptions, this.dataInspection, this.skill, this.httpHeaders, this.toolCallbacks,
+					this.multiModel, this.toolContext);
 		}
 
 	}

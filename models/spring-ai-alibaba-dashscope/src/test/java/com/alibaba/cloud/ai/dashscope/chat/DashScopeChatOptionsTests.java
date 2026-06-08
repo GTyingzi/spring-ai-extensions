@@ -25,6 +25,7 @@ import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRe
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatApiSpec.ChatCompletionRequest.Parameters.Tool;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -88,6 +89,32 @@ class DashScopeChatOptionsTests {
         assertThat(options.getEnableThinking()).isTrue();
         assertThat(options.getThinkingBudget()).isEqualTo(TEST_THINKING_BUDGET);
         assertThat(options.getMultiModel()).isTrue();
+    }
+
+    @Test
+    void testMaxTokensMapsToMaxCompletionTokens() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder().maxTokens(100).build();
+
+        assertThat(options.getMaxTokens()).isEqualTo(100);
+        assertThat(options.getMaxCompletionTokens()).isEqualTo(100);
+    }
+
+    @Test
+    void testMaxCompletionTokensBacksMaxTokens() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder().maxCompletionTokens(200).build();
+
+        assertThat(options.getMaxTokens()).isEqualTo(200);
+        assertThat(options.getMaxCompletionTokens()).isEqualTo(200);
+    }
+
+    @Test
+    void testCombineWithGenericMaxTokensMapsToMaxCompletionTokens() {
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .combineWith(ChatOptions.builder().maxTokens(300))
+                .build();
+
+        assertThat(options.getMaxTokens()).isEqualTo(300);
+        assertThat(options.getMaxCompletionTokens()).isEqualTo(300);
     }
 
     @Test
