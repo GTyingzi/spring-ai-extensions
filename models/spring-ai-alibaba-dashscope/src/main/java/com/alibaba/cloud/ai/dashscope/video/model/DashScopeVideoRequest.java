@@ -368,13 +368,18 @@ public class DashScopeVideoRequest {
             @JsonProperty("keep_original_sound")
             private @Nullable String keepOriginalSound;
 
+            @JsonProperty("ref_name")
+            private @Nullable String refName;
+
             public VideoMedia() {
             }
 
-            public VideoMedia(@Nullable String type, @Nullable String url, @Nullable String keepOriginalSound) {
+            public VideoMedia(@Nullable String type, @Nullable String url, @Nullable String keepOriginalSound,
+                    @Nullable String refName) {
                 this.type = type;
                 this.url = url;
                 this.keepOriginalSound = keepOriginalSound;
+                this.refName = refName;
             }
 
             private static @Nullable List<VideoMedia> optionsConvertReq(
@@ -383,7 +388,8 @@ public class DashScopeVideoRequest {
                     return null;
                 }
                 return media.stream()
-                        .map(item -> new VideoMedia(item.getType(), item.getUrl(), item.getKeepOriginalSound()))
+                        .map(item -> new VideoMedia(item.getType(), item.getUrl(), item.getKeepOriginalSound(),
+                                item.getRefName()))
                         .toList();
             }
 
@@ -476,6 +482,9 @@ public class DashScopeVideoRequest {
         @JsonProperty("audio")
         private @Nullable Boolean audio;
 
+        @JsonProperty("audio_setting")
+        private @Nullable String audioSetting;
+
         @JsonProperty("aspect_ratio")
         private @Nullable String aspectRatio;
 
@@ -556,6 +565,7 @@ public class DashScopeVideoRequest {
                     .duration(parameters.getDuration())
                     .watermark(parameters.getWatermark())
                     .audio(parameters.getAudio())
+                    .audioSetting(parameters.getAudioSetting())
                     .aspectRatio(parameters.getAspectRatio())
                     .shotType(parameters.getShotType())
                     .objOrBg(parameters.getObjOrBg())
@@ -625,6 +635,11 @@ public class DashScopeVideoRequest {
 
             public Builder audio(@Nullable Boolean audio) {
                 this.videoParameters.audio = audio;
+                return this;
+            }
+
+            public Builder audioSetting(@Nullable String audioSetting) {
+                this.videoParameters.audioSetting = audioSetting;
                 return this;
             }
 

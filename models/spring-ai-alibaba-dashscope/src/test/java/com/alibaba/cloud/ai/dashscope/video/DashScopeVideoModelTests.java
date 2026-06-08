@@ -294,7 +294,7 @@ class DashScopeVideoModelTests {
                 DashScopeModel.VideoModel.VIDUG3_PRO_IMG2VIDEO,
                 DashScopeModel.VideoModel.VIDUG3_TURBO_START_END2VIDEO,
                 DashScopeModel.VideoModel.VIDUG3_MIX_REFERENCE2VIDEO,
-                DashScopeModel.VideoModel.VIDUG3_PRO_REFERENCE2VIDEO);
+                DashScopeModel.VideoModel.VIDUQ2_PRO_REFERENCE2VIDEO);
 
         assertThat(videoGenerationModels)
                 .allSatisfy(model -> assertThat(DashScopeVideoApiConstants.getPathByModelName(model.getName()))
@@ -409,7 +409,7 @@ class DashScopeVideoModelTests {
                                 media("reference_image",
                                         "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260415/hynnff/wan-video-edit-clothes.webp")))
                         .build())
-                .parameters(ParametersOptions.builder().resolution("720P").build())
+                .parameters(ParametersOptions.builder().resolution("720P").audioSetting("origin").build())
                 .build(), """
                 {
                   "model": "happyhorse-1.0-video-edit",
@@ -427,7 +427,8 @@ class DashScopeVideoModelTests {
                     ]
                   },
                   "parameters": {
-                    "resolution": "720P"
+                    "resolution": "720P",
+                    "audio_setting": "origin"
                   }
                 }
                 """);
@@ -535,11 +536,14 @@ class DashScopeVideoModelTests {
                 .input(InputOptions.builder()
                         .media(List.of(
                                 media("image_url",
-                                        "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260320/knsple/wan-r2v-role-frame.jpg"),
+                                        "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260320/knsple/wan-r2v-role-frame.jpg",
+                                        "character"),
                                 media("image_url",
-                                        "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260129/qpzxps/wan-r2v-object4.png"),
+                                        "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260129/qpzxps/wan-r2v-object4.png",
+                                        "prop"),
                                 media("image_url",
-                                        "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260129/wfjikw/wan-r2v-backgroud5.png")))
+                                        "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260129/wfjikw/wan-r2v-backgroud5.png",
+                                        "background")))
                         .prompt("男人坐在靠窗的椅子上，手持吉他，在咖啡厅旁演奏一首舒缓的美国乡村民谣")
                         .build())
                 .parameters(ParametersOptions.builder()
@@ -555,15 +559,18 @@ class DashScopeVideoModelTests {
                     "media": [
                       {
                         "type": "image_url",
-                        "url": "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260320/knsple/wan-r2v-role-frame.jpg"
+                        "url": "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260320/knsple/wan-r2v-role-frame.jpg",
+                        "ref_name": "character"
                       },
                       {
                         "type": "image_url",
-                        "url": "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260129/qpzxps/wan-r2v-object4.png"
+                        "url": "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260129/qpzxps/wan-r2v-object4.png",
+                        "ref_name": "prop"
                       },
                       {
                         "type": "image_url",
-                        "url": "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260129/wfjikw/wan-r2v-backgroud5.png"
+                        "url": "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20260129/wfjikw/wan-r2v-backgroud5.png",
+                        "ref_name": "background"
                       }
                     ],
                     "prompt": "男人坐在靠窗的椅子上，手持吉他，在咖啡厅旁演奏一首舒缓的美国乡村民谣"
@@ -836,6 +843,31 @@ class DashScopeVideoModelTests {
     }
 
     @Test
+    void happyHorseVideoEditUsageParsesFractionalDurations() throws Exception {
+        DashScopeVideoResponse response = JSON_MAPPER.readValue("""
+                {
+                  "request_id": "test-request-id-789",
+                  "output": {
+                    "task_id": "test-task-id-123456",
+                    "task_status": "SUCCEEDED",
+                    "output_video_url": "https://example.com/generated-video.mp4"
+                  },
+                  "usage": {
+                    "duration": 13.24,
+                    "input_video_duration": 6.62,
+                    "output_video_duration": 13.24,
+                    "video_count": 1
+                  }
+                }
+                """, DashScopeVideoResponse.class);
+
+        assertThat(response.usage()).isNotNull();
+        assertThat(response.usage().duration()).isEqualTo(13.24);
+        assertThat(response.usage().inputVideoDuration()).isEqualTo(6.62);
+        assertThat(response.usage().outputVideoDuration()).isEqualTo(13.24);
+    }
+
+    @Test
     void testImageDetectionModel() {
         // Test image detection model which returns directly without polling
         // Image detection models return results synchronously (no task polling)
@@ -847,7 +879,7 @@ class DashScopeVideoModelTests {
 
         // Mock detection response - no task polling needed
         VideoOutput detectionOutput = new VideoOutput(null, null, null, null, null, null, null, null, null, null, null, null, false, false, false, List.of(212, 194, 460, 441), List.of(63, 30, 609, 575));
-        VideoUsage detectionUsage = new VideoUsage(0, 0, 0, 0, 0, null, null, null, 1);
+        VideoUsage detectionUsage = new VideoUsage(0.0, 0.0, 0.0, 0, 0, null, null, null, 1);
         DashScopeVideoResponse detectionResponse = new DashScopeVideoResponse(TEST_REQUEST_ID, detectionOutput, detectionUsage);
 
         when(dashScopeVideoApi.submitVideoGenTask(any(DashScopeVideoRequest.class))).thenReturn(ResponseEntity.ok(detectionResponse));
@@ -871,7 +903,7 @@ class DashScopeVideoModelTests {
 
         // Mock successful task completion
         VideoOutput completedOutput = new VideoOutput(TEST_TASK_ID, "SUCCEEDED", null, null, null, null, null, TEST_VIDEO_URL, null, null, null, null, false, false, false, null, null);
-        VideoUsage usage = new VideoUsage(5, 0, 5, 1, 0, "832*480", "16:9", "5s", 0);
+        VideoUsage usage = new VideoUsage(5.0, 0.0, 5.0, 1, 0, "832*480", "16:9", "5s", 0);
         DashScopeVideoResponse completedResponse = new DashScopeVideoResponse(TEST_REQUEST_ID, completedOutput, usage);
         when(dashScopeVideoApi.queryVideoGenTask(TEST_TASK_ID)).thenReturn(ResponseEntity.ok(completedResponse));
     }
@@ -913,6 +945,10 @@ class DashScopeVideoModelTests {
 
     private static InputOptions.Media media(String type, String url) {
         return InputOptions.Media.builder().type(type).url(url).build();
+    }
+
+    private static InputOptions.Media media(String type, String url, String refName) {
+        return InputOptions.Media.builder().type(type).url(url).refName(refName).build();
     }
 
 }

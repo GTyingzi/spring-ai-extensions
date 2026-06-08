@@ -70,7 +70,7 @@ public class DashScopeVideoApiConstants {
             DashScopeModel.VideoModel.VIDUG3_PRO_IMG2VIDEO.getName(),
             DashScopeModel.VideoModel.VIDUG3_TURBO_START_END2VIDEO.getName(),
             DashScopeModel.VideoModel.VIDUG3_MIX_REFERENCE2VIDEO.getName(),
-            DashScopeModel.VideoModel.VIDUG3_PRO_REFERENCE2VIDEO.getName()));
+            DashScopeModel.VideoModel.VIDUQ2_PRO_REFERENCE2VIDEO.getName()));
 
     // 通义万相-图生视频-基于首尾帧；通义万相-图生动作；通义万相数字人-图像检测-视频生成；图声舞蹈视频-舞动人像-AnimateAnyone-视频生成；图生唱视频-悦动人像EMO-视频生成；VideoRetalk-视频生成
     public static final String IMAGE_2_VIDEO_SYNTHESIS = "/api/v1/services/aigc/image2video/video-synthesis";
