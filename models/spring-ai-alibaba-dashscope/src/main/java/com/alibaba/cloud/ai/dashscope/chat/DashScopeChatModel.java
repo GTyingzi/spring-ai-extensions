@@ -104,6 +104,8 @@ public class DashScopeChatModel implements ChatModel {
 
 	public static final String DEFAULT_MODEL_NAME = DashScopeModel.ChatModel.QWEN_PLUS.getValue();
 
+	private static final String DEFAULT_RESULT_FORMAT = "message";
+
 	private static final ChatModelObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DashScopeChatModelObservationConvention();
 
 	private final DashScopeApi dashscopeApi;
@@ -547,7 +549,7 @@ public class DashScopeChatModel implements ChatModel {
 			.seed(options.getSeed())
 			.incrementalOutput(options.getIncrementalOutput())
 			.responseFormat(options.getResponseFormat())
-			.resultFormat(options.getResultFormat())
+			.resultFormat(Objects.requireNonNullElse(options.getResultFormat(), DEFAULT_RESULT_FORMAT))
 			.logprobs(options.getLogprobs())
 			.topLogprobs(options.getTopLogprobs())
 			.n(options.getN())

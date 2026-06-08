@@ -55,8 +55,6 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
-import org.springframework.ai.model.tool.ToolExecutionEligibilityChecker;
-import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.ai.support.UsageCalculator;
 import org.springframework.ai.tool.definition.ToolDefinition;
@@ -65,7 +63,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -96,8 +93,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	private final ToolCallingManager toolCallingManager;
 
-	private final ToolExecutionEligibilityChecker toolExecutionEligibilityChecker;
-
 	private final @Nullable String apiKey;
 
 	private final @Nullable String workspaceId;
@@ -108,8 +103,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 	public DashScopeSdkChatModel(DashScopeSdkGenerationClient generationClient, DashScopeSdkChatOptions defaultOptions,
                                  ToolCallingManager toolCallingManager, RetryTemplate retryTemplate, ObservationRegistry observationRegistry,
-                                 ToolExecutionEligibilityChecker toolExecutionEligibilityChecker, @Nullable String apiKey,
-                                 @Nullable String workspaceId,
+                                 @Nullable String apiKey, @Nullable String workspaceId,
                                  Map<String, String> connectionHeaders) {
 
 		Assert.notNull(generationClient, "generationClient cannot be null");
@@ -117,7 +111,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 		Assert.notNull(toolCallingManager, "toolCallingManager cannot be null");
 		Assert.notNull(retryTemplate, "retryTemplate cannot be null");
 		Assert.notNull(observationRegistry, "observationRegistry cannot be null");
-		Assert.notNull(toolExecutionEligibilityChecker, "toolExecutionEligibilityChecker cannot be null");
 		Assert.notNull(connectionHeaders, "connectionHeaders cannot be null");
 
 		this.generationClient = generationClient;
@@ -125,7 +118,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 		this.toolCallingManager = toolCallingManager;
 		this.retryTemplate = retryTemplate;
 		this.observationRegistry = observationRegistry;
-		this.toolExecutionEligibilityChecker = toolExecutionEligibilityChecker;
 		this.apiKey = apiKey;
 		this.workspaceId = workspaceId;
 		this.connectionHeaders = connectionHeaders;
@@ -183,17 +175,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 				return chatResponse;
 			});
 
-		if (this.toolExecutionEligibilityChecker.isToolCallResponse(response)) {
-			ToolExecutionResult toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
-			if (toolExecutionResult.returnDirect()) {
-				return ChatResponse.builder()
-					.from(response)
-					.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
-					.build();
-			}
-			return internalCall(new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions()), response);
-		}
-
 		return response;
 	}
 
@@ -219,22 +200,7 @@ public class DashScopeSdkChatModel implements ChatModel {
 			Flux<ChatResponse> chatResponse = flowableToFlux(generationResults)
 				.map(result -> toChatResponse(result, previousChatResponse, request.getModel()));
 
-			Flux<ChatResponse> flux = chatResponse.flatMap(response -> {
-				if (this.toolExecutionEligibilityChecker.isToolCallResponse(response)) {
-					return Flux.defer(() -> {
-						ToolExecutionResult toolExecutionResult = this.toolCallingManager.executeToolCalls(prompt, response);
-						if (toolExecutionResult.returnDirect()) {
-							return Flux.just(ChatResponse.builder()
-								.from(response)
-								.generations(ToolExecutionResult.buildGenerations(toolExecutionResult))
-								.build());
-						}
-						return internalStream(new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions()),
-								response);
-					}).subscribeOn(Schedulers.boundedElastic());
-				}
-				return Flux.just(response);
-			}).doOnError(observation::error)
+			Flux<ChatResponse> flux = chatResponse.doOnError(observation::error)
 				.doFinally(s -> observation.stop())
 				.contextWrite(ctx -> ctx.put(ObservationThreadLocalAccessor.KEY, observation));
 
@@ -565,9 +531,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 		private ToolCallingManager toolCallingManager = ToolCallingManager.builder().build();
 
-		private ToolExecutionEligibilityChecker toolExecutionEligibilityChecker =
-				chatResponse -> chatResponse != null && chatResponse.hasToolCalls();
-
 		private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
 		private @Nullable String apiKey;
@@ -584,7 +547,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 			this.defaultOptions = dashScopeSdkChatModel.defaultOptions;
 			this.retryTemplate = dashScopeSdkChatModel.retryTemplate;
 			this.toolCallingManager = dashScopeSdkChatModel.toolCallingManager;
-			this.toolExecutionEligibilityChecker = dashScopeSdkChatModel.toolExecutionEligibilityChecker;
 			this.observationRegistry = dashScopeSdkChatModel.observationRegistry;
 			this.apiKey = dashScopeSdkChatModel.apiKey;
 			this.workspaceId = dashScopeSdkChatModel.workspaceId;
@@ -611,12 +573,6 @@ public class DashScopeSdkChatModel implements ChatModel {
 			return this;
 		}
 
-		public Builder toolExecutionEligibilityChecker(
-				ToolExecutionEligibilityChecker toolExecutionEligibilityChecker) {
-			this.toolExecutionEligibilityChecker = toolExecutionEligibilityChecker;
-			return this;
-		}
-
 		public Builder observationRegistry(ObservationRegistry observationRegistry) {
 			this.observationRegistry = observationRegistry;
 			return this;
@@ -639,8 +595,8 @@ public class DashScopeSdkChatModel implements ChatModel {
 
 		public DashScopeSdkChatModel build() {
 			return new DashScopeSdkChatModel(this.generationClient, this.defaultOptions, this.toolCallingManager,
-					this.retryTemplate, this.observationRegistry, this.toolExecutionEligibilityChecker, this.apiKey,
-					this.workspaceId, this.connectionHeaders);
+					this.retryTemplate, this.observationRegistry, this.apiKey, this.workspaceId,
+					this.connectionHeaders);
 		}
 
 	}

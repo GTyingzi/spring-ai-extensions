@@ -114,6 +114,14 @@ class DashScopeChatModelTests {
     }
 
     @Test
+    void defaultOptionsUseMessageResultFormat() {
+        Prompt requestPrompt = chatModel.buildRequestPrompt(new Prompt(List.of(new UserMessage(TEST_PROMPT))));
+        ChatCompletionRequest request = chatModel.createRequest(requestPrompt);
+
+        assertThat(request.parameters().resultFormat()).isEqualTo("message");
+    }
+
+    @Test
     void callSendsDashScopeMessageRequestToGenerationEndpoint() {
         DashScopeChatOptions options = DashScopeChatOptions.builder()
                 .model("qwen-plus")
@@ -336,6 +344,48 @@ class DashScopeChatModelTests {
 
         assertThat(response).isNotNull();
         assertThat(response.getResults().get(0).getOutput().getText()).contains("get_weather");
+    }
+
+    @Test
+    void callMapsToolCallResponseWithoutExecutingToolCallback() {
+        ToolCallback weatherCallback = mock(ToolCallback.class);
+        when(weatherCallback.getToolDefinition()).thenReturn(DefaultToolDefinition.builder()
+                .name("get_weather")
+                .description("Get weather information")
+                .inputSchema(EMPTY_INPUT_SCHEMA)
+                .build());
+
+        DashScopeChatOptions options = DashScopeChatOptions.builder()
+                .model("qwen-turbo")
+                .toolCallbacks(List.of(weatherCallback))
+                .build();
+
+        DashScopeChatModel toolChatModel = DashScopeChatModel.builder()
+                .dashScopeApi(dashScopeApi)
+                .defaultOptions(options)
+                .build();
+
+        ToolCall toolCall = new ToolCall("tool-call-id-1", "function",
+                new ChatCompletionFunction("get_weather", "{\"location\":\"Beijing\"}"), null);
+        ChatCompletionMessage toolMessage = new ChatCompletionMessage("", Role.ASSISTANT, null, null,
+                List.of(toolCall), null, null, null, null, null);
+        Choice toolChoice = new Choice(ChatCompletionFinishReason.TOOL_CALLS, toolMessage, null, 0);
+        ChatCompletionOutput toolOutput = new ChatCompletionOutput("", List.of(toolChoice), null);
+        TokenUsage usage = new TokenUsage(10, 5, 15, null, null, null, null, null, null, null);
+        ChatCompletion toolCompletion = new ChatCompletion("test-id", toolOutput, usage);
+
+        when(dashScopeApi.chatCompletionEntity(any(), any(), eq(false))).thenReturn(ResponseEntity.ok(toolCompletion));
+
+        ChatResponse response = toolChatModel.call(new Prompt(List.of(new UserMessage("What's the weather?")), options));
+
+        assertThat(response.hasToolCalls()).isTrue();
+        assertThat(response.getResult().getOutput().getToolCalls()).hasSize(1);
+        assertThat(response.getResult().getOutput().getToolCalls().get(0).name()).isEqualTo("get_weather");
+
+        ArgumentCaptor<ChatCompletionRequest> requestCaptor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        verify(dashScopeApi).chatCompletionEntity(requestCaptor.capture(), any(), eq(false));
+        assertThat(requestCaptor.getValue().parameters().tools()).hasSize(1);
+        verify(weatherCallback, never()).call(any(String.class));
     }
 
     @Test
